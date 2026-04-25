@@ -1,0 +1,33 @@
+.viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.counter {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  min-width: 48px;
+  text-align: center;
+}
+
+.image {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: block;
+  object-fit: contain;
+}
+
+.empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  padding: var(--space-md);
+  text-align: center;
+}

@@ -9,6 +9,7 @@ interface DialogProps {
   onConfirm?: () => void
   confirmLabel?: string
   confirmVariant?: 'primary' | 'danger'
+  footer?: ReactNode
   children: ReactNode
   width?: string
 }
@@ -20,6 +21,7 @@ export function Dialog({
   onConfirm,
   confirmLabel = 'Save',
   confirmVariant = 'primary',
+  footer,
   children,
   width = '520px',
 }: DialogProps) {
@@ -47,10 +49,14 @@ export function Dialog({
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
         <div className={styles.body}>{children}</div>
-        {onConfirm && (
+        {(footer ?? onConfirm) && (
           <div className={styles.footer}>
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button variant={confirmVariant} onClick={onConfirm}>{confirmLabel}</Button>
+            {footer ?? (
+              <>
+                <Button variant="ghost" onClick={onClose}>Cancel</Button>
+                <Button variant={confirmVariant} onClick={onConfirm}>{confirmLabel}</Button>
+              </>
+            )}
           </div>
         )}
       </div>

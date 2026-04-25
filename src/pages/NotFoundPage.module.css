@@ -1,0 +1,29 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--space-md);
+  text-align: center;
+  padding: var(--space-lg);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.code {
+  font-size: 1.5rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.message {
+  font-size: var(--font-size-md);
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
