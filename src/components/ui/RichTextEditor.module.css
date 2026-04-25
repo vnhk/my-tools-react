@@ -1,0 +1,54 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.toggleBtn {
+  align-self: flex-start;
+  padding: 4px 12px;
+  background: var(--color-surface-2, #1e1e2e);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 4px;
+  color: var(--color-text-secondary, #ccc);
+  font-size: var(--font-size-sm, 13px);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.toggleBtn:hover {
+  background: var(--color-surface-3, #2a2a3e);
+  color: var(--color-text-primary, #fff);
+}
+
+/* Quill snow theme overrides for dark mode */
+:global(.ql-toolbar.ql-snow) {
+  background: var(--color-surface-2, #1e1e2e);
+  border-color: var(--color-border, #333);
+  border-radius: 4px 4px 0 0;
+}
+
+:global(.ql-container.ql-snow) {
+  background: var(--color-surface-1, #13131f);
+  border-color: var(--color-border, #333);
+  border-radius: 0 0 4px 4px;
+  color: var(--color-text-primary, #fff);
+}
+
+:global(.ql-editor) {
+  color: var(--color-text-primary, #fff);
+  min-height: 100px;
+}
+
+:global(.ql-snow .ql-stroke) {
+  stroke: var(--color-text-secondary, #ccc);
+}
+
+:global(.ql-snow .ql-fill) {
+  fill: var(--color-text-secondary, #ccc);
+}
+
+:global(.ql-snow .ql-picker) {
+  color: var(--color-text-secondary, #ccc);
+}

@@ -1,0 +1,113 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover .editIcon {
+  opacity: 1;
+}
+
+.clickable:hover .value {
+  color: var(--color-text-primary);
+}
+
+.label {
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-tertiary, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.value {
+  font-size: var(--font-size-sm, 13px);
+  color: var(--color-text-secondary, #ccc);
+  line-height: 1.4;
+  flex: 1;
+}
+
+.value.empty {
+  color: var(--color-text-tertiary, #666);
+  font-style: italic;
+}
+
+.editIcon {
+  font-size: 12px;
+  color: var(--color-text-tertiary, #666);
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.editor {
+  width: 100%;
+  background: var(--color-surface-2, #1e1e2e);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--color-text-primary, #fff);
+  font-size: var(--font-size-sm, 13px);
+  outline: none;
+}
+
+.editor:focus {
+  border-color: var(--color-primary, #7c3aed);
+}
+
+.multiEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--color-surface-2, #1e1e2e);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.multiOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm, 13px);
+  color: var(--color-text-primary, #fff);
+  cursor: pointer;
+}
+
+.multiActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.saveBtn,
+.cancelBtn {
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: none;
+  font-size: var(--font-size-xs, 11px);
+  cursor: pointer;
+}
+
+.saveBtn {
+  background: var(--color-primary, #7c3aed);
+  color: #fff;
+}
+
+.cancelBtn {
+  background: var(--color-surface-3, #2a2a3e);
+  color: var(--color-text-secondary, #ccc);
+}

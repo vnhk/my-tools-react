@@ -3,6 +3,7 @@ import { AuthProvider } from './auth/AuthContext'
 import { RequireAuth } from './auth/RequireAuth'
 import { LoginPage } from './pages/LoginPage'
 import { AppLayout, NavItem } from './components/layout/AppLayout'
+import { NotificationProvider } from './components/ui/Notification'
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/invest-track', label: 'Invest Track', icon: '📈' },
@@ -30,6 +31,7 @@ function PlaceholderPage({ name }: { name: string }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <NotificationProvider>
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -48,6 +50,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
+      </NotificationProvider>
     </BrowserRouter>
   )
 }
