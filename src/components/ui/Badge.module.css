@@ -1,0 +1,16 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.primary  { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+.success  { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.warning  { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+.danger   { background: rgba(239, 68, 68, 0.2);  color: #f87171; }
+.info     { background: rgba(34, 211, 238, 0.2); color: #67e8f9; }
+.neutral  { background: rgba(255, 255, 255, 0.1); color: var(--color-text-secondary); }
