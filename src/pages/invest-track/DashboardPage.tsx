@@ -493,7 +493,8 @@ function FireTab({ kpi, fireGoal, onGoalChange }: {
 
   return (
     <div className={styles.fireContainer}>
-      {/* Goal editor */}
+
+      {/* 1 — Goal editor */}
       <div className={styles.fireGoalRow}>
         <span className={styles.kpiLabel}>FIRE Goal (PLN):</span>
         <input
@@ -504,78 +505,54 @@ function FireTab({ kpi, fireGoal, onGoalChange }: {
         <span className={styles.kpiSub}>Change goal and projections update automatically.</span>
       </div>
 
-      {/* Summary KPI */}
-      <div className={styles.kpiRow}>
-        <KpiCard label="Net Worth" value={PLN(kpi.netWorth)} />
-        <KpiCard label="Progress" value={`${Math.min(100, (kpi.netWorth / fireGoal) * 100).toFixed(1)}%`}
-          trend={kpi.netWorth >= fireGoal ? 'positive' : null} />
-        <KpiCard label="Remaining" value={PLN(Math.max(0, fireGoal - kpi.netWorth))} />
-        <KpiCard label="Total Savings (monthly)" value={PLN(defaultTotal)} />
+      {/* 2 — FIRE Stages (first, main content) */}
+      <div className={styles.fireCard}>
+        <h3 className={styles.fireCardTitle}>FIRE Stages</h3>
+        <div className={styles.stagesHeader}>
+          <span>Stage</span><span>% goal</span><span>Amount</span>
+          <span>How much left</span><span>How many months?</span><span>Progress</span>
+        </div>
+        {stages.map(s => (
+          <div key={s.pct} className={`${styles.stageRow} ${s.achieved ? styles.stageAchieved : ''}`}>
+            <div className={styles.stageName}>{s.name}</div>
+            <div className={styles.stagePct}>{s.pct}%</div>
+            <div className={styles.stageAmount}>{PLN(s.amount)}</div>
+            <div className={`${styles.stageLeft} ${s.achieved ? styles.positive : ''}`}>
+              {s.achieved ? 'Achieved' : PLN(s.left)}
+            </div>
+            <div className={styles.stageMonths}>
+              {s.achieved ? '—' : formatMonths(s.monthsEst)}
+            </div>
+            <div className={styles.stageProgressCol}>
+              <div className={styles.progressBar}>
+                <div className={styles.progressFill}
+                  style={{ width: `${s.progress * 100}%`, background: s.achieved ? '#22c55e' : '#6366f1' }} />
+              </div>
+              <span className={styles.progressPct}>{(s.progress * 100).toFixed(1)}%</span>
+            </div>
+          </div>
+        ))}
+        <div className={styles.stagesNote}>
+          * Projections use historical deposits and estimated monthly return after inflation (3.8%).
+          Savings counted towards goal without investment returns.
+        </div>
       </div>
 
-      {/* Mode toggle + years + deposit controls */}
-      <div className={styles.fireModeRow}>
+      {/* 3 — Goal progress and variance (chart + controls + metrics) */}
+      <div className={styles.fireCard}>
+        <h3 className={styles.fireCardTitle}>Goal progress and variance</h3>
+
+        {/* 3a — Mode toggle */}
         <div className={styles.fireModeToggle}>
           <span className={styles.kpiLabel}>Mode:</span>
-          <button
-            className={`${styles.filterBtn} ${autoMode ? styles.filterActive : ''}`}
-            onClick={() => setAutoMode(true)}
-          >Auto</button>
-          <button
-            className={`${styles.filterBtn} ${!autoMode ? styles.filterActive : ''}`}
-            onClick={() => setAutoMode(false)}
-          >Manual</button>
+          <button className={`${styles.filterBtn} ${autoMode ? styles.filterActive : ''}`}
+            onClick={() => setAutoMode(true)}>Auto</button>
+          <button className={`${styles.filterBtn} ${!autoMode ? styles.filterActive : ''}`}
+            onClick={() => setAutoMode(false)}>Manual</button>
         </div>
 
-        <div className={styles.fireInputGroup}>
-          <span className={styles.kpiLabel}>How many years to invest?</span>
-          <input
-            type="number" className={styles.fireGoalInput}
-            value={yearsToInvest} min={1} max={30} step={1}
-            onChange={e => setYearsToInvest(Math.min(30, Math.max(1, Number(e.target.value))))}
-          />
-        </div>
-
-        {autoMode && (
-          <div className={styles.fireInputGroup}>
-            <span className={styles.kpiLabel}>Total monthly savings (PLN):</span>
-            <input
-              type="number" className={styles.fireGoalInput}
-              value={totalMonthly} min={0} step={1000}
-              onChange={e => setTotalMonthly(Number(e.target.value))}
-            />
-          </div>
-        )}
-
-        {!autoMode && (
-          <>
-            <div className={styles.fireInputGroup}>
-              <span className={styles.kpiLabel}>Monthly to investments (PLN):</span>
-              <input
-                type="number" className={styles.fireGoalInput}
-                value={manualInvest} min={0} step={100}
-                onChange={e => setManualInvest(Number(e.target.value))}
-              />
-            </div>
-            <div className={styles.fireInputGroup}>
-              <span className={styles.kpiLabel}>Monthly to savings (PLN):</span>
-              <input
-                type="number" className={styles.fireGoalInput}
-                value={manualSavings} min={0} step={100}
-                onChange={e => setManualSavings(Number(e.target.value))}
-              />
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Projection chart */}
-      <div className={styles.chartCard} style={{ margin: '0 16px 12px' }}>
-        <h3 className={styles.chartTitle}>
-          Goal progress and variance — {yearsToInvest} year projection
-          (±20% monthly investment deposit, inflation 3.8%)
-        </h3>
-        <ResponsiveContainer width="100%" height={300}>
+        {/* 3b — Chart */}
+        <ResponsiveContainer width="100%" height={320}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="year" tickFormatter={v => `Y${v}`} tick={{ fontSize: 11, fill: '#888' }} tickLine={false} />
@@ -590,72 +567,91 @@ function FireTab({ kpi, fireGoal, onGoalChange }: {
             <Line type="monotone" dataKey="Only Deposits" stroke="#888" strokeWidth={1} dot={false} strokeDasharray="2 3" />
           </LineChart>
         </ResponsiveContainer>
-      </div>
 
-      {/* Stages table */}
-      <div className={styles.fireStages}>
-        <h4 className={styles.sectionLabel} style={{ padding: '0 16px 8px' }}>FIRE Stages</h4>
-        <div className={styles.stagesNote}>
-          * Values are projections using historical deposits and estimated monthly return after inflation (3.8%).
-          Savings counted towards goal without investment returns.
-        </div>
-        {stages.map(s => (
-          <div key={s.pct} className={`${styles.stageRow} ${s.achieved ? styles.stageAchieved : ''}`}>
-            <div className={styles.stageName}>{s.name}</div>
-            <div className={styles.stagePct}>{s.pct}%</div>
-            <div className={styles.stageAmount}>{PLN(s.amount)}</div>
-            <div className={styles.stageProgressCol}>
-              <div className={styles.progressBar}>
-                <div className={styles.progressFill}
-                  style={{ width: `${s.progress * 100}%`, background: s.achieved ? '#22c55e' : '#6366f1' }} />
-              </div>
-              <span className={styles.progressPct}>{(s.progress * 100).toFixed(1)}%</span>
-            </div>
-            <div className={`${styles.stageLeft} ${s.achieved ? styles.positive : ''}`}>
-              {s.achieved ? '✓ Achieved' : PLN(s.left) + ' left'}
-            </div>
-            <div className={styles.stageMonths}>
-              {s.achieved ? '—' : formatMonths(s.monthsEst)}
-            </div>
+        {/* 3c — Controls: years | deposit inputs */}
+        <div className={styles.fireControlsRow}>
+          <div className={styles.fireInputGroup}>
+            <span className={styles.kpiLabel}>How many years do you want to invest?</span>
+            <input type="number" className={styles.fireGoalInput}
+              value={yearsToInvest} min={1} max={30} step={1}
+              onChange={e => setYearsToInvest(Math.min(30, Math.max(1, Number(e.target.value))))} />
           </div>
-        ))}
+
+          {autoMode && (
+            <div className={styles.fireInputGroup}>
+              <span className={styles.kpiLabel}>Total monthly savings (investments + savings) (PLN):</span>
+              <input type="number" className={styles.fireGoalInput}
+                value={totalMonthly} min={0} step={1000}
+                onChange={e => setTotalMonthly(Number(e.target.value))} />
+            </div>
+          )}
+
+          {!autoMode && (
+            <>
+              <div className={styles.fireInputGroup}>
+                <span className={styles.kpiLabel}>Total monthly savings (PLN):</span>
+                <input type="number" className={styles.fireGoalInput}
+                  value={totalMonthly} min={0} step={1000}
+                  onChange={e => setTotalMonthly(Number(e.target.value))} />
+              </div>
+              <div className={styles.fireInputGroup}>
+                <span className={styles.kpiLabel}>Monthly to investments (Investment + Crypto + Bonds) (PLN):</span>
+                <input type="number" className={styles.fireGoalInput}
+                  value={manualInvest} min={0} step={100}
+                  onChange={e => setManualInvest(Number(e.target.value))} />
+              </div>
+              <div className={styles.fireInputGroup}>
+                <span className={styles.kpiLabel}>Monthly to savings accounts (PLN):</span>
+                <input type="number" className={styles.fireGoalInput}
+                  value={manualSavings} min={0} step={100}
+                  onChange={e => setManualSavings(Number(e.target.value))} />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 3d — Metric tiles */}
+        <div className={styles.fireMetricRow}>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{PLN(kpi.investBalance)}</span>
+            <span className={styles.metricLabel}>Investment Balance</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{PLN(kpi.savingsBalance)}</span>
+            <span className={styles.metricLabel}>Savings Balance</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{PLN(kpi.netWorth)}</span>
+            <span className={styles.metricLabel}>Net Worth</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{PLN(nextYearCombined)}</span>
+            <span className={styles.metricLabel}>Prognosed next year net worth</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{PLN(nextYearPlus20)}</span>
+            <span className={styles.metricLabel}>Prognosed next year (+20% deposit)</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{PLN(avgMonthlyInvest)}</span>
+            <span className={styles.metricLabel}>Avg monthly investment deposit</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{PLN(avgMonthlySavings)}</span>
+            <span className={styles.metricLabel}>Avg monthly savings deposit</span>
+          </div>
+          <div className={styles.metricBox}>
+            <span className={styles.metricValue}>{(monthlyReturn * 100).toFixed(3)}%</span>
+            <span className={styles.metricLabel}>Monthly investment return</span>
+          </div>
+        </div>
+
+        {/* 3e — Bottom info */}
+        <div className={styles.fireBottomInfo}>
+          Target: {PLN(fireGoal)}.
+        </div>
       </div>
 
-      {/* Metric tiles */}
-      <div className={styles.fireMetricRow}>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{PLN(kpi.investBalance)}</span>
-          <span className={styles.metricLabel}>Investment Balance</span>
-        </div>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{PLN(kpi.savingsBalance)}</span>
-          <span className={styles.metricLabel}>Savings Balance</span>
-        </div>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{PLN(kpi.netWorth)}</span>
-          <span className={styles.metricLabel}>Net Worth</span>
-        </div>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{PLN(nextYearCombined)}</span>
-          <span className={styles.metricLabel}>Prognosed next year net worth</span>
-        </div>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{PLN(nextYearPlus20)}</span>
-          <span className={styles.metricLabel}>Prognosed next year (+20% deposit)</span>
-        </div>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{PLN(avgMonthlyInvest)}</span>
-          <span className={styles.metricLabel}>Avg monthly invest deposit</span>
-        </div>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{PLN(avgMonthlySavings)}</span>
-          <span className={styles.metricLabel}>Avg monthly savings deposit</span>
-        </div>
-        <div className={styles.metricBox}>
-          <span className={styles.metricValue}>{(monthlyReturn * 100).toFixed(3)}%</span>
-          <span className={styles.metricLabel}>Monthly investment return</span>
-        </div>
-      </div>
     </div>
   )
 }

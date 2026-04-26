@@ -233,15 +233,14 @@
 .fireContainer {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  padding: 0 16px 24px;
+  gap: 12px;
+  padding: 12px 16px 24px;
 }
 
 .fireGoalRow {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 0 4px;
   flex-wrap: wrap;
 }
 
@@ -255,60 +254,50 @@
   font-size: 14px;
 }
 
-/* ── FIRE mode + controls row ── */
-.fireModeRow {
+/* ── FIRE cards ── */
+.fireCard {
+  background: var(--glass-bg, rgba(255,255,255,0.04));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  border-radius: 12px;
+  padding: 16px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 20px;
-  padding: 12px 0;
-  border-top: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fireCardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 4px;
+}
+
+/* ── Stages header ── */
+.stagesHeader {
+  display: grid;
+  grid-template-columns: 160px 44px 130px 130px 120px 1fr;
+  gap: 8px;
+  padding: 0 4px 4px;
   border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
-  margin: 8px 0 12px;
-}
-
-.fireModeToggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fireInputGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* ── FIRE stages ── */
-.fireStages {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin: 4px 0 12px;
-}
-
-.stagesNote {
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--color-text-secondary);
-  padding: 0 0 8px;
-  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
 .stageRow {
   display: grid;
-  grid-template-columns: 160px 38px 130px 1fr 140px 90px;
+  grid-template-columns: 160px 44px 130px 130px 120px 1fr;
   align-items: center;
   gap: 8px;
-  padding: 5px 8px;
-  border-radius: 8px;
-  background: var(--glass-bg, rgba(255,255,255,0.03));
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.06));
+  padding: 5px 4px;
+  border-radius: 6px;
+  transition: background 0.1s;
 }
+.stageRow:hover { background: rgba(255,255,255,0.04); }
 
-.stageAchieved {
-  border-color: rgba(34,197,94,0.25);
-  background: rgba(34,197,94,0.05);
-}
+.stageAchieved .stageName { color: #22c55e; }
 
 .stageName {
   font-size: 12px;
@@ -360,15 +349,44 @@
 }
 
 .stageLeft {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--color-text-secondary);
-  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .stageMonths {
   font-size: 11px;
   color: var(--color-text-secondary);
-  text-align: right;
+}
+
+.stagesNote {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* ── FIRE mode toggle ── */
+.fireModeToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── FIRE controls row ── */
+.fireControlsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-end;
+  padding: 4px 0;
+  border-top: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+}
+
+.fireInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 /* ── FIRE metric tiles ── */
@@ -376,21 +394,22 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
-  padding: 12px 0 8px;
+  padding: 4px 0 0;
+  border-top: 1px solid var(--glass-border, rgba(255,255,255,0.08));
 }
 
 .metricBox {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 14px;
-  background: var(--glass-bg, rgba(255,255,255,0.04));
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
-  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.06));
+  border-radius: 8px;
 }
 
 .metricValue {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.2;
@@ -402,6 +421,13 @@
   text-transform: uppercase;
   letter-spacing: 0.3px;
   line-height: 1.3;
+}
+
+/* ── FIRE bottom info ── */
+.fireBottomInfo {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  padding-top: 4px;
 }
 
 /* ── Strategies tab ── */
@@ -458,7 +484,8 @@
   .strategyGrid { grid-template-columns: 1fr; }
   .fireMetricRow { grid-template-columns: repeat(2, 1fr); }
   .innerTabRow { flex-wrap: wrap; }
-  .stageRow { grid-template-columns: 1fr 38px 110px 1fr; }
+  .stagesHeader { display: none; }
+  .stageRow { grid-template-columns: 1fr 44px 110px 1fr; }
   .stageName { display: none; }
   .stageMonths { display: none; }
 }
