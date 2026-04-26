@@ -448,33 +448,22 @@
   gap: 8px;
 }
 
+.strategyHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .strategyName {
   font-size: 12px;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0;
   line-height: 1.3;
 }
 
-.strategyMeta {
-  display: flex;
-  justify-content: space-between;
+.strategyOverall {
   font-size: 11px;
   color: var(--color-text-secondary);
-}
-
-.strategyBar {
-  display: flex;
-  height: 10px;
-  border-radius: 5px;
-  overflow: hidden;
-  background: rgba(255,255,255,0.06);
-}
-
-.strategyLegend {
-  display: flex;
-  gap: 12px;
-  font-size: 11px;
 }
 
 @media (max-width: 900px) {

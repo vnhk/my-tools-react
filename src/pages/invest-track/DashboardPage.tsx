@@ -344,17 +344,16 @@ function DashboardTab({ data, investSeries, netWorthSeries }: DashboardTabProps)
 
 // ── Balance tab ───────────────────────────────────────────────────────────────
 
+function WalletTileTitle({ w }: { w: WalletTimeSeriesEntry }) {
+  const rr = w.returnRate !== 0 ? ` (${PCT(w.returnRate)})` : ''
+  return <h3 className={styles.chartTitle}>{w.walletName}{rr}</h3>
+}
+
 function BalanceTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesEntry[]; filter: Filter }) {
   const wallets = walletSeries.map(w => ({ ...w, series: filterSeries(w.series, filter) }))
 
-  const totalBalance = walletSeries.reduce((s, w) => {
-    const last = w.series[w.series.length - 1]
-    return s + (last?.balance ?? 0)
-  }, 0)
-  const totalDeposit = walletSeries.reduce((s, w) => {
-    const last = w.series[w.series.length - 1]
-    return s + (last?.cumDeposit ?? 0)
-  }, 0)
+  const totalBalance = walletSeries.reduce((s, w) => s + (w.series[w.series.length - 1]?.balance ?? 0), 0)
+  const totalDeposit = walletSeries.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
 
   return (
     <>
@@ -367,7 +366,7 @@ function BalanceTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesEn
       <div className={styles.walletGrid}>
         {wallets.map(w => (
           <div key={w.walletId} className={styles.walletTile}>
-            <h3 className={styles.chartTitle}>{w.walletName}</h3>
+            <WalletTileTitle w={w} />
             {w.series.length > 1 ? (
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={w.series}>
@@ -399,13 +398,13 @@ function BalanceTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesEn
 // ── Earnings tab ──────────────────────────────────────────────────────────────
 
 function EarningsTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesEntry[]; filter: Filter }) {
-  const investWallets = walletSeries.filter(w => w.isInvestment)
-  const wallets = investWallets.map(w => ({
+  // All wallets (same as Vaadin — parent passes all investment-like wallets)
+  const wallets = walletSeries.map(w => ({
     ...w,
     series: filterSeries(w.series, filter).map(p => ({ ...p, earnings: p.balance - p.cumDeposit })),
   }))
 
-  const totalEarnings = investWallets.reduce((s, w) => {
+  const totalEarnings = walletSeries.reduce((s, w) => {
     const last = w.series[w.series.length - 1]
     return s + ((last?.balance ?? 0) - (last?.cumDeposit ?? 0))
   }, 0)
@@ -413,13 +412,13 @@ function EarningsTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesE
   return (
     <>
       <div className={styles.kpiRow} style={{ padding: '12px 16px 0' }}>
-        <KpiCard label="Total Earnings" value={PLN(totalEarnings)}
+        <KpiCard label="Total Profit" value={PLN(totalEarnings)}
           trend={totalEarnings >= 0 ? 'positive' : 'negative'} />
       </div>
       <div className={styles.walletGrid}>
         {wallets.map(w => (
           <div key={w.walletId} className={styles.walletTile}>
-            <h3 className={styles.chartTitle}>{w.walletName}</h3>
+            <WalletTileTitle w={w} />
             {w.series.length > 1 ? (
               <ResponsiveContainer width="100%" height={180}>
                 <AreaChart data={w.series}>
@@ -440,7 +439,7 @@ function EarningsTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesE
             ) : <div className={styles.empty} style={{ height: 80 }}>Not enough data</div>}
           </div>
         ))}
-        {wallets.length === 0 && <div className={styles.empty}>No investment wallets</div>}
+        {wallets.length === 0 && <div className={styles.empty}>No wallets</div>}
       </div>
     </>
   )
@@ -658,21 +657,83 @@ function FireTab({ kpi, fireGoal, onGoalChange }: {
 
 // ── Short Term Strategies tab ─────────────────────────────────────────────────
 
-interface StrategyStats {
+interface StrategyChartData {
   name: string
   total: number
-  bestPct: number
-  goodPct: number
-  riskyPct: number
-  winPct: number
+  overallRisky: string
+  overallGood: string
+  overallBest: string
+  series: { date: string; Best: number | null; Good: number | null; Risky: number | null }[]
+}
+
+function calcSuccessRate(recs: InvestmentRecommendation[]): string {
+  const good = recs.filter(r => r.recommendationResult === 'Good').length
+  const bad = recs.filter(r => r.recommendationResult === 'Bad').length
+  const total = good + bad
+  return total > 0 ? (good / total).toFixed(2) : '0'
+}
+
+function buildStrategyChartData(name: string, recs: InvestmentRecommendation[]): StrategyChartData {
+  // Group by date
+  const byDate: Record<string, InvestmentRecommendation[]> = {}
+  for (const r of recs) {
+    if (!byDate[r.date]) byDate[r.date] = []
+    byDate[r.date].push(r)
+  }
+
+  const series = Object.keys(byDate).sort().map(date => {
+    const day = byDate[date]
+    const byType: Record<string, InvestmentRecommendation[]> = {}
+    for (const r of day) {
+      if (!byType[r.recommendationType]) byType[r.recommendationType] = []
+      byType[r.recommendationType].push(r)
+    }
+    const rate = (type: string) => {
+      const t = byType[type]
+      if (!t?.length) return null
+      const g = t.filter(r => r.recommendationResult === 'Good').length
+      const b = t.filter(r => r.recommendationResult === 'Bad').length
+      return g + b > 0 ? g / (g + b) : null
+    }
+    return { date, Best: rate('Best'), Good: rate('Good'), Risky: rate('Risky') }
+  })
+
+  const byType: Record<string, InvestmentRecommendation[]> = {}
+  for (const r of recs) {
+    if (!byType[r.recommendationType]) byType[r.recommendationType] = []
+    byType[r.recommendationType].push(r)
+  }
+
+  return {
+    name,
+    total: recs.length,
+    overallRisky: byType['Risky'] ? calcSuccessRate(byType['Risky']) : '0',
+    overallGood: byType['Good'] ? calcSuccessRate(byType['Good']) : '0',
+    overallBest: byType['Best'] ? calcSuccessRate(byType['Best']) : '0',
+    series,
+  }
+}
+
+function PctTooltipStrategy({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className={styles.tooltip}>
+      <p className={styles.tooltipLabel}>{label}</p>
+      {payload.map((p: any) => p.value != null && (
+        <p key={p.name} style={{ color: p.color, margin: '2px 0', fontSize: 12 }}>
+          {p.name}: {(p.value * 100).toFixed(1)}%
+        </p>
+      ))}
+    </div>
+  )
 }
 
 function StrategiesTab() {
-  const [strategies, setStrategies] = useState<StrategyStats[]>([])
+  const [strategies, setStrategies] = useState<StrategyChartData[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    recommendationsApi.getAll({ size: 5000, page: 0, sort: 'date,desc' })
+    recommendationsApi.getAll({ size: 10000, page: 0, sort: 'date,asc' })
       .then(res => {
         const items: InvestmentRecommendation[] = res.data.content
         const grouped: Record<string, InvestmentRecommendation[]> = {}
@@ -680,21 +741,7 @@ function StrategiesTab() {
           if (!grouped[item.strategy]) grouped[item.strategy] = []
           grouped[item.strategy].push(item)
         }
-        const stats: StrategyStats[] = Object.entries(grouped).map(([name, recs]) => {
-          const total = recs.length
-          const best = recs.filter(r => r.recommendationType === 'Best').length
-          const good = recs.filter(r => r.recommendationType === 'Good').length
-          const risky = recs.filter(r => r.recommendationType === 'Risky').length
-          const wins = recs.filter(r => r.recommendationResult === 'Good').length
-          return {
-            name, total,
-            bestPct: total > 0 ? (best / total) * 100 : 0,
-            goodPct: total > 0 ? (good / total) * 100 : 0,
-            riskyPct: total > 0 ? (risky / total) * 100 : 0,
-            winPct: total > 0 ? (wins / total) * 100 : 0,
-          }
-        }).sort((a, b) => b.winPct - a.winPct)
-        setStrategies(stats)
+        setStrategies(Object.entries(grouped).map(([name, recs]) => buildStrategyChartData(name, recs)))
       })
       .finally(() => setLoading(false))
   }, [])
@@ -706,26 +753,29 @@ function StrategiesTab() {
     <div className={styles.strategyGrid}>
       {strategies.map(s => (
         <div key={s.name} className={styles.strategyCard}>
-          <h3 className={styles.strategyName}>{s.name}</h3>
-          <div className={styles.strategyMeta}>
-            <span>{s.total} recommendations</span>
-            <span className={s.winPct >= 50 ? styles.positive : styles.negative}>
-              Win rate: {s.winPct.toFixed(1)}%
+          <div className={styles.strategyHeader}>
+            <span className={styles.strategyName}>{s.name}</span>
+            <span className={styles.strategyOverall}>
+              Risky: {s.overallRisky}, Good: {s.overallGood}, Best: {s.overallBest}
             </span>
           </div>
-          <div className={styles.strategyBar}>
-            <div style={{ width: `${s.bestPct}%`, background: '#22c55e', height: '100%', borderRadius: '4px 0 0 4px' }}
-              title={`Best: ${s.bestPct.toFixed(1)}%`} />
-            <div style={{ width: `${s.goodPct}%`, background: '#6366f1', height: '100%' }}
-              title={`Good: ${s.goodPct.toFixed(1)}%`} />
-            <div style={{ width: `${s.riskyPct}%`, background: '#ef4444', height: '100%', borderRadius: '0 4px 4px 0' }}
-              title={`Risky: ${s.riskyPct.toFixed(1)}%`} />
-          </div>
-          <div className={styles.strategyLegend}>
-            <span style={{ color: '#22c55e' }}>Best {s.bestPct.toFixed(0)}%</span>
-            <span style={{ color: '#6366f1' }}>Good {s.goodPct.toFixed(0)}%</span>
-            <span style={{ color: '#ef4444' }}>Risky {s.riskyPct.toFixed(0)}%</span>
-          </div>
+          {s.series.length > 1 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <LineChart data={s.series}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <XAxis dataKey="date" tick={{ fontSize: 9, fill: '#888' }} tickLine={false} interval="preserveStartEnd" />
+                <YAxis domain={[0, 1]} tickFormatter={v => `${(v * 100).toFixed(0)}%`}
+                  tick={{ fontSize: 10, fill: '#888' }} tickLine={false} />
+                <Tooltip content={<PctTooltipStrategy />} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="Best" stroke="#22c55e" strokeWidth={1.5} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Good" stroke="#6366f1" strokeWidth={1.5} dot={false} connectNulls />
+                <Line type="monotone" dataKey="Risky" stroke="#ef4444" strokeWidth={1.5} dot={false} connectNulls />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className={styles.empty} style={{ height: 100 }}>Not enough data</div>
+          )}
         </div>
       ))}
     </div>

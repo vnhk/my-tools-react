@@ -188,6 +188,7 @@ export interface WalletTimeSeriesEntry {
   walletId: string
   walletName: string
   isInvestment: boolean
+  returnRate: number
   series: TimeSeriesPoint[]
 }
 
