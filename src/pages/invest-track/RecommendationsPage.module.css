@@ -1,0 +1,16 @@
+.page { padding: 0; }
+
+.positive { color: var(--color-success, #22c55e); font-weight: 600; }
+.negative { color: var(--color-danger, #ef4444); font-weight: 600; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+.muted { color: var(--color-text-secondary); }

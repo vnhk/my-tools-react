@@ -1,5 +1,7 @@
 import { getSaveFormFields, getEditFormFields, validateFields } from '../../api/entityConfig'
 import { TextField } from '../fields/TextField'
+import { Checkbox } from '../fields/Checkbox'
+import { SelectField } from '../fields/SelectField'
 import { RichTextEditor } from './RichTextEditor'
 
 interface DynamicFormProps {
@@ -9,9 +11,10 @@ interface DynamicFormProps {
   onChange: (field: string, value: unknown) => void
   errors?: Record<string, string>
   skip?: string[]
+  dynamicOptions?: Record<string, string[]>
 }
 
-export function DynamicForm({ entityName, mode, values, onChange, errors = {}, skip = [] }: DynamicFormProps) {
+export function DynamicForm({ entityName, mode, values, onChange, errors = {}, skip = [], dynamicOptions = {} }: DynamicFormProps) {
   const fields = mode === 'save'
     ? getSaveFormFields(entityName)
     : getEditFormFields(entityName)
@@ -20,29 +23,98 @@ export function DynamicForm({ entityName, mode, values, onChange, errors = {}, s
 
   return (
     <>
-      {visible.map((f, i) =>
-        f.wysiwyg ? (
-          <div key={f.field}>
-            <RichTextEditor
-              value={String(values[f.field] ?? '')}
-              onChange={(html) => onChange(f.field, html)}
-              height="300px"
-              placeholder={f.displayName}
+      {visible.map((f, i) => {
+        const val = values[f.field]
+
+        if (f.wysiwyg) {
+          return (
+            <div key={f.field}>
+              <RichTextEditor
+                value={String(val ?? '')}
+                onChange={(html) => onChange(f.field, html)}
+                height="300px"
+                placeholder={f.displayName}
+              />
+              {errors[f.field] && <span style={{ color: 'var(--color-danger, red)', fontSize: '0.8em' }}>{errors[f.field]}</span>}
+            </div>
+          )
+        }
+
+        // Dropdown — static options from YML
+        if (f.strValues && f.strValues.length > 0) {
+          return (
+            <SelectField
+              key={f.field}
+              label={f.displayName}
+              value={String(val ?? '')}
+              options={f.strValues.map((o) => ({ value: o, label: o }))}
+              placeholder="— Select —"
+              required={f.required}
+              error={errors[f.field]}
+              onChange={(e) => onChange(f.field, e.target.value)}
             />
-            {errors[f.field] && <span style={{ color: 'var(--color-danger, red)', fontSize: '0.8em' }}>{errors[f.field]}</span>}
-          </div>
-        ) : (
+          )
+        }
+
+        // Dropdown — dynamic options
+        if (f.dynamicStrValues) {
+          const opts = dynamicOptions[f.field] ?? []
+          return (
+            <SelectField
+              key={f.field}
+              label={f.displayName}
+              value={String(val ?? '')}
+              options={opts.map((o) => ({ value: o, label: o }))}
+              placeholder="— Select —"
+              required={f.required}
+              error={errors[f.field]}
+              onChange={(e) => onChange(f.field, e.target.value)}
+            />
+          )
+        }
+
+        // Boolean checkbox — only when value is already boolean-typed in defaults
+        if (typeof val === 'boolean') {
+          return (
+            <Checkbox
+              key={f.field}
+              label={f.displayName}
+              checked={val}
+              onChange={(e) => onChange(f.field, e.target.checked)}
+            />
+          )
+        }
+
+        // Date field
+        if (f.field.toLowerCase().includes('date') && !f.wysiwyg) {
+          const dateVal = val ? String(val).slice(0, 10) : ''
+          return (
+            <TextField
+              key={f.field}
+              label={f.displayName}
+              type="date"
+              value={dateVal}
+              onChange={(e) => onChange(f.field, e.target.value)}
+              required={f.required}
+              autoFocus={i === 0}
+              error={errors[f.field]}
+            />
+          )
+        }
+
+        // Default: text field
+        return (
           <TextField
             key={f.field}
             label={f.displayName}
-            value={String(values[f.field] ?? '')}
+            value={String(val ?? '')}
             onChange={(e) => onChange(f.field, e.target.value)}
             required={f.required}
             autoFocus={i === 0}
             error={errors[f.field]}
           />
         )
-      )}
+      })}
     </>
   )
 }

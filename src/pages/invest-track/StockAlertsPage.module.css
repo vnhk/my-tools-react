@@ -1,0 +1,19 @@
+.page { padding: 0; }
+.form { display: flex; flex-direction: column; gap: 12px; }
+.configSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--glass-bg, rgba(255,255,255,0.04));
+  border-radius: 8px;
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+}
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}

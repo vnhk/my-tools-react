@@ -1,0 +1,4 @@
+.page { padding: 0; }
+
+.income { color: var(--color-success, #22c55e); font-weight: 600; }
+.expense { color: var(--color-danger, #ef4444); font-weight: 600; }

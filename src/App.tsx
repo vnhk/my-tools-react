@@ -6,6 +6,13 @@ import { AppLayout, NavItem } from './components/layout/AppLayout'
 import { NotificationProvider } from './components/ui/Notification'
 import { PocketListPage } from './pages/pocket/PocketListPage'
 import { PocketItemsPage } from './pages/pocket/PocketItemsPage'
+import { InvestTrackLayout } from './pages/invest-track/InvestTrackLayout'
+import { DashboardPage } from './pages/invest-track/DashboardPage'
+import { WalletListPage } from './pages/invest-track/WalletListPage'
+import { WalletDetailPage } from './pages/invest-track/WalletDetailPage'
+import { BudgetEntriesPage } from './pages/invest-track/BudgetEntriesPage'
+import { StockAlertsPage } from './pages/invest-track/StockAlertsPage'
+import { RecommendationsPage } from './pages/invest-track/RecommendationsPage'
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/invest-track', label: 'Invest Track', icon: '📈' },
@@ -42,7 +49,16 @@ export default function App() {
               <Route index element={<Navigate to="/pocket" replace />} />
               <Route path="/pocket" element={<PocketListPage />} />
               <Route path="/pocket/:pocketName" element={<PocketItemsPage />} />
-              {NAV_ITEMS.filter((item) => item.path !== '/pocket').map((item) => (
+              <Route path="/invest-track" element={<InvestTrackLayout />}>
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="wallets" element={<WalletListPage />} />
+                <Route path="wallets/:walletId" element={<WalletDetailPage />} />
+                <Route path="budget" element={<BudgetEntriesPage />} />
+                <Route path="alerts" element={<StockAlertsPage />} />
+                <Route path="recommendations" element={<RecommendationsPage />} />
+              </Route>
+              {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track').map((item) => (
                 <Route
                   key={item.path}
                   path={`${item.path}/*`}

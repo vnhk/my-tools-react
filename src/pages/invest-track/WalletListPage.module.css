@@ -1,0 +1,16 @@
+.page { padding: 0; }
+
+.nameLink {
+  color: var(--color-primary, #6366f1);
+  cursor: pointer;
+  font-weight: 500;
+}
+.nameLink:hover { text-decoration: underline; }
+
+.value {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.positive { color: var(--color-success, #22c55e); font-weight: 600; }
+.negative { color: var(--color-danger, #ef4444); font-weight: 600; }

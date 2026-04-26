@@ -1,0 +1,36 @@
+.page { display: flex; flex-direction: column; gap: 0; }
+
+.kpiRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px;
+  background: var(--glass-bg, rgba(255,255,255,0.04));
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 130px;
+}
+
+.kpiLabel {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.value { font-weight: 600; }
+.positive { color: var(--color-success, #22c55e); }
+.negative { color: var(--color-danger, #ef4444); }
+
+.form { display: flex; flex-direction: column; gap: 12px; }
