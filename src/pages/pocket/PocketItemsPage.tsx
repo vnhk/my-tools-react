@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
-import { TextField } from '../../components/fields/TextField'
+import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
+import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { NumberField } from '../../components/fields/NumberField'
 import { Checkbox } from '../../components/fields/Checkbox'
 import { RichTextEditor } from '../../components/ui/RichTextEditor'
+import { TextField } from '../../components/fields/TextField'
 import { TabNav } from '../../components/layout/TabNav'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
@@ -14,28 +16,11 @@ import { pocketItemsApi, type PocketItem } from '../../api/pockets'
 import { toPage } from '../../api/crud'
 import styles from './PocketItemsPage.module.css'
 
-function truncate(str: string, n = 80) {
-  if (!str) return ''
-  const text = str.replace(/<[^>]+>/g, '')
-  return text.length > n ? text.slice(0, n) + '…' : text
-}
-
-const buildColumns = (onDecrypt: (item: PocketItem) => void) => [
-  { key: 'summary', header: 'Summary', sortable: true },
-  {
-    key: 'content',
-    header: 'Content',
-    render: (row: PocketItem) =>
-      row.encrypted ? (
-        <span className={styles.encryptedBadge}>🔒 encrypted</span>
-      ) : (
-        <span className={styles.contentPreview}>{truncate(row.content)}</span>
-      ),
-  },
+const EXTRA_COLUMNS = [
   {
     key: 'encrypted',
     header: 'Encrypted',
-    render: (row: PocketItem) =>
+    render: (row: PocketItem, onDecrypt: (item: PocketItem) => void) =>
       row.encrypted ? (
         <button className={styles.decryptBtn} onClick={(e) => { e.stopPropagation(); onDecrypt(row) }}>
           🔓 Decrypt
@@ -60,11 +45,37 @@ export function PocketItemsPage() {
 
   const [editOpen, setEditOpen] = useState(false)
   const [editItem, setEditItem] = useState<Partial<PocketItem>>(EMPTY_ITEM)
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  const [editUnlocked, setEditUnlocked] = useState(false)
+  const [editPassword, setEditPassword] = useState('')
+  const [editUnlockedContent, setEditUnlockedContent] = useState<string | null>(null)
 
   const [decryptOpen, setDecryptOpen] = useState(false)
   const [decryptItem, setDecryptItem] = useState<PocketItem | null>(null)
   const [decryptPassword, setDecryptPassword] = useState('')
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
+
+  const openDecrypt = (item: PocketItem) => {
+    setDecryptItem(item)
+    setDecryptedContent(null)
+    setDecryptPassword('')
+    setDecryptOpen(true)
+  }
+
+  const columns = [
+    ...buildColumnsFromConfig<PocketItem>('PocketItem', {
+      content: {
+        render: (row) => row.encrypted
+          ? <span className={styles.encryptedBadge}>🔒 encrypted</span>
+          : <span className={styles.contentPreview}>{row.content?.replace(/<[^>]+>/g, '').slice(0, 80)}</span>,
+      },
+    }),
+    ...EXTRA_COLUMNS.map((col) =>
+      col.key === 'encrypted'
+        ? { ...col, render: (row: PocketItem) => col.render(row, openDecrypt) }
+        : col
+    ),
+  ]
 
   const load = () => {
     if (!decodedName) return
@@ -77,19 +88,45 @@ export function PocketItemsPage() {
 
   useEffect(load, [decodedName, table.page, table.pageSize, table.sortBy, table.sortDir])
 
+  const openEdit = (item: Partial<PocketItem>) => {
+    setEditItem(item)
+    setFormErrors({})
+    setEditUnlocked(!item.encrypted)
+    setEditPassword('')
+    setEditUnlockedContent(null)
+    setEditOpen(true)
+  }
+
+  const handleUnlock = async () => {
+    if (!editItem.id) return
+    try {
+      const res = await pocketItemsApi.decrypt(editItem.id, editPassword)
+      setEditUnlockedContent(res.data.content)
+      setEditItem((s) => ({ ...s, content: res.data.content }))
+      setEditUnlocked(true)
+      setEditPassword('')
+    } catch {
+      showError('Wrong password')
+    }
+  }
+
   const actions = useTableActions<PocketItem>({
     onDelete: async (selected) => { for (const r of selected) await pocketItemsApi.delete(r.id) },
-    onEdit: (item) => { setEditItem(item); setEditOpen(true) },
+    onEdit: openEdit,
     onRefresh: load,
   })
 
   const handleSave = async () => {
-    if (!editItem.summary?.trim()) { showError('Summary is required'); return }
+    const payload = editUnlockedContent !== null
+      ? { ...editItem, content: editItem.content ?? editUnlockedContent }
+      : editItem
+    const errors = validateFields('PocketItem', payload as Record<string, unknown>)
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return }
     try {
-      if (editItem.id) {
-        await pocketItemsApi.update(editItem.id, editItem)
+      if (payload.id) {
+        await pocketItemsApi.update(payload.id, payload)
       } else {
-        await pocketItemsApi.create({ ...editItem, pocketName: decodedName } as PocketItem & { pocketName: string })
+        await pocketItemsApi.create({ ...payload, pocketName: decodedName } as PocketItem & { pocketName: string })
       }
       showSuccess('Saved')
       setEditOpen(false)
@@ -110,13 +147,6 @@ export function PocketItemsPage() {
     }
   }
 
-  const openDecrypt = (item: PocketItem) => {
-    setDecryptItem(item)
-    setDecryptedContent(null)
-    setDecryptPassword('')
-    setDecryptOpen(true)
-  }
-
   const tabs = [
     { path: '/pocket', label: '← Pockets' },
     { path: `/pocket/${encodeURIComponent(decodedName)}`, label: decodedName },
@@ -127,7 +157,7 @@ export function PocketItemsPage() {
       <TabNav tabs={tabs} />
 
       <DataTable
-        columns={buildColumns(openDecrypt)}
+        columns={columns}
         rows={rows}
         rowKey={(r) => r.id}
         loading={loading}
@@ -140,53 +170,51 @@ export function PocketItemsPage() {
         sortDir={table.sortDir}
         onSort={table.toggleSort}
         actions={actions}
-        onRowClick={(row) => { setEditItem(row); setEditOpen(true) }}
-        onAdd={() => { setEditItem({ ...EMPTY_ITEM, orderInPocket: rows.length }); setEditOpen(true) }}
+        onRowClick={(row) => openEdit(row)}
+        onAdd={() => openEdit({ ...EMPTY_ITEM, orderInPocket: rows.length })}
         addLabel="New Item"
       />
 
-      {/* Edit / Create dialog */}
       <Dialog
         open={editOpen}
         title={editItem.id ? 'Edit Item' : 'New Item'}
         onClose={() => setEditOpen(false)}
-        onConfirm={handleSave}
-        confirmLabel="Save"
+        onConfirm={editUnlocked ? handleSave : handleUnlock}
+        confirmLabel={editUnlocked ? 'Save' : 'Unlock'}
         width="700px"
       >
-        <div className={styles.form}>
+        {!editUnlocked ? (
           <TextField
-            label="Summary"
-            value={editItem.summary ?? ''}
-            onChange={(e) => setEditItem((s) => ({ ...s, summary: e.target.value }))}
-            required
+            label="Password"
+            type="password"
+            value={editPassword}
+            onChange={(e) => setEditPassword(e.target.value)}
             autoFocus
+            placeholder="Enter decryption password"
           />
-          <NumberField
-            label="Order"
-            value={editItem.orderInPocket ?? 0}
-            onChange={(v) => setEditItem((s) => ({ ...s, orderInPocket: v === '' ? 0 : v }))}
-          />
-          <Checkbox
-            label="Encrypted"
-            checked={editItem.encrypted ?? false}
-            onChange={(e) => setEditItem((s) => ({ ...s, encrypted: e.target.checked }))}
-          />
-          {!editItem.encrypted && (
-            <div className={styles.editorWrap}>
-              <span className={styles.editorLabel}>Content</span>
-              <RichTextEditor
-                value={editItem.content ?? ''}
-                onChange={(html) => setEditItem((s) => ({ ...s, content: html }))}
-                height="300px"
-                placeholder="Write something…"
-              />
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className={styles.form}>
+            <DynamicForm
+              entityName="PocketItem"
+              mode={editItem.id ? 'edit' : 'save'}
+              values={editItem as Record<string, unknown>}
+              onChange={(field, value) => setEditItem((s) => ({ ...s, [field]: value }))}
+              errors={formErrors}
+            />
+            <NumberField
+              label="Order"
+              value={editItem.orderInPocket ?? 0}
+              onChange={(v) => setEditItem((s) => ({ ...s, orderInPocket: v === '' ? 0 : v }))}
+            />
+            <Checkbox
+              label="Encrypted"
+              checked={editItem.encrypted ?? false}
+              onChange={(e) => setEditItem((s) => ({ ...s, encrypted: e.target.checked }))}
+            />
+          </div>
+        )}
       </Dialog>
 
-      {/* Decrypt dialog */}
       <Dialog
         open={decryptOpen}
         title={`Decrypt: ${decryptItem?.summary ?? ''}`}

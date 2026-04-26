@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
-import { TextField } from '../../components/fields/TextField'
+import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
+import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
 import { useNotification } from '../../components/ui/Notification'
@@ -10,13 +11,7 @@ import { pocketsApi, type Pocket } from '../../api/pockets'
 import { toPage } from '../../api/crud'
 import styles from './PocketListPage.module.css'
 
-const COLUMNS = [
-  {
-    key: 'name',
-    header: 'Name',
-    sortable: true,
-    render: (row: Pocket) => <span className={styles.nameLink}>{row.name}</span>,
-  },
+const EXTRA_COLUMNS = [
   { key: 'pocketSize', header: 'Items', sortable: true },
   { key: 'creationDate', header: 'Created', sortable: true },
   { key: 'modificationDate', header: 'Modified', sortable: true },
@@ -31,6 +26,14 @@ export function PocketListPage() {
   const [loading, setLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editItem, setEditItem] = useState<Partial<Pocket>>({ name: '' })
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+
+  const columns = [
+    ...buildColumnsFromConfig<Pocket>('Pocket', {
+      name: { render: (row) => <span className={styles.nameLink}>{row.name}</span> },
+    }),
+    ...EXTRA_COLUMNS,
+  ]
 
   const load = () => {
     setLoading(true)
@@ -44,12 +47,13 @@ export function PocketListPage() {
 
   const actions = useTableActions<Pocket>({
     onDelete: async (selected) => { for (const r of selected) await pocketsApi.delete(r.id) },
-    onEdit: (item) => { setEditItem(item); setDialogOpen(true) },
+    onEdit: (item) => { setEditItem(item); setFormErrors({}); setDialogOpen(true) },
     onRefresh: load,
   })
 
   const handleSave = async () => {
-    if (!editItem.name?.trim()) { showError('Name is required'); return }
+    const errors = validateFields('Pocket', editItem as Record<string, unknown>)
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return }
     try {
       if (editItem.id) {
         await pocketsApi.update(editItem.id, editItem)
@@ -68,7 +72,7 @@ export function PocketListPage() {
     <div className={styles.page}>
       <h2>Pockets</h2>
       <DataTable
-        columns={COLUMNS}
+        columns={columns}
         rows={rows}
         rowKey={(r) => r.id}
         loading={loading}
@@ -84,7 +88,7 @@ export function PocketListPage() {
         onSearchChange={table.setSearch}
         actions={actions}
         onRowClick={(row) => navigate(`/pocket/${encodeURIComponent(row.name)}`)}
-        onAdd={() => { setEditItem({ name: '' }); setDialogOpen(true) }}
+        onAdd={() => { setEditItem({ name: '' }); setFormErrors({}); setDialogOpen(true) }}
         addLabel="New Pocket"
       />
 
@@ -95,12 +99,12 @@ export function PocketListPage() {
         onConfirm={handleSave}
         confirmLabel="Save"
       >
-        <TextField
-          label="Name"
-          value={editItem.name ?? ''}
-          onChange={(e) => setEditItem((s) => ({ ...s, name: e.target.value }))}
-          required
-          autoFocus
+        <DynamicForm
+          entityName="Pocket"
+          mode={editItem.id ? 'edit' : 'save'}
+          values={editItem as Record<string, unknown>}
+          onChange={(field, value) => setEditItem((s) => ({ ...s, [field]: value }))}
+          errors={formErrors}
         />
       </Dialog>
     </div>
