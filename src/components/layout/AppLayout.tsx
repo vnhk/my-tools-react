@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import { PocketSidePanel } from './PocketSidePanel'
 import styles from './AppLayout.module.css'
 
 export interface NavItem {
@@ -57,6 +58,8 @@ export function AppLayout({ navItems }: AppLayoutProps) {
       <main className={styles.main}>
         <Outlet />
       </main>
+
+      <PocketSidePanel />
     </div>
   )
 }
