@@ -48,7 +48,7 @@ const PAGE_SIZES = [10, 25, 50, 100]
 
 export function DataTable<T>({
   columns,
-  rows,
+  rows: rowsProp,
   rowKey,
   actions = [],
   onRowClick,
@@ -67,6 +67,7 @@ export function DataTable<T>({
   onAdd,
   addLabel = 'Add',
 }: DataTableProps<T>) {
+  const rows = Array.isArray(rowsProp) ? rowsProp : []
   const [selected, setSelected] = useState<Set<string>>(new Set())
 
   const toggleAll = () => {

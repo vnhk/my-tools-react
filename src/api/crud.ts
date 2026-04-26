@@ -8,6 +8,14 @@ export interface Page<T> {
   size: number
 }
 
+// Normalizes a raw API response that may be a Page object or a plain array
+export function toPage<T>(data: Page<T> | T[]): Page<T> {
+  if (Array.isArray(data)) {
+    return { content: data, totalElements: data.length, totalPages: 1, number: 0, size: data.length }
+  }
+  return { ...data, content: data.content ?? [] }
+}
+
 export interface SearchParams {
   page?: number
   size?: number

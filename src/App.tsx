@@ -4,6 +4,8 @@ import { RequireAuth } from './auth/RequireAuth'
 import { LoginPage } from './pages/LoginPage'
 import { AppLayout, NavItem } from './components/layout/AppLayout'
 import { NotificationProvider } from './components/ui/Notification'
+import { PocketListPage } from './pages/pocket/PocketListPage'
+import { PocketItemsPage } from './pages/pocket/PocketItemsPage'
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/invest-track', label: 'Invest Track', icon: '📈' },
@@ -37,8 +39,10 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route element={<RequireAuth />}>
             <Route element={<AppLayout navItems={NAV_ITEMS} />}>
-              <Route index element={<Navigate to="/invest-track" replace />} />
-              {NAV_ITEMS.map((item) => (
+              <Route index element={<Navigate to="/pocket" replace />} />
+              <Route path="/pocket" element={<PocketListPage />} />
+              <Route path="/pocket/:pocketName" element={<PocketItemsPage />} />
+              {NAV_ITEMS.filter((item) => item.path !== '/pocket').map((item) => (
                 <Route
                   key={item.path}
                   path={`${item.path}/*`}

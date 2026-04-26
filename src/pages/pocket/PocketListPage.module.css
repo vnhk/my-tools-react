@@ -1,0 +1,16 @@
+.page {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.nameLink {
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.nameLink:hover {
+  text-decoration: underline;
+}

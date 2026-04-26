@@ -1,0 +1,56 @@
+.page {
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.editorWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.editorLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.contentPreview {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.encryptedBadge {
+  font-size: var(--font-size-sm);
+  color: var(--color-warning, #f59e0b);
+  font-style: italic;
+}
+
+.decryptBtn {
+  background: none;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.decryptBtn:hover {
+  background: rgba(var(--color-primary-rgb, 99, 102, 241), 0.1);
+}
+
+.decryptedContent {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
