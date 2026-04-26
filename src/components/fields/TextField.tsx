@@ -6,11 +6,12 @@ interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string
 }
 
-export function TextField({ label, error, className = '', ...props }: TextFieldProps) {
+export function TextField({ label, error, className = '', id, ...props }: TextFieldProps) {
+  const inputId = id ?? (label ? `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}` : undefined)
   return (
     <div className={styles.group}>
-      {label && <label className={styles.label}>{label}</label>}
-      <input className={`${styles.input} ${className}`} {...props} />
+      {label && <label className={styles.label} htmlFor={inputId}>{label}</label>}
+      <input id={inputId} className={`${styles.input} ${className}`} {...props} />
       {error && <span className={styles.error}>{error}</span>}
     </div>
   )
