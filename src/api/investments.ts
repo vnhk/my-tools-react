@@ -205,3 +205,61 @@ export interface DashboardData {
 export const investDashboardApi = {
   get: () => client.get<DashboardData>('/invest-track/dashboard'),
 }
+
+export interface StockDto {
+  symbol: string
+  date: string | null
+  price: number | null
+  change: number | null
+  changePercent: number | null
+  transactions: number | null
+}
+
+export interface StockReportDto {
+  bestToInvest: StockDto[]
+  goodToInvest: StockDto[]
+  riskyToInvest: StockDto[]
+  goodInvestmentsBasedOnBestRecommendation: StockDto[]
+  goodInvestmentsBasedOnGoodRecommendation: StockDto[]
+  goodInvestmentsBasedOnRiskyRecommendation: StockDto[]
+  badInvestmentsBasedOnBestRecommendation: StockDto[]
+  badInvestmentsBasedOnGoodRecommendation: StockDto[]
+  badInvestmentsBasedOnRiskyRecommendation: StockDto[]
+  goodInvestmentProbabilityBasedOnBestToday: number | null
+  goodInvestmentProbabilityBasedOnGoodToday: number | null
+  goodInvestmentProbabilityBasedOnRiskyToday: number | null
+  goodInvestmentTotalProbabilityBasedOnToday: number | null
+}
+
+export const stockReportApi = {
+  getStrategies: () =>
+    client.get<string[]>('/invest-track/stock-report/strategies'),
+
+  getReport: (date: string, strategy: string) =>
+    client.get<StockReportDto>('/invest-track/stock-report', { params: { date, strategy } }),
+
+  triggerMorning: () =>
+    client.post<{ message: string }>('/invest-track/stock-report/trigger/morning'),
+
+  triggerEvening: () =>
+    client.post<{ message: string }>('/invest-track/stock-report/trigger/evening'),
+}
+
+export interface ImportResultDto {
+  imported: number
+  skipped: number
+  errors: string[]
+}
+
+export const dataIEApi = {
+  export: () =>
+    client.get<Blob>('/invest-track/data-ie/export', { responseType: 'blob' }),
+
+  import: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return client.post<ImportResultDto>('/invest-track/data-ie/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
+}

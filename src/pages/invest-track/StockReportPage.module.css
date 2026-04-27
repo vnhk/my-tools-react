@@ -1,0 +1,184 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--glass-bg, rgba(255,255,255,0.02));
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolBtn {
+  padding: 5px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.toolBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.toolBtn.primary  { background: var(--color-primary, #6366f1); border-color: var(--color-primary, #6366f1); color: #fff; }
+.toolBtn.warning  { background: var(--color-warning, #f59e0b); border-color: var(--color-warning, #f59e0b); color: #fff; }
+.toolBtn.primary:hover:not(:disabled),
+.toolBtn.warning:hover:not(:disabled) { opacity: 0.85; }
+
+.select {
+  padding: 5px 8px;
+  background: var(--glass-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.14));
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  min-width: 220px;
+}
+
+.dateInput {
+  padding: 5px 8px;
+  background: var(--glass-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.14));
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  color-scheme: dark;
+}
+
+/* ── Total probability banner ── */
+.totalProb {
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.06));
+  flex-shrink: 0;
+}
+.totalProb strong { color: var(--color-success, #22c55e); font-size: 14px; }
+
+/* ── Inner tabs ── */
+.innerTabRow {
+  display: flex;
+  gap: 4px;
+  padding: 10px 16px 0;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+}
+
+.innerTabBtn {
+  padding: 6px 16px;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: -1px;
+}
+.innerTabBtn:hover { color: var(--color-text-primary); }
+.innerTabActive {
+  background: var(--glass-bg, rgba(255,255,255,0.06));
+  border-color: var(--glass-border, rgba(255,255,255,0.12));
+  color: var(--color-text-primary) !important;
+}
+
+/* ── Content area ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* ── Table block ── */
+.tableBlock {
+  background: var(--glass-bg, rgba(255,255,255,0.03));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tableTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.searchInput {
+  padding: 5px 10px;
+  background: var(--glass-bg, rgba(255,255,255,0.05));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  max-width: 220px;
+}
+.searchInput::placeholder { color: var(--color-text-secondary); }
+
+.tableWrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.table th {
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1));
+  white-space: nowrap;
+}
+.table td {
+  padding: 5px 10px;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.04));
+}
+.table tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+.symbol { font-weight: 600; }
+.positive { color: var(--color-success, #22c55e); font-weight: 600; }
+.negative { color: var(--color-danger, #ef4444); font-weight: 600; }
+
+/* ── Probability banner ── */
+.probability {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  padding: 6px 2px;
+}
+.probability strong { color: var(--color-primary, #6366f1); }
+
+/* ── States ── */
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}

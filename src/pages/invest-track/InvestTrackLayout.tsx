@@ -6,7 +6,9 @@ const TABS = [
   { path: '/invest-track/wallets', label: 'Wallets', icon: '💼' },
   { path: '/invest-track/budget', label: 'Budget', icon: '💰' },
   { path: '/invest-track/alerts', label: 'Stock Alerts', icon: '🔔' },
-  { path: '/invest-track/recommendations', label: 'Recommendations', icon: '📊' },
+  { path: '/invest-track/stock-report', label: 'Stock Report', icon: '🚩' },
+  { path: '/invest-track/recommendations', label: 'Rec. History', icon: '📜' },
+  { path: '/invest-track/data-ie', label: 'Data IE', icon: '💾' },
 ]
 
 export function InvestTrackLayout() {

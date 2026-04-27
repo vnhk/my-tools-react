@@ -13,6 +13,8 @@ import { WalletDetailPage } from './pages/invest-track/WalletDetailPage'
 import { BudgetEntriesPage } from './pages/invest-track/BudgetEntriesPage'
 import { StockAlertsPage } from './pages/invest-track/StockAlertsPage'
 import { RecommendationsPage } from './pages/invest-track/RecommendationsPage'
+import { StockReportPage } from './pages/invest-track/StockReportPage'
+import { DataIEPage } from './pages/invest-track/DataIEPage'
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/invest-track', label: 'Invest Track', icon: '📈' },
@@ -56,7 +58,9 @@ export default function App() {
                 <Route path="wallets/:walletId" element={<WalletDetailPage />} />
                 <Route path="budget" element={<BudgetEntriesPage />} />
                 <Route path="alerts" element={<StockAlertsPage />} />
+                <Route path="stock-report" element={<StockReportPage />} />
                 <Route path="recommendations" element={<RecommendationsPage />} />
+                <Route path="data-ie" element={<DataIEPage />} />
               </Route>
               {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track').map((item) => (
                 <Route
