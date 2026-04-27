@@ -1,0 +1,190 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--glass-bg, rgba(255,255,255,0.02));
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  flex-shrink: 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.cartSelect {
+  padding: 5px 8px;
+  background: var(--glass-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.14));
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  min-width: 200px;
+}
+
+.btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { opacity: 0.85; }
+.primary { background: var(--color-primary, #6366f1); border-color: var(--color-primary, #6366f1); color: #fff; }
+.warning { background: var(--color-warning, #f59e0b); border-color: var(--color-warning, #f59e0b); color: #fff; }
+.danger  { background: var(--color-danger, #ef4444);  border-color: var(--color-danger, #ef4444);  color: #fff; }
+
+.checkLabel {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: var(--color-text-secondary); cursor: pointer;
+}
+
+.empty {
+  display: flex; align-items: center; justify-content: center;
+  height: 200px; color: var(--color-text-secondary); font-size: 14px;
+}
+
+/* ── Cart content ── */
+.cartContent {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.progressBar {
+  height: 3px;
+  background: rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+.progress {
+  height: 100%;
+  background: var(--color-success, #22c55e);
+  transition: width 0.3s ease;
+}
+
+.cartMeta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 10px 16px 6px;
+  flex-shrink: 0;
+}
+.cartName { font-size: 16px; font-weight: 700; color: var(--color-text-primary); }
+.cartCount { font-size: 12px; color: var(--color-text-secondary); }
+
+.itemList {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 4px 16px 16px;
+}
+
+/* ── Groups ── */
+.group { margin-bottom: 12px; }
+.groupLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 6px 0 4px;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.06));
+  margin-bottom: 2px;
+}
+.doneLabel { color: var(--color-success, #22c55e); opacity: 0.6; }
+.emptyCart {
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+/* ── Item rows ── */
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 6px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.itemRow:hover { background: rgba(255,255,255,0.04); }
+
+.checkbox {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  border: 2px solid var(--glass-border, rgba(255,255,255,0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #fff;
+  flex-shrink: 0;
+  transition: all 0.1s;
+}
+.checked {
+  background: var(--color-success, #22c55e);
+  border-color: var(--color-success, #22c55e);
+}
+
+.itemInfo { display: flex; align-items: baseline; gap: 8px; flex: 1; }
+.itemName { font-size: 13px; color: var(--color-text-primary); }
+.itemQty { font-size: 11px; color: var(--color-text-secondary); }
+.itemDone .itemName { text-decoration: line-through; color: var(--color-text-secondary); }
+
+/* ── Dialogs ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.dialog {
+  background: var(--glass-bg, rgba(20,20,35,0.97));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-radius: 14px;
+  width: 480px; max-width: 95vw; max-height: 80vh;
+  display: flex; flex-direction: column;
+}
+.dialogHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+}
+.dialogTitle { font-size: 14px; font-weight: 700; color: var(--color-text-primary); }
+.closeBtn { background: none; border: none; color: var(--color-text-secondary); font-size: 20px; cursor: pointer; }
+.dialogBody { padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.dialogLabel { font-size: 11px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; }
+.dialogInput {
+  padding: 7px 10px;
+  background: var(--glass-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.14));
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 13px;
+}
+.dialogFooter {
+  display: flex; gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  justify-content: flex-end;
+}
+.exportText {
+  font-size: 12px;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  line-height: 1.7;
+}

@@ -15,6 +15,14 @@ import { StockAlertsPage } from './pages/invest-track/StockAlertsPage'
 import { RecommendationsPage } from './pages/invest-track/RecommendationsPage'
 import { StockReportPage } from './pages/invest-track/StockReportPage'
 import { DataIEPage } from './pages/invest-track/DataIEPage'
+import { CookBookLayout } from './pages/cook-book/CookBookLayout'
+import { RecipeListPage } from './pages/cook-book/RecipeListPage'
+import { RecipeDetailPage } from './pages/cook-book/RecipeDetailPage'
+import { FridgeSearchPage } from './pages/cook-book/FridgeSearchPage'
+import { ShoppingCartPage } from './pages/cook-book/ShoppingCartPage'
+import { IngredientsPage } from './pages/cook-book/IngredientsPage'
+import { DietPage } from './pages/cook-book/DietPage'
+import { DietDashboardPage } from './pages/cook-book/DietDashboardPage'
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/invest-track', label: 'Invest Track', icon: '📈' },
@@ -62,7 +70,17 @@ export default function App() {
                 <Route path="recommendations" element={<RecommendationsPage />} />
                 <Route path="data-ie" element={<DataIEPage />} />
               </Route>
-              {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track').map((item) => (
+              <Route path="/cook-book" element={<CookBookLayout />}>
+                <Route index element={<Navigate to="recipes" replace />} />
+                <Route path="recipes" element={<RecipeListPage />} />
+                <Route path="recipes/:id" element={<RecipeDetailPage />} />
+                <Route path="search" element={<FridgeSearchPage />} />
+                <Route path="shopping-cart" element={<ShoppingCartPage />} />
+                <Route path="ingredients" element={<IngredientsPage />} />
+                <Route path="diet" element={<DietPage />} />
+                <Route path="diet-dashboard" element={<DietDashboardPage />} />
+              </Route>
+              {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book').map((item) => (
                 <Route
                   key={item.path}
                   path={`${item.path}/*`}
