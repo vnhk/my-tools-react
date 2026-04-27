@@ -24,7 +24,10 @@ type Filter = typeof QUICK_FILTERS[number]
 const INNER_TABS = ['Dashboard', 'Balance', 'Earnings', 'FIRE', 'Short Term Strategies'] as const
 type InnerTab = typeof INNER_TABS[number]
 
-const FILTER_TABS: InnerTab[] = ['Dashboard', 'Balance', 'Earnings']
+type PeriodAgg = 'Monthly' | 'Two-Monthly' | 'Quarterly' | 'Half-Yearly' | 'Yearly'
+const PERIOD_OPTS: PeriodAgg[] = ['Monthly', 'Two-Monthly', 'Quarterly', 'Half-Yearly', 'Yearly']
+const AGG_OPTS = ['All Wallets', 'One Wallet'] as const
+type AggMode = typeof AGG_OPTS[number]
 
 const FIRE_STAGE_PCTS = [1, 2, 5, 10, 25, 35, 50, 60, 70, 75, 80, 100]
 const FIRE_STAGE_NAMES = [
@@ -32,6 +35,50 @@ const FIRE_STAGE_NAMES = [
   'Quarter Mark', 'Steady Path', 'Halfway There', 'Comfort Zone',
   'Strong Position', 'Three-Quarters Mark', 'Lean FIRE', 'Full FIRE',
 ]
+
+function applyDateRange(series: TimeSeriesPoint[], from: string, to: string): TimeSeriesPoint[] {
+  return series.filter(p => (!from || p.date >= from) && (!to || p.date <= to))
+}
+
+function applyPeriodAgg(series: TimeSeriesPoint[], period: PeriodAgg): TimeSeriesPoint[] {
+  if (period === 'Monthly' || series.length === 0) return series
+  const step = period === 'Two-Monthly' ? 2 : period === 'Quarterly' ? 3 : period === 'Half-Yearly' ? 6 : 12
+  const result: TimeSeriesPoint[] = []
+  for (let i = 0; i < series.length; i++) {
+    if (i % step === 0) result.push(series[i])
+  }
+  const last = series[series.length - 1]
+  if (result[result.length - 1] !== last) result.push(last)
+  return result
+}
+
+function aggregateAllWallets(walletSeries: WalletTimeSeriesEntry[]): WalletTimeSeriesEntry {
+  const allDatesSet = new Set<string>()
+  for (const w of walletSeries) w.series.forEach(p => allDatesSet.add(p.date))
+  const allDates = [...allDatesSet].sort()
+  const aggregated: TimeSeriesPoint[] = allDates.map(date => {
+    let totalBalance = 0, totalCumDeposit = 0
+    for (const w of walletSeries) {
+      const pts = w.series.filter(p => p.date <= date)
+      if (pts.length > 0) {
+        const last = pts[pts.length - 1]
+        totalBalance += last.balance
+        totalCumDeposit += last.cumDeposit
+      }
+    }
+    return { date, balance: totalBalance, cumDeposit: totalCumDeposit }
+  })
+  const last = aggregated[aggregated.length - 1]
+  const returnRate = last && last.cumDeposit > 0
+    ? ((last.balance - last.cumDeposit) / last.cumDeposit) * 100 : 0
+  return {
+    walletId: 'aggregated',
+    walletName: `Aggregated Wallet (${returnRate >= 0 ? '+' : ''}${returnRate.toFixed(2)}%)`,
+    isInvestment: true,
+    returnRate,
+    series: aggregated,
+  }
+}
 
 function filterSeries(series: TimeSeriesPoint[], filter: Filter): TimeSeriesPoint[] {
   if (!series.length) return series
@@ -155,6 +202,35 @@ function FilterRow({ filter, onChange }: { filter: Filter; onChange: (f: Filter)
           onClick={() => onChange(f)}
         >{f}</button>
       ))}
+    </div>
+  )
+}
+
+function WalletFilterPanel({
+  aggMode, period, fromDate, toDate, onAggMode, onPeriod, onFromDate, onToDate,
+}: {
+  aggMode: AggMode; period: PeriodAgg; fromDate: string; toDate: string
+  onAggMode: (v: AggMode) => void; onPeriod: (v: PeriodAgg) => void
+  onFromDate: (v: string) => void; onToDate: (v: string) => void
+}) {
+  return (
+    <div className={styles.walletFilterRow}>
+      <span className={styles.walletFilterLabel}>Aggregation:</span>
+      <select className={styles.walletFilterSelect} value={aggMode}
+        onChange={e => onAggMode(e.target.value as AggMode)}>
+        {AGG_OPTS.map(o => <option key={o}>{o}</option>)}
+      </select>
+      <span className={styles.walletFilterLabel}>Period:</span>
+      <select className={styles.walletFilterSelect} value={period}
+        onChange={e => onPeriod(e.target.value as PeriodAgg)}>
+        {PERIOD_OPTS.map(o => <option key={o}>{o}</option>)}
+      </select>
+      <span className={styles.walletFilterLabel}>From:</span>
+      <input type="date" className={styles.walletFilterDate} value={fromDate}
+        onChange={e => onFromDate(e.target.value)} />
+      <span className={styles.walletFilterLabel}>To:</span>
+      <input type="date" className={styles.walletFilterDate} value={toDate}
+        onChange={e => onToDate(e.target.value)} />
     </div>
   )
 }
@@ -349,11 +425,9 @@ function WalletTileTitle({ w }: { w: WalletTimeSeriesEntry }) {
   return <h3 className={styles.chartTitle}>{w.walletName}{rr}</h3>
 }
 
-function BalanceTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesEntry[]; filter: Filter }) {
-  const wallets = walletSeries.map(w => ({ ...w, series: filterSeries(w.series, filter) }))
-
-  const totalBalance = walletSeries.reduce((s, w) => s + (w.series[w.series.length - 1]?.balance ?? 0), 0)
-  const totalDeposit = walletSeries.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
+function BalanceTab({ wallets }: { wallets: WalletTimeSeriesEntry[] }) {
+  const totalBalance = wallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.balance ?? 0), 0)
+  const totalDeposit = wallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
 
   return (
     <>
@@ -397,14 +471,13 @@ function BalanceTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesEn
 
 // ── Earnings tab ──────────────────────────────────────────────────────────────
 
-function EarningsTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesEntry[]; filter: Filter }) {
-  // All wallets (same as Vaadin — parent passes all investment-like wallets)
-  const wallets = walletSeries.map(w => ({
+function EarningsTab({ wallets }: { wallets: WalletTimeSeriesEntry[] }) {
+  const walletsWithEarnings = wallets.map(w => ({
     ...w,
-    series: filterSeries(w.series, filter).map(p => ({ ...p, earnings: p.balance - p.cumDeposit })),
+    series: w.series.map(p => ({ ...p, earnings: p.balance - p.cumDeposit })),
   }))
 
-  const totalEarnings = walletSeries.reduce((s, w) => {
+  const totalEarnings = wallets.reduce((s, w) => {
     const last = w.series[w.series.length - 1]
     return s + ((last?.balance ?? 0) - (last?.cumDeposit ?? 0))
   }, 0)
@@ -416,7 +489,7 @@ function EarningsTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesE
           trend={totalEarnings >= 0 ? 'positive' : 'negative'} />
       </div>
       <div className={styles.walletGrid}>
-        {wallets.map(w => (
+        {walletsWithEarnings.map(w => (
           <div key={w.walletId} className={styles.walletTile}>
             <WalletTileTitle w={w} />
             {w.series.length > 1 ? (
@@ -439,7 +512,7 @@ function EarningsTab({ walletSeries, filter }: { walletSeries: WalletTimeSeriesE
             ) : <div className={styles.empty} style={{ height: 80 }}>Not enough data</div>}
           </div>
         ))}
-        {wallets.length === 0 && <div className={styles.empty}>No wallets</div>}
+        {walletsWithEarnings.length === 0 && <div className={styles.empty}>No wallets</div>}
       </div>
     </>
   )
@@ -790,11 +863,22 @@ export function DashboardPage() {
   const [filter, setFilter] = useState<Filter>('ALL')
   const [activeTab, setActiveTab] = useState<InnerTab>('Dashboard')
   const [fireGoal, setFireGoal] = useState(1_500_000)
+  const [aggMode, setAggMode] = useState<AggMode>('All Wallets')
+  const [period, setPeriod] = useState<PeriodAgg>('Monthly')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
 
   useEffect(() => {
     setLoading(true)
     investDashboardApi.get()
-      .then((res) => setData(res.data))
+      .then((res) => {
+        setData(res.data)
+        const allDates = res.data.walletSeries.flatMap(w => w.series.map(p => p.date)).sort()
+        if (allDates.length > 0) {
+          setFromDate(allDates[0])
+          setToDate(allDates[allDates.length - 1])
+        }
+      })
       .finally(() => setLoading(false))
   }, [])
 
@@ -807,10 +891,21 @@ export function DashboardPage() {
     [data, filter],
   )
 
+  const processedWalletSeries = useMemo(() => {
+    if (!data) return []
+    const wallets = aggMode === 'One Wallet'
+      ? [aggregateAllWallets(data.walletSeries)]
+      : data.walletSeries
+    return wallets.map(w => ({
+      ...w,
+      series: applyPeriodAgg(applyDateRange(w.series, fromDate, toDate), period),
+    }))
+  }, [data, aggMode, period, fromDate, toDate])
+
   if (loading) return <div className={styles.loading}>Loading dashboard…</div>
   if (!data) return <div className={styles.empty}>Failed to load dashboard</div>
 
-  const showFilter = (FILTER_TABS as readonly string[]).includes(activeTab)
+  const showWalletFilter = activeTab === 'Balance' || activeTab === 'Earnings'
 
   return (
     <div className={styles.page}>
@@ -825,20 +920,25 @@ export function DashboardPage() {
         ))}
       </div>
 
-      {/* Quick filter — visible for Dashboard, Balance, Earnings */}
-      {showFilter && <FilterRow filter={filter} onChange={setFilter} />}
+      {/* Quick filter — Dashboard only */}
+      {activeTab === 'Dashboard' && <FilterRow filter={filter} onChange={setFilter} />}
+
+      {/* Wallet filter — Balance / Earnings */}
+      {showWalletFilter && (
+        <WalletFilterPanel
+          aggMode={aggMode} period={period} fromDate={fromDate} toDate={toDate}
+          onAggMode={setAggMode} onPeriod={setPeriod}
+          onFromDate={setFromDate} onToDate={setToDate}
+        />
+      )}
 
       {/* Tab content */}
       <div className={styles.tabContent}>
         {activeTab === 'Dashboard' && (
           <DashboardTab data={data} investSeries={investSeries} netWorthSeries={netWorthSeries} />
         )}
-        {activeTab === 'Balance' && (
-          <BalanceTab walletSeries={data.walletSeries} filter={filter} />
-        )}
-        {activeTab === 'Earnings' && (
-          <EarningsTab walletSeries={data.walletSeries} filter={filter} />
-        )}
+        {activeTab === 'Balance' && <BalanceTab wallets={processedWalletSeries} />}
+        {activeTab === 'Earnings' && <EarningsTab wallets={processedWalletSeries} />}
         {activeTab === 'FIRE' && (
           <FireTab kpi={data.kpi} fireGoal={fireGoal} onGoalChange={setFireGoal} />
         )}

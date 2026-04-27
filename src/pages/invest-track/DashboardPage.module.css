@@ -62,6 +62,44 @@
 .positive { color: var(--color-success, #22c55e) !important; }
 .negative { color: var(--color-danger, #ef4444) !important; }
 
+/* ── Wallet filter bar (Balance / Earnings) ── */
+.walletFilterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--glass-bg, rgba(255,255,255,0.02));
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.walletFilterLabel {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.walletFilterSelect {
+  padding: 4px 8px;
+  background: var(--glass-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.14));
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.walletFilterDate {
+  padding: 4px 8px;
+  background: var(--glass-bg, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.14));
+  border-radius: 6px;
+  color: var(--color-text-primary);
+  font-size: 12px;
+  color-scheme: dark;
+}
+
 /* ── Filter bar ── */
 .filterRow {
   display: flex;
