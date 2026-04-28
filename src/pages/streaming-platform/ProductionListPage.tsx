@@ -279,6 +279,7 @@ export default function ProductionListPage() {
             ⚙ Filters{isActive && !showFilters ? ' •' : ''}
           </button>
           <Link to="/streaming/remote" className={styles.iconBtn}>📱 Remote</Link>
+          <Link to="/streaming/tv-pairing" className={styles.iconBtn}>📺 TV Pair</Link>
         </div>
       </div>
 

@@ -27,6 +27,7 @@ import ProductionListPage from './pages/streaming-platform/ProductionListPage'
 import ProductionDetailsPage from './pages/streaming-platform/ProductionDetailsPage'
 import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
 import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
+import TvPairingPage from './pages/streaming-platform/TvPairingPage'
 import {HomePage, HomePageCard} from "./components/layout/HomePage.tsx";
 import {
     FaBarcode,
@@ -210,6 +211,7 @@ export default function App() {
                                 <Route path="/streaming/player/:productionName/:videoFolderId"
                                        element={<VideoPlayerPage/>}/>
                                 <Route path="/streaming/remote" element={<RemoteControlPage/>}/>
+                                <Route path="/streaming/tv-pairing" element={<TvPairingPage/>}/>
                                 {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming').map((item) => (
                                     <Route
                                         key={item.path}
