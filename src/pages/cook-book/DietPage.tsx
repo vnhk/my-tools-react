@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNotification } from '../../components/ui/Notification'
 import { dietApi, ingredientsApi, type DietDayDto, type DietMealDto, type DietMealItemDto, type IngredientDto } from '../../api/cookBook'
 import { CustomSelect } from '../../components/fields/CustomSelect'
+import { Dialog } from '../../components/ui/Dialog'
+import { Button } from '../../components/ui/Button'
 import styles from './DietPage.module.css'
 
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'OTHER']
@@ -269,10 +271,12 @@ function CopyMealDialog({ date, mealType, mealName, onCopied, onClose }: {
 }
 
 // ── Set Data dialog ───────────────────────────────────────────────────────────
+const ACCURACY_OPTIONS = [40, 50, 60, 70, 80, 90, 100].map(p => ({ value: String(p), label: `${p}%` }))
+
 function SetDataDialog({ day, onSaved, onClose }: {
   day: DietDayDto; onSaved: (d: DietDayDto) => void; onClose: () => void
 }) {
-  const { showError } = useNotification()
+  const { showError, showSuccess } = useNotification()
   const [f, setF] = useState({
     targetKcal: day.targetKcal ?? '',
     estimatedDailyKcal: day.estimatedDailyKcal ?? '',
@@ -281,7 +285,7 @@ function SetDataDialog({ day, onSaved, onClose }: {
     targetFat: day.targetFat ?? '',
     targetFiber: day.targetFiber ?? '',
     activityKcal: day.activityKcal ?? '',
-    activityKcalPercent: day.activityKcalPercent ?? 85,
+    activityKcalPercent: day.activityKcalPercent ?? 100,
     weightKg: day.weightKg ?? '',
     notes: day.notes ?? '',
     age: day.age ?? '',
@@ -293,25 +297,34 @@ function SetDataDialog({ day, onSaved, onClose }: {
 
   const n = (v: string | number) => (v === '' ? null : Number(v))
 
+  const pctSum = macroPct.protein + macroPct.fat + macroPct.carbs
+  const pctOk = Math.abs(pctSum - 100) < 1
+
   const calcTDEE = () => {
-    const age = n(f.age), height = n(f.heightCm), weight = day.weightKg
-    if (!age || !height || !weight) return
+    const age = n(f.age), height = n(f.heightCm), weight = n(f.weightKg)
+    if (!age || !height || !weight) { showError('Enter weight, height and age first'); return }
     const bmr = f.gender === 'M'
       ? 10 * weight + 6.25 * height - 5 * age + 5
       : 10 * weight + 6.25 * height - 5 * age - 161
     const mult = ACTIVITY_MULTIPLIERS[f.activityLevel] ?? 1.2
-    setF(prev => ({ ...prev, estimatedDailyKcal: Math.round(bmr * mult) }))
+    const tdee = Math.round(bmr * mult)
+    setF(prev => ({ ...prev, estimatedDailyKcal: tdee }))
+    showSuccess(`TDEE calculated: ${tdee} kcal`)
   }
 
   const applyMacroPct = () => {
     const kcal = n(f.targetKcal)
-    if (!kcal) return
+    const actKcal = n(f.activityKcal) ?? 0
+    const actPct = n(f.activityKcalPercent) ?? 100
+    const effective = (kcal ?? 0) + actKcal * actPct / 100
+    if (!effective) { showError('Enter Target Calories first'); return }
     setF(prev => ({
       ...prev,
-      targetProtein: Math.round(kcal * macroPct.protein / 100 / 4),
-      targetFat: Math.round(kcal * macroPct.fat / 100 / 9),
-      targetCarbs: Math.round(kcal * macroPct.carbs / 100 / 4),
+      targetProtein: Math.round(effective * macroPct.protein / 100 / 4),
+      targetFat: Math.round(effective * macroPct.fat / 100 / 9),
+      targetCarbs: Math.round(effective * macroPct.carbs / 100 / 4),
     }))
+    showSuccess(`Macros calculated from ${Math.round(effective)} effective kcal`)
   }
 
   const handleSave = () => {
@@ -329,94 +342,115 @@ function SetDataDialog({ day, onSaved, onClose }: {
       .catch(() => showError('Failed to save'))
   }
 
-  const field = (key: keyof typeof f, label: string, type = 'number', opts?: { min?: number }) => (
-    <div className={styles.field}>
-      <label className={styles.label}>{label}</label>
-      <input className={styles.input} type={type} min={opts?.min ?? 0}
+  const numField = (key: keyof typeof f, label: string, step = '1') => (
+    <div className={styles.sdField}>
+      <label className={styles.sdLabel}>{label}</label>
+      <input className={styles.sdInput} type="number" min="0" step={step}
         value={f[key] as string | number}
         onChange={e => setF(prev => ({ ...prev, [key]: e.target.value }))} />
     </div>
   )
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.dialog} style={{ width: 560 }} onClick={e => e.stopPropagation()}>
-        <div className={styles.dialogHeader}>
-          <span className={styles.dialogTitle}>Set Data — {day.date}</span>
-          <button className={styles.closeBtn} onClick={onClose}>×</button>
+    <Dialog open title={`Daily Data — ${day.date}`} onClose={onClose} onConfirm={handleSave}
+      width="min(95vw, 580px)">
+
+      {/* ── 1. Targets ─────────────────────────────────────────── */}
+      <div className={styles.sdSection}>
+        <div className={styles.sdSectionTitle}>Targets</div>
+        <div className={styles.sdGrid2}>
+          {numField('targetKcal', 'Target Calories / Goal (kcal)')}
+          {numField('estimatedDailyKcal', 'Est. Daily Calories / TDEE (kcal)')}
+          {numField('targetProtein', 'Target Protein (g)')}
+          {numField('targetCarbs', 'Target Carbs (g)')}
+          {numField('targetFat', 'Target Fat (g)')}
+          {numField('targetFiber', 'Target Fiber (g)')}
         </div>
-        <div className={styles.dialogBody}>
-          <div className={styles.sectionTitle}>Targets</div>
-          <div className={styles.grid3}>
-            {field('targetKcal', 'Target kcal')}
-            {field('estimatedDailyKcal', 'TDEE (est.)')}
-            {field('activityKcal', 'Activity kcal')}
-          </div>
-          <div className={styles.grid2}>
-            {field('activityKcalPercent', 'Activity accuracy %')}
-            {field('weightKg', 'Weight (kg)')}
-          </div>
-          <div className={styles.grid4}>
-            {field('targetProtein', 'Protein (g)')}
-            {field('targetFat', 'Fat (g)')}
-            {field('targetCarbs', 'Carbs (g)')}
-            {field('targetFiber', 'Fiber (g)')}
-          </div>
 
-          <div className={styles.sectionTitle} style={{ marginTop: 12 }}>Macro % Calculator</div>
-          <div className={styles.grid3}>
-            {(['protein', 'fat', 'carbs'] as const).map(m => (
-              <div key={m} className={styles.field}>
-                <label className={styles.label}>{m.charAt(0).toUpperCase() + m.slice(1)} %</label>
-                <input className={styles.input} type="number" min="0" max="100"
-                  value={macroPct[m]}
-                  onChange={e => setMacroPct(prev => ({ ...prev, [m]: Number(e.target.value) }))} />
-              </div>
-            ))}
+        {/* Activity row: kcal field + accuracy % + info */}
+        <div className={styles.sdActivityRow}>
+          <div className={styles.sdField} style={{ flex: 1 }}>
+            <label className={styles.sdLabel}>Activity Calories Burned</label>
+            <input className={styles.sdInput} type="number" min="0"
+              value={f.activityKcal as string | number}
+              onChange={e => setF(prev => ({ ...prev, activityKcal: e.target.value }))} />
           </div>
-          <button className={`${styles.btn} ${styles.secondary}`} onClick={applyMacroPct}>
-            Apply to targets (from {f.targetKcal || '?'} kcal)
-          </button>
-
-          <div className={styles.sectionTitle} style={{ marginTop: 12 }}>Profile & TDEE Calculator</div>
-          <div className={styles.grid4}>
-            {field('age', 'Age')}
-            {field('heightCm', 'Height (cm)')}
-            <div className={styles.field}>
-              <label className={styles.label}>Gender</label>
-              <CustomSelect
-                className={styles.input}
-                options={[{ value: 'M', label: 'Male' }, { value: 'F', label: 'Female' }]}
-                value={f.gender}
-                onChange={v => setF(prev => ({ ...prev, gender: v }))}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>Activity Level</label>
-              <CustomSelect
-                className={styles.input}
-                options={ACTIVITY_LEVELS}
-                value={f.activityLevel}
-                onChange={v => setF(prev => ({ ...prev, activityLevel: v }))}
-              />
-            </div>
+          <div className={styles.sdField} style={{ width: 110 }}>
+            <label className={styles.sdLabel}>Accuracy</label>
+            <CustomSelect
+              options={ACCURACY_OPTIONS}
+              value={String(f.activityKcalPercent)}
+              onChange={v => setF(prev => ({ ...prev, activityKcalPercent: Number(v) }))}
+              size="sm"
+            />
           </div>
-          <button className={`${styles.btn} ${styles.secondary}`} onClick={calcTDEE}>
-            Calculate TDEE (Mifflin-St Jeor)
-          </button>
-
-          <div className={styles.field} style={{ marginTop: 12 }}>
-            <label className={styles.label}>Notes</label>
-            <textarea className={styles.input} rows={2} value={f.notes}
-              onChange={e => setF(prev => ({ ...prev, notes: e.target.value }))} />
+          <div className={styles.sdInfoIcon} title="Fitness trackers often overestimate calorie burn. Select what % of reported activity calories should count toward your daily deficit.">
+            ℹ
           </div>
-        </div>
-        <div className={styles.dialogFooter}>
-          <button className={`${styles.btn} ${styles.primary}`} onClick={handleSave}>Save</button>
-          <button className={styles.btn} onClick={onClose}>Cancel</button>
         </div>
       </div>
-    </div>
+
+      {/* ── 2. Macro % Calculator ──────────────────────────────── */}
+      <div className={styles.sdSection}>
+        <div className={styles.sdSectionTitle}>Macro % Calculator</div>
+        <div className={styles.sdMacroPctRow}>
+          {(['protein', 'fat', 'carbs'] as const).map(m => (
+            <div key={m} className={styles.sdField}>
+              <label className={styles.sdLabel}>{m.charAt(0).toUpperCase() + m.slice(1)} %</label>
+              <input className={styles.sdInput} type="number" min="0" max="100"
+                value={macroPct[m]}
+                onChange={e => setMacroPct(prev => ({ ...prev, [m]: Number(e.target.value) }))} />
+            </div>
+          ))}
+          <div className={`${styles.sdPctSum} ${pctOk ? styles.sdPctOk : styles.sdPctBad}`}>
+            Sum: {pctSum}%
+          </div>
+        </div>
+        <Button variant="secondary" size="sm" onClick={applyMacroPct} style={{ width: '100%' }}>
+          Calculate macros from % (effective: {Number(f.targetKcal || 0) + (Number(f.activityKcal || 0) * Number(f.activityKcalPercent || 100) / 100)} kcal)
+        </Button>
+      </div>
+
+      {/* ── 3. Profile & TDEE ──────────────────────────────────── */}
+      <div className={styles.sdSection}>
+        <div className={styles.sdSectionTitle}>Profile &amp; TDEE Calculator</div>
+        <div className={styles.sdGrid2}>
+          {numField('weightKg', 'Weight (kg)', '0.1')}
+          {numField('heightCm', 'Height (cm)')}
+          {numField('age', 'Age')}
+          <div className={styles.sdField}>
+            <label className={styles.sdLabel}>Gender</label>
+            <div className={styles.sdRadioGroup}>
+              {[{ v: 'M', l: '♂ Male' }, { v: 'F', l: '♀ Female' }].map(({ v, l }) => (
+                <label key={v} className={`${styles.sdRadio} ${f.gender === v ? styles.sdRadioActive : ''}`}>
+                  <input type="radio" name="gender" value={v} checked={f.gender === v}
+                    onChange={() => setF(prev => ({ ...prev, gender: v }))} />
+                  {l}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className={styles.sdField}>
+          <label className={styles.sdLabel}>Activity Level</label>
+          <CustomSelect
+            options={ACTIVITY_LEVELS}
+            value={f.activityLevel}
+            onChange={v => setF(prev => ({ ...prev, activityLevel: v }))}
+          />
+        </div>
+        <Button variant="primary" size="sm" onClick={calcTDEE} style={{ width: '100%' }}>
+          Calculate TDEE → (Mifflin-St Jeor)
+        </Button>
+      </div>
+
+      {/* ── 4. Notes ───────────────────────────────────────────── */}
+      <div className={styles.sdField}>
+        <label className={styles.sdLabel}>Notes</label>
+        <textarea className={styles.sdInput} rows={3} value={f.notes}
+          onChange={e => setF(prev => ({ ...prev, notes: e.target.value }))} />
+      </div>
+    </Dialog>
   )
 }
 
