@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   LineChart, Line, ReferenceLine,
@@ -287,19 +287,19 @@ function ReturnsHeatmap({ heatmap }: { heatmap: Record<string, number> }) {
         <div className={styles.heatmapCorner} />
         {MONTH_LABELS.map((m, i) => <div key={i} className={styles.heatmapMonthLabel}>{m}</div>)}
         {years.map((year) => (
-          <>
-            <div key={year} className={styles.heatmapYearLabel}>{year}</div>
+          <Fragment key={year}>
+            <div className={styles.heatmapYearLabel}>{year}</div>
             {months.map((m) => {
-              const key = `${year}-${m}`
-              const val = map[key]
+              const k = `${year}-${m}`
+              const val = map[k]
               return (
-                <div key={key} className={styles.heatmapCell} style={{ background: color(val) }}
-                  title={val !== undefined ? `${key}: ${PCT(val)}` : key}>
+                <div key={k} className={styles.heatmapCell} style={{ background: color(val) }}
+                  title={val !== undefined ? `${k}: ${PCT(val)}` : k}>
                   {val !== undefined && <span className={styles.heatmapVal}>{val.toFixed(1)}</span>}
                 </div>
               )
             })}
-          </>
+          </Fragment>
         ))}
       </div>
     </div>

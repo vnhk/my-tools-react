@@ -10,6 +10,7 @@ interface Toast {
 }
 
 interface NotificationContextValue {
+  showNotification: (msg: string, variant: Variant) => void
   showSuccess: (msg: string) => void
   showError: (msg: string) => void
   showWarning: (msg: string) => void
@@ -35,6 +36,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider value={{
+      showNotification: add,
       showSuccess: (msg) => add(msg, 'success'),
       showError: (msg) => add(msg, 'error'),
       showWarning: (msg) => add(msg, 'warning'),
