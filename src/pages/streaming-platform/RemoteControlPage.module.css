@@ -1,0 +1,131 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.backBtn {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  font-size: 18px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color var(--transition), background var(--transition);
+}
+.backBtn:hover { color: var(--color-text-primary); background: rgba(255,255,255,0.06); }
+
+.header h1 {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.connDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.connDot.on { background: var(--color-success); box-shadow: 0 0 6px var(--color-success); }
+.connDot.off { background: var(--color-border); }
+
+/* Connect form */
+.connectSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.connectSection p {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* roomInput overrides the shared TextField to use large centered numeric style */
+.roomInput {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.15em;
+  text-align: center;
+}
+
+/* Remote controls */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.status strong { color: var(--color-text-primary); }
+
+.statusDot {
+  font-size: 12px;
+}
+.statusDot.green { color: var(--color-success); }
+.statusDot.red { color: var(--color-danger); }
+
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.remoteBtn {
+  flex: 1;
+  padding: 14px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background var(--transition), border-color var(--transition);
+  text-align: center;
+}
+.remoteBtn:hover:not(:disabled) {
+  background: rgba(165,180,252,0.08);
+  border-color: rgba(165,180,252,0.3);
+}
+.remoteBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.remoteBtnLg {
+  composes: remoteBtn;
+  font-size: 20px;
+  padding: 18px 8px;
+}

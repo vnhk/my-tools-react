@@ -1,0 +1,139 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  cursor: none;
+}
+.container:hover { cursor: default; }
+
+.video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+/* ── Controls overlay ── */
+.controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  padding: 40px 16px 12px;
+  transition: opacity 0.25s ease;
+}
+.controls.visible { opacity: 1; pointer-events: auto; }
+.controls.hidden  { opacity: 0; pointer-events: none; }
+
+/* ── Progress bar ── */
+.progressBar {
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 9999px;
+  cursor: pointer;
+  position: relative;
+  margin-bottom: 10px;
+}
+.progressBar:hover { height: 6px; margin-bottom: 8px; }
+.progressBuffered {
+  position: absolute;
+  left: 0; top: 0; height: 100%;
+  background: rgba(255,255,255,0.3);
+  border-radius: 9999px;
+  pointer-events: none;
+}
+.progressFill {
+  position: absolute;
+  left: 0; top: 0; height: 100%;
+  background: #a5b4fc;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+
+/* ── Controls row ── */
+.controlsRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.controlsRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.ctrlBtn {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.ctrlBtn:hover { background: rgba(255,255,255,0.15); }
+.ctrlBtn.active { color: #a5b4fc; }
+
+.epNavBtn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+.epNavBtn:hover { color: #fff; background: rgba(255,255,255,0.15); }
+
+.timeDisplay {
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
+
+/* ── Volume slider ── */
+.volumeSlider {
+  width: 80px;
+  accent-color: #a5b4fc;
+}
+@media (max-width: 480px) { .volumeSlider { display: none; } }
+
+/* ── Subtitle control ── */
+.subtitleControl {
+  position: relative;
+}
+.subtitleMenu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  background: rgba(10,12,22,0.97);
+  border: 1px solid rgba(165,180,252,0.2);
+  border-radius: 8px;
+  padding: 4px;
+  min-width: 100px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+.subtitleMenu button {
+  display: block;
+  width: 100%;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+.subtitleMenu button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.subtitleMenu button.active { color: #a5b4fc; font-weight: 600; }

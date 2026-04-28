@@ -23,6 +23,10 @@ import { ShoppingCartPage } from './pages/cook-book/ShoppingCartPage'
 import { IngredientsPage } from './pages/cook-book/IngredientsPage'
 import { DietPage } from './pages/cook-book/DietPage'
 import { DietDashboardPage } from './pages/cook-book/DietDashboardPage'
+import ProductionListPage from './pages/streaming-platform/ProductionListPage'
+import ProductionDetailsPage from './pages/streaming-platform/ProductionDetailsPage'
+import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
+import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
 
 const NAV_ITEMS: NavItem[] = [
   { path: '/invest-track', label: 'Invest Track', icon: '📈' },
@@ -80,7 +84,11 @@ export default function App() {
                 <Route path="diet" element={<DietPage />} />
                 <Route path="diet-dashboard" element={<DietDashboardPage />} />
               </Route>
-              {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book').map((item) => (
+              <Route path="/streaming" element={<ProductionListPage />} />
+              <Route path="/streaming/production/:name" element={<ProductionDetailsPage />} />
+              <Route path="/streaming/player/:productionName/:videoFolderId" element={<VideoPlayerPage />} />
+              <Route path="/streaming/remote" element={<RemoteControlPage />} />
+              {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming').map((item) => (
                 <Route
                   key={item.path}
                   path={`${item.path}/*`}
