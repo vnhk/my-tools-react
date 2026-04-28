@@ -26,13 +26,6 @@
   gap: 12px;
 }
 
-.row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  align-items: end;
-}
-
 .macroRow {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

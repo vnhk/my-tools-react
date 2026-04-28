@@ -124,7 +124,7 @@ export function WalletListPage() {
         title={editItem.id ? 'Edit Wallet' : 'New Wallet'}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleSave}
-        width="600px"
+        width="min(90vw, 720px)"
       >
         <DynamicForm
           entityName="Wallet"

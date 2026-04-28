@@ -138,7 +138,7 @@ export function LowCodeGeneratorPage() {
         onClose={() => setEditOpen(false)}
         onConfirm={handleSave}
         confirmLabel="Save"
-        width="640px"
+        width="min(90vw, 720px)"
       >
         <div className={styles.form}>
           <TextField label="Class Name" value={editItem.className ?? ''} onChange={(e) => setEditItem((s) => ({ ...s, className: e.target.value }))} />

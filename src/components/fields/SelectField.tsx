@@ -1,28 +1,37 @@
-import { SelectHTMLAttributes } from 'react'
 import styles from './Field.module.css'
+import { CustomSelect } from './CustomSelect'
 
 interface Option {
   value: string
   label: string
 }
 
-interface SelectFieldProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'children'> {
+interface SelectFieldProps {
   label?: string
   error?: string
   options: Option[]
   placeholder?: string
+  value?: string
+  onChange?: (e: { target: { value: string } }) => void
+  required?: boolean
+  disabled?: boolean
+  className?: string
+  id?: string
 }
 
-export function SelectField({ label, error, options, placeholder, className = '', ...props }: SelectFieldProps) {
+export function SelectField({ label, error, options, placeholder, value, onChange, required, disabled, className = '', id }: SelectFieldProps) {
   return (
     <div className={styles.group}>
-      {label && <label className={styles.label}>{label}</label>}
-      <select className={`${styles.select} ${className}`} {...props}>
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </select>
+      {label && <label className={styles.label}>{label}{required && <span className={styles.required}>*</span>}</label>}
+      <CustomSelect
+        id={id}
+        options={placeholder ? [{ value: '', label: placeholder }, ...options] : options}
+        value={value ?? ''}
+        onChange={(v) => onChange?.({ target: { value: v } })}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={className}
+      />
       {error && <span className={styles.error}>{error}</span>}
     </div>
   )

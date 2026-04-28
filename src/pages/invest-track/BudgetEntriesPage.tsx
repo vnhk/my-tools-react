@@ -398,7 +398,7 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
 
       {/* Dialogs */}
       <Dialog open={editOpen} title={editItem.id ? 'Edit Entry' : 'New Entry'}
-        onClose={() => setEditOpen(false)} onConfirm={handleSave} width="600px">
+        onClose={() => setEditOpen(false)} onConfirm={handleSave} width="min(90vw, 720px)">
         <DynamicForm entityName="BudgetEntry" mode={editItem.id ? 'edit' : 'save'}
           values={editItem as Record<string, unknown>}
           onChange={(field, value) => setEditItem(s => ({ ...s, [field]: value }))}

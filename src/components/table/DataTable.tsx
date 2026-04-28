@@ -1,5 +1,6 @@
 import { ReactNode, useState } from 'react'
 import { Button } from '../ui/Button'
+import { CustomSelect } from '../fields/CustomSelect'
 import styles from './DataTable.module.css'
 
 export interface Column<T> {
@@ -197,15 +198,13 @@ export function DataTable<T>({
           </div>
           <div className={styles.footerRight}>
             {onPageSizeChange && (
-              <select
+              <CustomSelect
+                size="sm"
                 className={styles.pageSizeSelect}
-                value={pageSize}
-                onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              >
-                {PAGE_SIZES.map((s) => (
-                  <option key={s} value={s}>{s} / page</option>
-                ))}
-              </select>
+                options={PAGE_SIZES.map((s) => ({ value: String(s), label: `${s} / page` }))}
+                value={String(pageSize)}
+                onChange={(v) => onPageSizeChange(Number(v))}
+              />
             )}
             {onPageChange && totalPages != null && (
               <>

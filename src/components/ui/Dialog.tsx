@@ -23,7 +23,7 @@ export function Dialog({
   confirmVariant = 'primary',
   footer,
   children,
-  width = '520px',
+  width = 'min(90vw, 720px)',
 }: DialogProps) {
   const backdropRef = useRef<HTMLDivElement>(null)
 

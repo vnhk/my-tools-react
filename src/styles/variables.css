@@ -1,53 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
 :root {
-  /* Colors */
-  --color-bg: #0f1117;
-  --color-surface: rgba(17, 25, 40, 0.75);
-  --color-surface-hover: rgba(255, 255, 255, 0.05);
-  --color-border: rgba(255, 255, 255, 0.12);
-  --color-text-primary: rgba(255, 255, 255, 0.92);
-  --color-text-secondary: rgba(255, 255, 255, 0.6);
-  --color-text-tertiary: rgba(255, 255, 255, 0.35);
+  /* ── Palette ── */
+  --color-bg:              #06070e;
+  --color-bg-elevated:     #0c0e1a;
+  --color-surface:         rgba(255, 255, 255, 0.035);
+  --color-surface-hover:   rgba(255, 255, 255, 0.065);
+  --color-surface-active:  rgba(165, 180, 252, 0.09);
+  --color-border:          rgba(255, 255, 255, 0.09);
+  --color-border-strong:   rgba(255, 255, 255, 0.16);
 
-  /* Brand */
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-primary-glow: rgba(99, 102, 241, 0.3);
+  /* ── Text ── */
+  --color-text-primary:    rgba(255, 255, 255, 0.94);
+  --color-text-secondary:  rgba(255, 255, 255, 0.52);
+  --color-text-tertiary:   rgba(255, 255, 255, 0.28);
+  --color-text-inverse:    #06070e;
 
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #22d3ee;
+  /* ── Brand ── */
+  --color-primary:         #a5b4fc;
+  --color-primary-dark:    #6366f1;
+  --color-primary-hover:   #c4b5fd;
+  --color-primary-glow:    rgba(165, 180, 252, 0.35);
+  --color-primary-subtle:  rgba(165, 180, 252, 0.1);
+  --color-primary-rgb:     165, 180, 252;
 
-  /* Glass */
-  --glass-bg: rgba(17, 25, 40, 0.75);
-  --glass-blur: 16px;
-  --glass-border: rgba(255, 255, 255, 0.12);
+  --color-success:         #34d399;
+  --color-success-subtle:  rgba(52, 211, 153, 0.12);
+  --color-warning:         #fbbf24;
+  --color-warning-subtle:  rgba(251, 191, 36, 0.12);
+  --color-danger:          #f87171;
+  --color-danger-subtle:   rgba(248, 113, 113, 0.12);
+  --color-info:            #38bdf8;
+  --color-info-subtle:     rgba(56, 189, 248, 0.12);
 
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
+  /* ── Glass (also aliased for backwards-compat with page-level CSS) ── */
+  --glass-bg:              rgba(12, 14, 26, 0.82);
+  --glass-surface:         rgba(255, 255, 255, 0.04);
+  --glass-blur:            20px;
+  --glass-border:          rgba(255, 255, 255, 0.09);
+  --glass-border-gradient: linear-gradient(135deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 100%);
 
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  /* ── Shadows ── */
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
+  --shadow-lg:   0 12px 48px rgba(0,0,0,0.65), 0 4px 16px rgba(0,0,0,0.4);
+  --shadow-xl:   0 24px 80px rgba(0,0,0,0.75), 0 8px 32px rgba(0,0,0,0.5);
+  --shadow-glow: 0 0 0 1px var(--color-primary-glow), 0 0 20px rgba(165,180,252,0.2), 0 0 40px rgba(165,180,252,0.08);
+  --shadow-glow-sm: 0 0 12px rgba(165,180,252,0.25);
+
+  /* ── Spacing ── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  36px;
+  --space-2xl: 48px;
+
+  /* ── Radii ── */
+  --radius-xs:   4px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   18px;
+  --radius-xl:   24px;
   --radius-pill: 9999px;
 
-  /* Typography */
-  --font-size-xs: 11px;
-  --font-size-sm: 13px;
-  --font-size-md: 15px;
-  --font-size-lg: 18px;
-  --font-size-xl: 22px;
+  /* ── Typography ── */
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-size-xs:  11px;
+  --font-size-sm:  13px;
+  --font-size-md:  15px;
+  --font-size-lg:  18px;
+  --font-size-xl:  24px;
+  --font-size-2xl: 32px;
+  --line-height-tight:  1.25;
+  --line-height-normal: 1.55;
 
-  /* Sidebar */
-  --sidebar-width: 220px;
-  --sidebar-collapsed-width: 56px;
-  --header-height: 52px;
+  /* ── Layout ── */
+  --sidebar-width:           224px;
+  --sidebar-collapsed-width: 60px;
+  --header-height:           56px;
 
-  /* Transitions */
-  --transition: 0.18s ease;
+  /* ── Motion ── */
+  --transition:      0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --spring:          0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

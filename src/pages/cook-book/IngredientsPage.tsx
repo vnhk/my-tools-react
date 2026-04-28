@@ -1,42 +1,16 @@
 import { useEffect, useState } from 'react'
 import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
-import { TextField } from '../../components/fields/TextField'
-import { NumberField } from '../../components/fields/NumberField'
-import { SelectField } from '../../components/fields/SelectField'
+import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
+import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
 import { useNotification } from '../../components/ui/Notification'
 import { ingredientsApi, type IngredientDto } from '../../api/cookBook'
-import type { Column } from '../../components/table/DataTable'
 import styles from './IngredientsPage.module.css'
 
-const CATEGORIES = [
-  'Dairy', 'Meat', 'Fish', 'Vegetables', 'Fruits', 'Spices',
-  'Grains', 'Fats', 'Beverages', 'Sweets', 'Other',
-]
-
-const COLUMNS: Column<IngredientDto>[] = [
-  { key: 'name', header: 'Name', sortable: true },
-  {
-    key: 'category',
-    header: 'Category',
-    sortable: true,
-    render: (row) => row.category
-      ? <span className={styles.catBadge}>{row.category}</span>
-      : <span className={styles.muted}>—</span>,
-  },
-  { key: 'kcalPer100g', header: 'Kcal / 100g', render: (row) => row.kcalPer100g ?? '—' },
-  { key: 'proteinPer100g', header: 'Protein / 100g', render: (row) => row.proteinPer100g ?? '—' },
-  { key: 'fatPer100g', header: 'Fat / 100g', render: (row) => row.fatPer100g ?? '—' },
-  { key: 'carbsPer100g', header: 'Carbs / 100g', render: (row) => row.carbsPer100g ?? '—' },
-  { key: 'fiberPer100g', header: 'Fiber / 100g', render: (row) => row.fiberPer100g ?? '—' },
-]
-
-type EditState = Partial<IngredientDto>
-
-const EMPTY: EditState = {
-  name: '', icon: '', category: '',
+const EMPTY: Partial<IngredientDto> = {
+  name: '', category: '',
   kcalPer100g: undefined, proteinPer100g: undefined, fatPer100g: undefined,
   carbsPer100g: undefined, fiberPer100g: undefined,
 }
@@ -47,7 +21,21 @@ export function IngredientsPage() {
   const [allRows, setAllRows] = useState<IngredientDto[]>([])
   const [loading, setLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editItem, setEditItem] = useState<EditState>({ ...EMPTY })
+  const [editItem, setEditItem] = useState<Record<string, unknown>>({ ...EMPTY })
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+
+  const columns = buildColumnsFromConfig<IngredientDto>('Ingredient', {
+    category: {
+      render: (row) => row.category
+        ? <span className={styles.catBadge}>{row.category}</span>
+        : <span className={styles.muted}>—</span>,
+    },
+    kcalPer100g: { render: (row) => row.kcalPer100g ?? '—' },
+    proteinPer100g: { render: (row) => row.proteinPer100g ?? '—' },
+    fatPer100g: { render: (row) => row.fatPer100g ?? '—' },
+    carbsPer100g: { render: (row) => row.carbsPer100g ?? '—' },
+    fiberPer100g: { render: (row) => row.fiberPer100g ?? '—' },
+  })
 
   const load = () => {
     setLoading(true)
@@ -59,7 +47,6 @@ export function IngredientsPage() {
 
   useEffect(load, [])
 
-  // Client-side filter + sort + page
   const filtered = allRows
     .filter(r =>
       !table.search ||
@@ -78,26 +65,23 @@ export function IngredientsPage() {
   const pageRows = filtered.slice(table.page * table.pageSize, (table.page + 1) * table.pageSize)
 
   const openEdit = (item: Partial<IngredientDto>) => {
-    setEditItem({ ...EMPTY, ...item })
+    setEditItem({ ...EMPTY, ...item } as Record<string, unknown>)
+    setFormErrors({})
     setDialogOpen(true)
   }
 
   const actions = useTableActions<IngredientDto>({
-    onDelete: async (selected) => {
-      for (const r of selected) await ingredientsApi.delete(r.id)
-    },
+    onDelete: async (selected) => { for (const r of selected) await ingredientsApi.delete(r.id) },
     onEdit: openEdit,
     onRefresh: load,
   })
 
-  const set = (field: keyof EditState, value: unknown) =>
-    setEditItem(s => ({ ...s, [field]: value }))
-
   const handleSave = async () => {
-    if (!editItem.name?.trim()) { showError('Name is required'); return }
+    const errors = validateFields('Ingredient', editItem)
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return }
     try {
       if (editItem.id) {
-        await ingredientsApi.update(editItem.id, editItem)
+        await ingredientsApi.update(editItem.id as string, editItem)
       } else {
         await ingredientsApi.create(editItem)
       }
@@ -112,7 +96,7 @@ export function IngredientsPage() {
   return (
     <div className={styles.page}>
       <DataTable
-        columns={COLUMNS}
+        columns={columns}
         rows={pageRows}
         rowKey={r => r.id}
         loading={loading}
@@ -138,42 +122,14 @@ export function IngredientsPage() {
         title={editItem.id ? 'Edit Ingredient' : 'New Ingredient'}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleSave}
-        width="520px"
       >
-        <div className={styles.form}>
-          <div className={styles.row}>
-            <TextField
-              label="Name"
-              value={editItem.name ?? ''}
-              onChange={e => set('name', e.target.value)}
-              autoFocus
-            />
-            <TextField
-              label="Icon"
-              value={editItem.icon ?? ''}
-              onChange={e => set('icon', e.target.value)}
-              placeholder="e.g. 🥛"
-            />
-          </div>
-          <SelectField
-            label="Category"
-            value={editItem.category ?? ''}
-            options={[{ value: '', label: '— None —' }, ...CATEGORIES.map(c => ({ value: c, label: c }))]}
-            onChange={e => set('category', e.target.value)}
-          />
-          <div className={styles.macroRow}>
-            <NumberField label="Kcal / 100g" value={editItem.kcalPer100g ?? ''}
-              onChange={v => set('kcalPer100g', v === '' ? null : v)} min={0} />
-            <NumberField label="Protein / 100g" value={editItem.proteinPer100g ?? ''}
-              onChange={v => set('proteinPer100g', v === '' ? null : v)} min={0} />
-            <NumberField label="Fat / 100g" value={editItem.fatPer100g ?? ''}
-              onChange={v => set('fatPer100g', v === '' ? null : v)} min={0} />
-            <NumberField label="Carbs / 100g" value={editItem.carbsPer100g ?? ''}
-              onChange={v => set('carbsPer100g', v === '' ? null : v)} min={0} />
-            <NumberField label="Fiber / 100g" value={editItem.fiberPer100g ?? ''}
-              onChange={v => set('fiberPer100g', v === '' ? null : v)} min={0} />
-          </div>
-        </div>
+        <DynamicForm
+          entityName="Ingredient"
+          mode={editItem.id ? 'edit' : 'save'}
+          values={editItem}
+          onChange={(field, value) => setEditItem(s => ({ ...s, [field]: value }))}
+          errors={formErrors}
+        />
       </Dialog>
     </div>
   )

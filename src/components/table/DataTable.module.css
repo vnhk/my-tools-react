@@ -6,7 +6,7 @@
   height: 100%;
 }
 
-/* Toolbar */
+/* ══ Toolbar ══════════════════════════════════════════════════════════════════ */
 .toolbar {
   display: flex;
   align-items: center;
@@ -23,24 +23,37 @@
 
 .search {
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-primary);
+  font-family: var(--font-sans);
   font-size: var(--font-size-sm);
-  padding: 6px 12px;
-  width: 260px;
+  padding: 9px 14px 9px 36px;
+  width: 280px;
   outline: none;
-  transition: border-color var(--transition);
+  transition:
+    border-color var(--transition),
+    background var(--transition),
+    box-shadow var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
 }
-.search:focus { border-color: var(--color-primary); }
+.search:focus {
+  border-color: var(--color-primary-dark);
+  background-color: rgba(165, 180, 252, 0.05);
+  box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.12);
+}
 .search::placeholder { color: var(--color-text-tertiary); }
 
-/* Table */
+/* ══ Table wrapper ════════════════════════════════════════════════════════════ */
 .tableWrapper {
   overflow: auto;
   flex: 1;
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.018);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 .table {
@@ -49,59 +62,77 @@
   font-size: var(--font-size-sm);
 }
 
+/* ── Header ── */
 .table thead {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: rgba(17, 25, 40, 0.95);
 }
 
 .table th {
-  padding: 10px 12px;
+  padding: 11px 14px;
   text-align: left;
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-weight: 700;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--glass-border);
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--color-border);
   white-space: nowrap;
+  background: rgba(8, 9, 18, 0.92);
+  backdrop-filter: blur(8px);
 }
 
 .sortable { cursor: pointer; user-select: none; }
-.sortable:hover { color: var(--color-text-primary); }
-.sortIcon { color: var(--color-primary); }
+.sortable:hover { color: var(--color-text-secondary); }
+.sortIcon { color: var(--color-primary); margin-left: 4px; }
 
+/* ── Rows ── */
 .table td {
-  padding: 9px 12px;
+  padding: 11px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   color: var(--color-text-primary);
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: background var(--transition);
 }
 
-.checkCell { width: 40px; }
+.checkCell { width: 44px; }
+.checkCell input { accent-color: var(--color-primary-dark); cursor: pointer; }
 
-.row { transition: background var(--transition); }
-.row:hover { background: var(--color-surface-hover); }
+.row {
+  transition: background var(--transition);
+  position: relative;
+}
+
+.row:hover td {
+  background: rgba(165, 180, 252, 0.04);
+}
+.row:hover td:first-child {
+  box-shadow: inset 2px 0 0 rgba(165, 180, 252, 0.45);
+}
 .row:last-child td { border-bottom: none; }
-.selectedRow { background: rgba(99, 102, 241, 0.08); }
+
+.selectedRow td { background: rgba(165, 180, 252, 0.07); }
+.selectedRow td:first-child { box-shadow: inset 2px 0 0 var(--color-primary); }
+
 .clickable { cursor: pointer; }
 
 .empty {
   text-align: center;
   color: var(--color-text-tertiary);
-  padding: 48px !important;
+  padding: 56px !important;
+  font-size: var(--font-size-sm);
 }
 
-/* Footer */
+/* ══ Footer ═══════════════════════════════════════════════════════════════════ */
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-xs) 0;
+  padding: 2px 0;
   flex-shrink: 0;
 }
 
@@ -111,47 +142,52 @@
   gap: var(--space-sm);
 }
 
-.selectionInfo { font-size: var(--font-size-sm); color: var(--color-primary); font-weight: 600; }
-.totalInfo { font-size: var(--font-size-sm); color: var(--color-text-tertiary); }
-.pageInfo { font-size: var(--font-size-sm); color: var(--color-text-secondary); padding: 0 4px; }
+.selectionInfo { font-size: var(--font-size-xs); color: var(--color-primary); font-weight: 700; }
+.totalInfo     { font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
+.pageInfo      { font-size: var(--font-size-xs); color: var(--color-text-secondary); padding: 0 4px; }
 
 .pageSizeSelect {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-xs);
-  padding: 4px 6px;
-  outline: none;
+  width: 110px;
+  flex-shrink: 0;
 }
 
-/* Floating toolbar */
+/* ══ Floating selection toolbar ═══════════════════════════════════════════════ */
 .floatingToolbar {
   position: fixed;
-  bottom: 24px;
+  bottom: 28px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--glass-border);
+  background: rgba(12, 14, 26, 0.92);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(165, 180, 252, 0.2);
   border-radius: var(--radius-pill);
   padding: 8px 16px;
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(165, 180, 252, 0.08),
+    0 0 24px rgba(165, 180, 252, 0.08);
   z-index: 100;
+  animation: floatIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes floatIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1); }
 }
 
 .floatingCount {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
   color: #fff;
   font-size: var(--font-size-xs);
-  font-weight: 700;
+  font-weight: 800;
   width: 22px;
   height: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 8px rgba(165, 180, 252, 0.4);
 }
