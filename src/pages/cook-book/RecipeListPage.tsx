@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useNotification } from '../../components/ui/Notification'
 import { recipesApi, type RecipeDto } from '../../api/cookBook'
+import { CustomSelect } from '../../components/fields/CustomSelect'
 import styles from './RecipeListPage.module.css'
 
 function Stars({ rating, count }: { rating: number | null; count: number | null }) {
@@ -32,9 +33,12 @@ function ImportDialog({ scrapers, onImport, onClose }: {
         </div>
         <div className={styles.dialogBody}>
           <label className={styles.dialogLabel}>Scraper</label>
-          <select className={styles.dialogSelect} value={scraper} onChange={e => setScraper(e.target.value)}>
-            {scrapers.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
+          <CustomSelect
+            className={styles.dialogSelect}
+            options={scrapers.map(s => ({ value: s, label: s }))}
+            value={scraper}
+            onChange={setScraper}
+          />
           <label className={styles.dialogLabel}>HTML Content</label>
           <textarea
             className={styles.dialogTextarea}
@@ -124,10 +128,12 @@ export function RecipeListPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
-        <select className={styles.tagSelect} value={filterTag} onChange={e => setFilterTag(e.target.value)}>
-          <option value="">All tags</option>
-          {tags.map(t => <option key={t} value={t}>{t}</option>)}
-        </select>
+        <CustomSelect
+          className={styles.tagSelect}
+          options={[{ value: '', label: 'All tags' }, ...tags.map(t => ({ value: t, label: t }))]}
+          value={filterTag}
+          onChange={setFilterTag}
+        />
         <button
           className={`${styles.filterBtn} ${filterFav ? styles.filterActive : ''}`}
           onClick={() => setFilterFav(f => !f)}

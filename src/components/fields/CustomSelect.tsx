@@ -15,6 +15,8 @@ interface CustomSelectProps {
   size?: 'sm'
   className?: string
   id?: string
+  placement?: 'bottom' | 'top'
+  autoOpen?: boolean
 }
 
 export function CustomSelect({
@@ -26,8 +28,10 @@ export function CustomSelect({
   size,
   className = '',
   id,
+  placement = 'bottom',
+  autoOpen = false,
 }: CustomSelectProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(autoOpen)
   const [focusedIndex, setFocusedIndex] = useState<number>(-1)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
@@ -90,6 +94,8 @@ export function CustomSelect({
     setOpen(false)
   }
 
+  const dropdownClass = `${styles.dropdown} ${placement === 'top' ? styles.dropdownTop : ''}`
+
   return (
     <div
       ref={wrapperRef}
@@ -116,7 +122,7 @@ export function CustomSelect({
       </button>
 
       {open && (
-        <div className={styles.dropdown} role="listbox">
+        <div className={dropdownClass} role="listbox">
           <div ref={listRef} className={styles.optionsList}>
             {options.map((opt, i) => (
               <div

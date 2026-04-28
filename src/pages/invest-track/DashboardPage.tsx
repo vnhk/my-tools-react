@@ -9,6 +9,7 @@ import {
   type DashboardData, type DashboardKpi, type TimeSeriesPoint, type WalletTimeSeriesEntry,
   type InvestmentRecommendation,
 } from '../../api/investments'
+import { CustomSelect } from '../../components/fields/CustomSelect'
 import styles from './DashboardPage.module.css'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -216,15 +217,19 @@ function WalletFilterPanel({
   return (
     <div className={styles.walletFilterRow}>
       <span className={styles.walletFilterLabel}>Aggregation:</span>
-      <select className={styles.walletFilterSelect} value={aggMode}
-        onChange={e => onAggMode(e.target.value as AggMode)}>
-        {AGG_OPTS.map(o => <option key={o}>{o}</option>)}
-      </select>
+      <CustomSelect
+        className={styles.walletFilterSelect}
+        options={AGG_OPTS.map(o => ({ value: o, label: o }))}
+        value={aggMode}
+        onChange={v => onAggMode(v as AggMode)}
+      />
       <span className={styles.walletFilterLabel}>Period:</span>
-      <select className={styles.walletFilterSelect} value={period}
-        onChange={e => onPeriod(e.target.value as PeriodAgg)}>
-        {PERIOD_OPTS.map(o => <option key={o}>{o}</option>)}
-      </select>
+      <CustomSelect
+        className={styles.walletFilterSelect}
+        options={PERIOD_OPTS.map(o => ({ value: o, label: o }))}
+        value={period}
+        onChange={v => onPeriod(v as PeriodAgg)}
+      />
       <span className={styles.walletFilterLabel}>From:</span>
       <input type="date" className={styles.walletFilterDate} value={fromDate}
         onChange={e => onFromDate(e.target.value)} />

@@ -1,15 +1,16 @@
-import { SelectHTMLAttributes } from 'react'
 import styles from './Field.module.css'
+import { CustomSelect } from './CustomSelect'
 
-// React equivalent of BervanDynamicDropdownController
-// A select field that takes a dynamic list of options and an identifying key
-
-interface DynamicSelectFieldProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface DynamicSelectFieldProps {
   fieldKey: string
   label?: string
   options: string[]
   error?: string
   required?: boolean
+  value?: string
+  onChange?: (e: { target: { value: string } }) => void
+  disabled?: boolean
+  className?: string
 }
 
 export function DynamicSelectField({
@@ -18,23 +19,26 @@ export function DynamicSelectField({
   options,
   error,
   required,
+  value,
+  onChange,
+  disabled,
   className = '',
-  ...props
 }: DynamicSelectFieldProps) {
   return (
     <div className={styles.group}>
       {label && (
         <label className={styles.label}>
           {label}
-          {required && <span style={{ color: 'var(--color-danger)' }}> *</span>}
+          {required && <span className={styles.required}> *</span>}
         </label>
       )}
-      <select className={`${styles.select} ${className}`} required={required} {...props}>
-        <option value="">—</option>
-        {options.map((opt) => (
-          <option key={opt} value={opt}>{opt}</option>
-        ))}
-      </select>
+      <CustomSelect
+        options={[{ value: '', label: '—' }, ...options.map((o) => ({ value: o, label: o }))]}
+        value={value ?? ''}
+        onChange={(v) => onChange?.({ target: { value: v } })}
+        disabled={disabled}
+        className={className}
+      />
       {error && <span className={styles.error}>{error}</span>}
     </div>
   )

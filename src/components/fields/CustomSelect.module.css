@@ -93,9 +93,20 @@
   animation: dropIn 0.14s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.dropdownTop {
+  top: auto;
+  bottom: calc(100% + 6px);
+  animation-name: dropUp;
+}
+
 @keyframes dropIn {
   from { opacity: 0; transform: translateY(-6px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes dropUp {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
 
 .optionsList {

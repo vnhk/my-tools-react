@@ -5,6 +5,7 @@ import {
   recipesApi, ingredientsApi, shoppingCartsApi, unitsApi,
   type RecipeDto, type RecipeIngredientDto, type CartDto, type IngredientDto, type UnitOption,
 } from '../../api/cookBook'
+import { CustomSelect } from '../../components/fields/CustomSelect'
 import styles from './RecipeDetailPage.module.css'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -137,9 +138,12 @@ function AddIngredientDialog({ recipeId, existingCategories, units, onAdded, onC
             </div>
             <div className={styles.dialogField}>
               <label className={styles.dialogLabel}>Unit</label>
-              <select className={styles.dialogSelect} value={unit} onChange={e => setUnit(e.target.value)}>
-                {units.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-              </select>
+              <CustomSelect
+                className={styles.dialogSelect}
+                options={units.map(u => ({ value: u.value, label: u.label }))}
+                value={unit}
+                onChange={setUnit}
+              />
             </div>
           </div>
           <label className={styles.dialogLabel}>Category (e.g., Na ciasto)</label>
@@ -193,10 +197,12 @@ function AddToCartDialog({ recipeId, onClose }: { recipeId: string; onClose: () 
         </div>
         <div className={styles.dialogBody}>
           <label className={styles.dialogLabel}>Cart</label>
-          <select className={styles.dialogSelect} value={cartId} onChange={e => setCartId(e.target.value)}>
-            <option value="">Select...</option>
-            {carts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <CustomSelect
+            className={styles.dialogSelect}
+            options={[{ value: '', label: 'Select...' }, ...carts.map(c => ({ value: c.id, label: c.name }))]}
+            value={cartId}
+            onChange={setCartId}
+          />
           <label className={styles.dialogLabel}>Servings multiplier</label>
           <input className={styles.dialogInput} type="number" min="0.1" step="0.5" value={multiplier}
             onChange={e => setMultiplier(e.target.value)} />

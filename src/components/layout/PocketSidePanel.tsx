@@ -5,6 +5,7 @@ import { Dialog } from '../ui/Dialog'
 import { RichTextEditor } from '../ui/RichTextEditor'
 import { TextField } from '../fields/TextField'
 import { Button } from '../ui/Button'
+import { CustomSelect } from '../fields/CustomSelect'
 import styles from './PocketSidePanel.module.css'
 
 // ── Item dialog ────────────────────────────────────────────────────────────────
@@ -155,9 +156,11 @@ function PocketColumn({ initialName, allNames }: PocketColumnProps) {
   return (
     <div className={styles.column}>
       <div className={styles.columnHeader}>
-        <select value={selected} onChange={(e) => setSelected(e.target.value)}>
-          {allNames.map((n) => <option key={n} value={n}>{n}</option>)}
-        </select>
+        <CustomSelect
+          options={allNames.map((n) => ({ value: n, label: n }))}
+          value={selected}
+          onChange={setSelected}
+        />
       </div>
 
       <div className={styles.itemsList}>

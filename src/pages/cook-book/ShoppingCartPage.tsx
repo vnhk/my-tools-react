@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNotification } from '../../components/ui/Notification'
 import { shoppingCartsApi, type CartDto, type CartItemDto } from '../../api/cookBook'
+import { CustomSelect } from '../../components/fields/CustomSelect'
 import styles from './ShoppingCartPage.module.css'
 
 function NewCartDialog({ onCreated, onClose }: { onCreated: (cart: CartDto) => void; onClose: () => void }) {
@@ -139,15 +140,13 @@ export function ShoppingCartPage() {
   return (
     <div className={styles.page}>
       <div className={styles.toolbar}>
-        <select className={styles.cartSelect} value={selectedId}
-          onChange={e => setSelectedId(e.target.value)} disabled={loadingCarts}>
-          <option value="">Select cart...</option>
-          {visibleCarts.map(c => (
-            <option key={c.id} value={c.id}>
-              {c.archived ? '[Archived] ' : ''}{c.name}
-            </option>
-          ))}
-        </select>
+        <CustomSelect
+          className={styles.cartSelect}
+          options={[{ value: '', label: 'Select cart...' }, ...visibleCarts.map(c => ({ value: c.id, label: `${c.archived ? '[Archived] ' : ''}${c.name}` }))]}
+          value={selectedId}
+          onChange={setSelectedId}
+          disabled={loadingCarts}
+        />
         <button className={`${styles.btn} ${styles.primary}`} onClick={() => setShowNew(true)}>+ New Cart</button>
         <label className={styles.checkLabel}>
           <input type="checkbox" checked={showArchived} onChange={e => setShowArchived(e.target.checked)} />

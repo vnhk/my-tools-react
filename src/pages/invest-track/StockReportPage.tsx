@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNotification } from '../../components/ui/Notification'
 import { stockReportApi, type StockDto, type StockReportDto } from '../../api/investments'
+import { CustomSelect } from '../../components/fields/CustomSelect'
 import styles from './StockReportPage.module.css'
 
 type Tab = 'best' | 'good' | 'risky'
@@ -183,13 +184,12 @@ export function StockReportPage() {
         >
           {triggering === 'evening' ? 'Loading...' : 'Trigger Evening'}
         </button>
-        <select
+        <CustomSelect
           className={styles.select}
+          options={strategies.map(s => ({ value: s, label: s }))}
           value={strategy}
-          onChange={e => setStrategy(e.target.value)}
-        >
-          {strategies.map(s => <option key={s} value={s}>{s}</option>)}
-        </select>
+          onChange={setStrategy}
+        />
         <input
           type="date"
           className={styles.dateInput}

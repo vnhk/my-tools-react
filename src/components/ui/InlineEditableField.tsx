@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { CustomSelect } from '../fields/CustomSelect'
 import styles from './InlineEditableField.module.css'
 
 type FieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'COMBOBOX' | 'MULTI_SELECT'
@@ -79,19 +80,16 @@ export function InlineEditableField({
       return (
         <div className={styles.field}>
           <span className={styles.label}>{label}</span>
-          <select
-            ref={inputRef as React.Ref<HTMLSelectElement>}
-            className={styles.editor}
+          <CustomSelect
+            autoOpen
+            options={[{ value: '', label: '—' }, ...options.map((o) => ({ value: o, label: o }))]}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={handleKeyDown}
-          >
-            <option value="">—</option>
-            {options.map((o) => (
-              <option key={o} value={o}>{o}</option>
-            ))}
-          </select>
+            onChange={(v) => {
+              setDraft(v)
+              setEditing(false)
+              onSave(v || null)
+            }}
+          />
         </div>
       )
     }

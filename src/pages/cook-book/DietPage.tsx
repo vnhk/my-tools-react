@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNotification } from '../../components/ui/Notification'
 import { dietApi, ingredientsApi, type DietDayDto, type DietMealDto, type DietMealItemDto, type IngredientDto } from '../../api/cookBook'
+import { CustomSelect } from '../../components/fields/CustomSelect'
 import styles from './DietPage.module.css'
 
 const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'OTHER']
@@ -250,9 +251,12 @@ function CopyMealDialog({ date, mealType, mealName, onCopied, onClose }: {
           </div>
           <div className={styles.field}>
             <label className={styles.label}>Source Meal</label>
-            <select className={styles.input} value={srcType} onChange={e => setSrcType(e.target.value)}>
-              {MEAL_TYPES.map(t => <option key={t} value={t}>{t.charAt(0) + t.slice(1).toLowerCase()}</option>)}
-            </select>
+            <CustomSelect
+              className={styles.input}
+              options={MEAL_TYPES.map(t => ({ value: t, label: t.charAt(0) + t.slice(1).toLowerCase() }))}
+              value={srcType}
+              onChange={setSrcType}
+            />
           </div>
         </div>
         <div className={styles.dialogFooter}>
@@ -380,18 +384,21 @@ function SetDataDialog({ day, onSaved, onClose }: {
             {field('heightCm', 'Height (cm)')}
             <div className={styles.field}>
               <label className={styles.label}>Gender</label>
-              <select className={styles.input} value={f.gender}
-                onChange={e => setF(prev => ({ ...prev, gender: e.target.value }))}>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-              </select>
+              <CustomSelect
+                className={styles.input}
+                options={[{ value: 'M', label: 'Male' }, { value: 'F', label: 'Female' }]}
+                value={f.gender}
+                onChange={v => setF(prev => ({ ...prev, gender: v }))}
+              />
             </div>
             <div className={styles.field}>
               <label className={styles.label}>Activity Level</label>
-              <select className={styles.input} value={f.activityLevel}
-                onChange={e => setF(prev => ({ ...prev, activityLevel: e.target.value }))}>
-                {ACTIVITY_LEVELS.map(l => <option key={l.value} value={l.value}>{l.label}</option>)}
-              </select>
+              <CustomSelect
+                className={styles.input}
+                options={ACTIVITY_LEVELS}
+                value={f.activityLevel}
+                onChange={v => setF(prev => ({ ...prev, activityLevel: v }))}
+              />
             </div>
           </div>
           <button className={`${styles.btn} ${styles.secondary}`} onClick={calcTDEE}>

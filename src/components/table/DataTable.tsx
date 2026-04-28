@@ -200,6 +200,7 @@ export function DataTable<T>({
             {onPageSizeChange && (
               <CustomSelect
                 size="sm"
+                placement="top"
                 className={styles.pageSizeSelect}
                 options={PAGE_SIZES.map((s) => ({ value: String(s), label: `${s} / page` }))}
                 value={String(pageSize)}
