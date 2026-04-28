@@ -5,7 +5,7 @@ import styles from './HomePage.module.css'
 export interface HomePageCard {
   title: string
   description: string
-  icon: string
+  icon: ReactNode
   route: string
 }
 
