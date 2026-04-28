@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import {ReactNode, useState} from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { PocketSidePanel } from './PocketSidePanel'
@@ -7,7 +7,7 @@ import styles from './AppLayout.module.css'
 export interface NavItem {
   path: string
   label: string
-  icon: string
+  icon: ReactNode
 }
 
 interface AppLayoutProps {

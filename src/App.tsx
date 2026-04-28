@@ -30,18 +30,18 @@ import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
 import {HomePage, HomePageCard} from "./components/layout/HomePage.tsx";
 import {
     FaBarcode,
-    FaBook,
+    FaBook, FaBookOpen, FaChartLine,
     FaCloudUploadAlt,
     FaCog,
     FaDatabase,
     FaDesktop,
     FaEdit,
-    FaFilm,
-    FaMoneyBill,
+    FaFilm, FaFlag, FaFolder, FaHome, FaMicrophone,
+    FaMoneyBill, FaPaintBrush,
     FaPlane,
     FaShoppingCart,
     FaTable,
-    FaTasks
+    FaTasks, FaUserTie
 } from "react-icons/fa";
 
 import {MdOutlineAddBox} from "react-icons/md";
@@ -146,20 +146,20 @@ const cards: HomePageCard[] = [
 ];
 
 const NAV_ITEMS: NavItem[] = [
-    {path: '/home', label: 'Home', icon: 'home'},
-    {path: '/invest-track', label: 'Invest Track', icon: '📈'},
-    {path: '/pocket', label: 'Pocket', icon: '📌'},
-    {path: '/cook-book', label: 'Cook Book', icon: '🍳'},
-    {path: '/learning', label: 'Learning', icon: '🗣'},
-    {path: '/streaming', label: 'Streaming', icon: '🎬'},
-    {path: '/canvas', label: 'Canvas', icon: '🎨'},
-    {path: '/spreadsheet', label: 'Spreadsheet', icon: '📊'},
-    {path: '/projects', label: 'Projects', icon: '🚩'},
-    {path: '/interview', label: 'Interview', icon: '💼'},
-    {path: '/files', label: 'Files', icon: '📁'},
-    {path: '/shopping', label: 'Shopping', icon: '🛒'},
-    {path: '/english', label: 'English Stats', icon: '📖'},
-]
+    { path: "/home", label: "Home", icon: <FaHome /> },
+    { path: "/pocket", label: "Pocket", icon: <FaFolder /> },
+    { path: "/cook-book", label: "Cook Book", icon: <FaBook /> },
+    { path: "/learning", label: "Learning", icon: <FaMicrophone /> },
+    { path: "/streaming", label: "Streaming", icon: <FaFilm /> },
+    { path: "/canvas", label: "Canvas", icon: <FaPaintBrush /> },
+    { path: "/invest-track", label: "Invest Track", icon: <FaChartLine /> },
+    { path: "/spreadsheet", label: "Spreadsheet", icon: <FaTable /> },
+    { path: "/projects", label: "Projects", icon: <FaTasks /> },
+    { path: "/interview", label: "Interview", icon: <FaUserTie /> },
+    { path: "/files", label: "Files", icon: <FaCloudUploadAlt /> },
+    { path: "/shopping", label: "Shopping", icon: <FaShoppingCart /> },
+    { path: "/english", label: "English Stats", icon: <FaBookOpen /> }
+];
 
 function PlaceholderPage({name}: { name: string }) {
     return (
