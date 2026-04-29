@@ -24,6 +24,13 @@ export function QuestionListPage() {
         ...buildColumnsFromConfig<InterviewQuestion>('Question')
     ]
 
+    const openEdit = (item: Partial<InterviewQuestion>) => {
+        setEditItem({
+            ...item
+        })
+        setDialogOpen(true)
+    }
+
     const load = () => {
         setLoading(true)
         interviewQuestionsApi
@@ -95,7 +102,7 @@ export function QuestionListPage() {
                 searchValue={table.search}
                 onSearchChange={table.setSearch}
                 actions={actions}
-                // onRowClick={openEdit}
+                onRowClick={openEdit}
                 onAdd={() => {
                     setEditItem({name: ''});
                     setFormErrors({});
