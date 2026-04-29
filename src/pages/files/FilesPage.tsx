@@ -280,14 +280,23 @@ function MoveDialog({
   )
 }
 
+const EDITABLE_EXT = new Set(['txt', 'md', 'json', 'xml', 'csv', 'log', 'yaml', 'yml', 'vtt', 'srt', 'js', 'ts', 'css', 'html'])
+const MAX_EDITABLE_BYTES = 2 * 1024 * 1024
+
 // ---- Inline File Viewer ----
 function FileViewerDialog({ item, onClose, onUnlockNeeded }: {
   item: FileItem
   onClose: () => void
   onUnlockNeeded: (item: FileItem) => void
 }) {
+  const { showNotification } = useNotification()
   const vtype = getViewerType(item)
+  const ext = (item.extension ?? '').toLowerCase()
+  const isEditable = vtype === 'text' && EDITABLE_EXT.has(ext) && (item.fileSize == null || item.fileSize <= MAX_EDITABLE_BYTES) && !item.encrypted
   const [textContent, setTextContent] = useState<string | null>(null)
+  const [editMode, setEditMode] = useState(false)
+  const [editValue, setEditValue] = useState('')
+  const [saving, setSaving] = useState(false)
   const [textError, setTextError] = useState(false)
   const streamUrl = `/file-storage-app/files/stream?uuid=${item.id}`
   const downloadUrl = `/file-storage-app/files/download?uuid=${item.id}`
@@ -311,12 +320,46 @@ function FileViewerDialog({ item, onClose, onUnlockNeeded }: {
     }
   }, [item.id])
 
+  const startEdit = () => {
+    setEditValue(textContent ?? '')
+    setEditMode(true)
+  }
+
+  const saveEdit = async () => {
+    setSaving(true)
+    try {
+      await client.put(`/files/${item.id}/content`, editValue, {
+        headers: { 'Content-Type': 'text/plain' },
+      })
+      setTextContent(editValue)
+      setEditMode(false)
+      showNotification('Saved', 'success')
+    } catch {
+      showNotification('Save failed', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const srcUrl = item.encrypted ? streamUrl : downloadUrl
 
   return (
     <Dialog open title={item.filename} onClose={onClose} width="min(95vw, 900px)"
       footer={
-        <Button variant="ghost" onClick={onClose}>Close</Button>
+        <>
+          {vtype === 'text' && isEditable && !editMode && (
+            <Button variant="secondary" onClick={startEdit}>✏ Edit</Button>
+          )}
+          {editMode && (
+            <>
+              <Button variant="ghost" onClick={() => setEditMode(false)}>Cancel</Button>
+              <Button variant="primary" onClick={saveEdit} disabled={saving}>
+                {saving ? 'Saving…' : 'Save'}
+              </Button>
+            </>
+          )}
+          {!editMode && <Button variant="ghost" onClick={onClose}>Close</Button>}
+        </>
       }
     >
       <div className={styles.viewerBody}>
@@ -339,6 +382,13 @@ function FileViewerDialog({ item, onClose, onUnlockNeeded }: {
             <div className={styles.viewerTextError}>Failed to load file content.</div>
           ) : textContent === null ? (
             <div className={styles.viewerLoading}>Loading…</div>
+          ) : editMode ? (
+            <textarea
+              className={styles.viewerTextEdit}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              spellCheck={false}
+            />
           ) : (
             <pre className={styles.viewerText}>{textContent}</pre>
           )
