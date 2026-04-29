@@ -16,6 +16,7 @@ export interface FieldConfig {
     fetchable: boolean
     strValues: string[] | null
     intValues: number[] | null
+    dataType: string
     dynamicStrValues: boolean
     dynamicStrValuesList: string[] | null
 }

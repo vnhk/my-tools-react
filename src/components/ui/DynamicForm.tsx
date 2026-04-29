@@ -126,7 +126,7 @@ export function DynamicForm({
                 }
 
                 // Number field — when min/max are set and the value is numeric (not a text field)
-                if (f.min != null && f.max != null && (val == null || typeof val === 'number')) {
+                if (f.min != null && f.max != null && (f.dataType?.toLowerCase() == "number" || typeof val === 'number')) {
                     return (
                         <TextField
                             key={f.field}
@@ -147,6 +147,7 @@ export function DynamicForm({
                         key={f.field}
                         label={f.displayName}
                         value={String(val ?? '')}
+                        type="text"
                         onChange={(e) => onChange(f.field, e.target.value)}
                         required={f.required}
                         autoFocus={i === 0}
