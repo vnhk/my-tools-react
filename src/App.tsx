@@ -47,6 +47,7 @@ import {
 } from "react-icons/fa";
 
 import {MdOutlineAddBox} from "react-icons/md";
+import {QuestionListPage} from "./pages/interview/QuestionListPage.tsx";
 
 const cards: HomePageCard[] = [
     {
@@ -207,6 +208,7 @@ export default function App() {
                                     <Route path="diet" element={<DietPage/>}/>
                                     <Route path="diet-dashboard" element={<DietDashboardPage/>}/>
                                 </Route>
+                                <Route path="/interview" element={<QuestionListPage/>}/>
                                 <Route path="/streaming" element={<ProductionListPage/>}/>
                                 <Route path="/streaming/production/:name" element={<ProductionDetailsPage/>}/>
                                 <Route path="/streaming/player/:productionName/:videoFolderId"
