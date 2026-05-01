@@ -29,6 +29,10 @@ import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
 import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
 import TvPairingPage from './pages/streaming-platform/TvPairingPage'
 import { FilesPage } from './pages/files/FilesPage'
+import { ProjectListPage } from './pages/projects/ProjectListPage'
+import { ProjectDetailsPage } from './pages/projects/ProjectDetailsPage'
+import { AllTasksPage } from './pages/projects/AllTasksPage'
+import { TaskDetailsPage } from './pages/projects/TaskDetailsPage'
 import {HomePage, HomePageCard} from "./components/layout/HomePage.tsx";
 import {
     FaBarcode,
@@ -216,7 +220,11 @@ export default function App() {
                                 <Route path="/streaming/remote" element={<RemoteControlPage/>}/>
                                 <Route path="/streaming/tv-pairing" element={<TvPairingPage/>}/>
                                 <Route path="/files" element={<FilesPage/>}/>
-                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming').map((item) => (
+                                <Route path="/projects" element={<ProjectListPage/>}/>
+                                <Route path="/projects/all-tasks" element={<AllTasksPage/>}/>
+                                <Route path="/projects/:projectId" element={<ProjectDetailsPage/>}/>
+                                <Route path="/projects/tasks/:taskId" element={<TaskDetailsPage/>}/>
+                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects').map((item) => (
                                     <Route
                                         key={item.path}
                                         path={`${item.path}/*`}

@@ -1,0 +1,24 @@
+.page {
+  padding: var(--space-md);
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-sm);
+}
+
+.pageHeader h2 {
+  margin: 0;
+}
+
+.nameLink {
+  color: var(--color-primary);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.nameLink:hover {
+  text-decoration: underline;
+}

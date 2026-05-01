@@ -8,9 +8,9 @@
   white-space: nowrap;
 }
 
-.primary  { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
-.success  { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-.warning  { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-.danger   { background: rgba(239, 68, 68, 0.2);  color: #f87171; }
-.info     { background: rgba(34, 211, 238, 0.2); color: #67e8f9; }
-.neutral  { background: rgba(255, 255, 255, 0.1); color: var(--color-text-secondary); }
+.primary  { background: var(--color-primary-subtle); color: var(--color-primary); }
+.success  { background: var(--color-success-subtle); color: var(--color-success); }
+.warning  { background: var(--color-warning-subtle); color: var(--color-warning); }
+.danger   { background: var(--color-danger-subtle);  color: var(--color-danger); }
+.info     { background: var(--color-info-subtle);    color: var(--color-info); }
+.neutral  { background: var(--color-surface-hover);  color: var(--color-text-secondary); }

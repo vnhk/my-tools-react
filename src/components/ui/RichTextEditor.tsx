@@ -106,7 +106,7 @@ export function RichTextEditor({
           {viewMode ? 'Switch to Edit Mode' : 'Switch to View Mode'}
         </button>
       )}
-      <div style={{ height }}>
+      <div style={{ height, overflow: 'hidden', borderRadius: '4px' }}>
         <div id={idRef.current} ref={editorRef} style={{ height: '100%' }} />
       </div>
     </div>

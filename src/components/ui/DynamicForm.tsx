@@ -30,7 +30,7 @@ export function DynamicForm({
     const visible = fields.filter((f) => !skip.includes(f.field))
 
     return (
-        <>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
             {visible.map((f, i) => {
                 const val = values[f.field]
 
@@ -155,7 +155,7 @@ export function DynamicForm({
                     />
                 )
             })}
-        </>
+        </div>
     )
 }
 
