@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:integration": "playwright test --config playwright.integration.config.ts",
+    "dev:integration": "vite --config vite.integration.config.ts",
+    "test:integration": "bash scripts/run-integration-tests.sh"
   },
   "dependencies": {
     "axios": "^1.15.2",
