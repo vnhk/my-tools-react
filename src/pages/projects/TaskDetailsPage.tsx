@@ -56,7 +56,7 @@ export function TaskDetailsPage() {
 
   const patch = async (fields: Partial<TaskDetailDto>) => {
     if (!task) return
-    await tasksApi.update(task.id, fields).catch(() => showError('Save failed'))
+    await tasksApi.patchUpdate(task.id, fields).catch(() => showError('Save failed'))
     load()
   }
 
@@ -188,7 +188,7 @@ export function TaskDetailsPage() {
         <InlineEditableField
           label="Due Date"
           value={task.dueDate}
-          fieldType="DATE"
+          fieldType="DATETIME"
           onSave={(v) => patch({ dueDate: v as string | null })}
         />
         <InlineEditableField

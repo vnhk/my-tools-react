@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { CustomSelect } from '../fields/CustomSelect'
 import styles from './InlineEditableField.module.css'
 
-type FieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'COMBOBOX' | 'MULTI_SELECT'
+type FieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'DATETIME' | 'COMBOBOX' | 'MULTI_SELECT'
 
 interface InlineEditableFieldProps {
   label: string
@@ -29,9 +29,14 @@ export function InlineEditableField({
   readOnly = false,
 }: InlineEditableFieldProps) {
   const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<string>(
-    Array.isArray(value) ? value.join(', ') : value != null ? String(value) : ''
-  )
+  const toInputValue = (v: typeof value) => {
+    if (Array.isArray(v)) return v.join(', ')
+    if (v == null) return ''
+    if (fieldType === 'DATETIME') return String(v).slice(0, 16)
+    return String(v)
+  }
+
+  const [draft, setDraft] = useState<string>(toInputValue(value))
   const [multiDraft, setMultiDraft] = useState<string[]>(
     Array.isArray(value) ? value : []
   )
@@ -45,7 +50,7 @@ export function InlineEditableField({
 
   const startEdit = () => {
     if (readOnly) return
-    setDraft(Array.isArray(value) ? value.join(', ') : value != null ? String(value) : '')
+    setDraft(toInputValue(value))
     setMultiDraft(Array.isArray(value) ? value : [])
     setEditing(true)
   }
@@ -124,7 +129,7 @@ export function InlineEditableField({
         <input
           ref={inputRef as React.Ref<HTMLInputElement>}
           className={styles.editor}
-          type={fieldType === 'NUMBER' ? 'number' : fieldType === 'DATE' ? 'date' : 'text'}
+          type={fieldType === 'NUMBER' ? 'number' : fieldType === 'DATE' ? 'date' : fieldType === 'DATETIME' ? 'datetime-local' : 'text'}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={commit}

@@ -102,7 +102,7 @@ export function ProjectDetailsPage() {
     if (Object.keys(errors).length > 0) { setTaskErrors(errors); return }
     try {
       if ((editTask as TaskDto).id) {
-        await tasksApi.update((editTask as TaskDto).id, editTask as Partial<TaskDto>)
+        await tasksApi.patchUpdate((editTask as TaskDto).id, editTask as Partial<TaskDto>)
       } else {
         if (!projectId) return
         await tasksApi.create({ ...(editTask as TaskCreateRequest), projectId })
