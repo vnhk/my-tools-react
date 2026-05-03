@@ -61,11 +61,13 @@ export function getEditFormFields(entityName: string): FieldConfig[] {
     return Object.values(config).filter((f) => f.inEditForm)
 }
 
-export function validateFields(entityName: string, values: Record<string, unknown>): Record<string, string> {
+export function validateFields(entityName: string, values: Record<string, unknown>, mode?: 'save' | 'edit'): Record<string, string> {
     const config = cache?.[entityName]
     if (!config) return {}
     const errors: Record<string, string> = {}
     for (const [fieldName, col] of Object.entries(config)) {
+        if (mode === 'save' && !col.inSaveForm) continue
+        if (mode === 'edit' && !col.inEditForm) continue
         const val = values[fieldName]
         const str = val != null ? String(val) : ''
         if (col.required && !str.trim()) {

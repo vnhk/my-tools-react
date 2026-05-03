@@ -47,7 +47,7 @@ export function ProjectListPage() {
   })
 
   const handleSave = async () => {
-    const errors = validateFields('Project', editItem as Record<string, unknown>)
+    const errors = validateFields('Project', editItem as Record<string, unknown>, editItem.id ? 'edit' : 'save')
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return }
     try {
       if (editItem.id) {

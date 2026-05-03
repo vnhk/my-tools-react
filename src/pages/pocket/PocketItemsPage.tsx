@@ -120,7 +120,7 @@ export function PocketItemsPage() {
     const payload = editUnlockedContent !== null
       ? { ...editItem, content: editItem.content ?? editUnlockedContent }
       : editItem
-    const errors = validateFields('PocketItem', payload as Record<string, unknown>)
+    const errors = validateFields('PocketItem', payload as Record<string, unknown>, payload.id ? 'edit' : 'save')
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return }
     try {
       if (payload.id) {

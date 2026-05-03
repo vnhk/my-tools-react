@@ -108,15 +108,17 @@ export function DynamicForm({
                     )
                 }
 
-                // Date field
-                if (f.field.toLowerCase().includes('date') && !f.wysiwyg) {
-                    const dateVal = val ? String(val).slice(0, 10) : ''
+                // Date / DateTime field
+                const dataType = f.dataType?.toUpperCase()
+                if (dataType === 'DATE' || dataType === 'DATETIME') {
+                    const isDateTime = dataType === 'DATETIME'
+                    const inputVal = val ? String(val).slice(0, isDateTime ? 16 : 10) : ''
                     return (
                         <TextField
                             key={f.field}
                             label={f.displayName}
-                            type="date"
-                            value={dateVal}
+                            type={isDateTime ? 'datetime-local' : 'date'}
+                            value={inputVal}
                             onChange={(e) => onChange(f.field, e.target.value)}
                             required={f.required}
                             autoFocus={i === 0}

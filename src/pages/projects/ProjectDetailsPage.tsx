@@ -98,7 +98,8 @@ export function ProjectDetailsPage() {
   })
 
   const handleTaskSave = async () => {
-    const errors = validateFields('Task', editTask as Record<string, unknown>)
+    const mode = (editTask as TaskDto).id ? 'edit' : 'save'
+    const errors = validateFields('Task', editTask as Record<string, unknown>, mode)
     if (Object.keys(errors).length > 0) { setTaskErrors(errors); return }
     try {
       if ((editTask as TaskDto).id) {
