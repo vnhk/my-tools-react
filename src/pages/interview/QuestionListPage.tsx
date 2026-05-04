@@ -8,7 +8,7 @@ import {useTableActions} from '../../hooks/useTableActions'
 import {useNotification} from '../../components/ui/Notification'
 import {toPage} from '../../api/crud'
 import styles from './QuestionListPage.module.css'
-import {InterviewQuestion, interviewQuestionsApi} from "../../api/interviewQuestions.ts";
+import {InterviewQuestion, interviewQuestionsApi} from "../../api/interview.ts";
 
 export function QuestionListPage() {
     const {showSuccess, showError} = useNotification()

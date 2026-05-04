@@ -52,6 +52,13 @@ import {
 
 import {MdOutlineAddBox} from "react-icons/md";
 import {QuestionListPage} from "./pages/interview/QuestionListPage.tsx";
+import {InterviewLayout} from "./pages/interview/InterviewLayout.tsx";
+import {CodingTaskListPage} from "./pages/interview/CodingTaskListPage.tsx";
+import {QuestionConfigListPage} from "./pages/interview/QuestionConfigListPage.tsx";
+import {InterviewSessionListPage} from "./pages/interview/InterviewSessionListPage.tsx";
+import {InterviewSessionPage} from "./pages/interview/InterviewSessionPage.tsx";
+import {StartInterviewPage} from "./pages/interview/StartInterviewPage.tsx";
+import {InterviewPlanPage} from "./pages/interview/InterviewPlanPage.tsx";
 
 const cards: HomePageCard[] = [
     {
@@ -212,7 +219,16 @@ export default function App() {
                                     <Route path="diet" element={<DietPage/>}/>
                                     <Route path="diet-dashboard" element={<DietDashboardPage/>}/>
                                 </Route>
-                                <Route path="/interview" element={<QuestionListPage/>}/>
+                                <Route path="/interview" element={<InterviewLayout/>}>
+                                    <Route index element={<Navigate to="questions" replace/>}/>
+                                    <Route path="questions" element={<QuestionListPage/>}/>
+                                    <Route path="coding-tasks" element={<CodingTaskListPage/>}/>
+                                    <Route path="configs" element={<QuestionConfigListPage/>}/>
+                                    <Route path="sessions" element={<InterviewSessionListPage/>}/>
+                                    <Route path="sessions/:id" element={<InterviewSessionPage/>}/>
+                                    <Route path="start" element={<StartInterviewPage/>}/>
+                                    <Route path="plan" element={<InterviewPlanPage/>}/>
+                                </Route>
                                 <Route path="/streaming" element={<ProductionListPage/>}/>
                                 <Route path="/streaming/production/:name" element={<ProductionDetailsPage/>}/>
                                 <Route path="/streaming/player/:productionName/:videoFolderId"
