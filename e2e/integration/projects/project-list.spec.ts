@@ -56,9 +56,34 @@ test.describe('Project list', () => {
     await page.getByRole('button', { name: /New Project/i }).click()
     await page.getByLabel('Name').fill('Gamma')
     await page.getByLabel('Number').fill('PRJ-003')
+    // Status and Priority are required selects — pick first available option for each
+    await page.getByRole('button', { name: '— Select —' }).first().click()
+    await page.getByRole('option', { name: 'Open' }).click()
+    await page.getByRole('button', { name: '— Select —' }).first().click()
+    await page.getByRole('option', { name: 'Medium' }).click()
     await page.getByRole('button', { name: 'Save' }).click()
 
     await expect(page.getByRole('cell', { name: 'Gamma' })).toBeVisible()
+  })
+
+  test('edits a project', async ({ page }) => {
+    let updated = false
+    await page.route('**/api/project-management/projects**', (route) => {
+      if (route.request().method() === 'PUT') {
+        updated = true
+        route.fulfill({ json: { ...PROJECTS[0], name: 'Alpha Updated' } })
+      } else {
+        route.fulfill({ json: pageResponse(updated ? [{ ...PROJECTS[0], name: 'Alpha Updated' }, PROJECTS[1]] : PROJECTS) })
+      }
+    })
+
+    await page.goto('/projects')
+    await page.getByRole('row', { name: /Alpha/ }).getByRole('checkbox').check()
+    await page.getByRole('button', { name: 'Edit' }).first().click()
+    await page.getByLabel('Name').fill('Alpha Updated')
+    await page.getByRole('button', { name: 'Save' }).click()
+
+    await expect(page.getByRole('cell', { name: 'Alpha Updated' })).toBeVisible()
   })
 
   test('deletes a project', async ({ page }) => {
@@ -78,5 +103,42 @@ test.describe('Project list', () => {
     await page.getByRole('button', { name: 'Delete' }).first().click()
 
     await expect(page.getByRole('cell', { name: 'Alpha' })).not.toBeVisible()
+  })
+
+  test('navigates to all-tasks page', async ({ page }) => {
+    await page.goto('/projects')
+    await page.getByRole('button', { name: /All Tasks/i }).click()
+    await expect(page).toHaveURL(/\/projects\/all-tasks/)
+  })
+
+  test('filters projects by search', async ({ page }) => {
+    let lastSearch: string | null = null
+    await page.route('**/api/project-management/projects**', (route) => {
+      const url = new URL(route.request().url())
+      lastSearch = url.searchParams.get('search')
+      route.fulfill({ json: pageResponse(lastSearch ? [PROJECTS[0]] : PROJECTS) })
+    })
+
+    await page.goto('/projects')
+    await page.getByPlaceholder('Search…').fill('Alpha')
+    await expect(page.getByRole('cell', { name: 'Alpha' })).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'Beta' })).not.toBeVisible()
+  })
+
+  test('shows validation error when name is missing', async ({ page }) => {
+    await page.goto('/projects')
+    await page.getByRole('button', { name: /New Project/i }).click()
+    await page.getByLabel('Number').fill('PRJ-999')
+    await page.getByRole('button', { name: 'Save' }).click()
+    // Multiple 'required' errors may appear (name, status, priority); .first() avoids strict mode
+    await expect(page.getByText(/required/i).first()).toBeVisible()
+  })
+
+  test('closes dialog on cancel', async ({ page }) => {
+    await page.goto('/projects')
+    await page.getByRole('button', { name: /New Project/i }).click()
+    await expect(page.getByLabel('Name')).toBeVisible()
+    await page.getByRole('button', { name: /Cancel/i }).click()
+    await expect(page.getByLabel('Name')).not.toBeVisible()
   })
 })
