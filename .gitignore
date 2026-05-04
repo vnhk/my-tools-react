@@ -31,3 +31,4 @@ test-results/
 *.njsproj
 *.sln
 *.sw?
+/playwright-report-integration/index.html
