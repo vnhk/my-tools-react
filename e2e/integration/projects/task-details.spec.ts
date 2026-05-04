@@ -335,6 +335,80 @@ test.describe('Task details', () => {
     await expect(page.getByText(/No relations yet/i)).toBeVisible()
   })
 
+  test('adds two relations, reload shows both, navigate to related task shows back-relation', async ({ page }) => {
+    const t3 = { id: 't3', number: 'TSK-003', name: 'Login flow', status: 'Open', type: 'Task' }
+    const t4 = { id: 't4', number: 'TSK-004', name: 'Refactor auth', status: 'Open', type: 'Task' }
+
+    const rel2 = {
+      id: 'r2', direction: 'PARENT', type: 'CHILD_IS_PART_OF', displayName: 'Parent of',
+      relatedTaskId: 't3', relatedTaskNumber: 'TSK-003', relatedTaskName: 'Login flow',
+      relatedTaskStatus: 'Open', relatedTaskType: 'Task',
+    }
+    const rel3 = {
+      id: 'r3', direction: 'PARENT', type: 'CHILD_IS_PART_OF', displayName: 'Parent of',
+      relatedTaskId: 't4', relatedTaskNumber: 'TSK-004', relatedTaskName: 'Refactor auth',
+      relatedTaskStatus: 'Open', relatedTaskType: 'Task',
+    }
+
+    // Mutable — starts with existing relation, gains rel2 and rel3 as they are added
+    const relations = [...TASK.relations]
+
+    // Overrides beforeEach route: returns current mutable relations on each GET
+    await page.route('**/api/project-management/tasks/t1', (route) => {
+      route.fulfill({ json: { ...TASK, relations } })
+    })
+
+    await page.route('**/api/project-management/tasks/search**', (route) => {
+      const url = new URL(route.request().url())
+      const q = (url.searchParams.get('q') ?? '').toLowerCase()
+      if (q.includes('login')) route.fulfill({ json: [t3] })
+      else if (q.includes('refactor')) route.fulfill({ json: [t4] })
+      else route.fulfill({ json: [] })
+    })
+
+    await page.route('**/api/project-management/tasks/t1/relations', (route) => {
+      const body = JSON.parse(route.request().postData() ?? '{}')
+      if (body.childTaskId === 't3') { relations.push(rel2); route.fulfill({ json: rel2 }) }
+      else if (body.childTaskId === 't4') { relations.push(rel3); route.fulfill({ json: rel3 }) }
+      else route.fulfill({ status: 400, body: '' })
+    })
+
+    // t3 detail — has a back-relation pointing to t1
+    const backRel = {
+      id: 'r2-rev', direction: 'CHILD', type: 'CHILD_IS_PART_OF', displayName: 'Is part of',
+      relatedTaskId: 't1', relatedTaskNumber: 'TSK-001', relatedTaskName: 'Fix login bug',
+      relatedTaskStatus: 'Open', relatedTaskType: 'Bug',
+    }
+    await page.route('**/api/project-management/tasks/t3', (route) =>
+      route.fulfill({ json: { ...TASK, id: 't3', name: 'Login flow', number: 'TSK-003', type: 'Task', relations: [backRel] } })
+    )
+
+    await page.goto('/projects/tasks/t1')
+
+    // Add first relation
+    await page.getByPlaceholder('Search task to link…').fill('Login')
+    await page.waitForSelector('text=TSK-003 — Login flow')
+    await page.locator('text=TSK-003 — Login flow').click()
+    await expect(page.getByText('Login flow')).toBeVisible()
+
+    // Add second relation
+    await page.getByPlaceholder('Search task to link…').fill('Refactor')
+    await page.waitForSelector('text=TSK-004 — Refactor auth')
+    await page.locator('text=TSK-004 — Refactor auth').click()
+    await expect(page.getByText('Refactor auth')).toBeVisible()
+
+    // Reload — both relations must persist
+    await page.reload()
+    await expect(page.getByText('Login flow')).toBeVisible()
+    await expect(page.getByText('Refactor auth')).toBeVisible()
+
+    // Navigate to t3 and verify the back-relation to t1 is shown
+    await page.getByText('Login flow').click()
+    await expect(page).toHaveURL(/\/projects\/tasks\/t3/)
+    await expect(page.getByText('TSK-001', { exact: true })).toBeVisible()
+    await expect(page.getByText('Fix login bug')).toBeVisible()
+  })
+
   test('searches and adds a relation', async ({ page }) => {
     const searchResult = { id: 't3', number: 'TSK-003', name: 'Login flow', status: 'Open', type: 'Task' }
     const newRelation = {
