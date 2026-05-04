@@ -47,4 +47,4 @@ echo "React dev server is ready."
 # ReactE2ETest starts the Spring Boot backend (via TestContainers) and runs Playwright.
 echo "=== Running backend integration test (TestContainers + Spring Boot + Playwright) ==="
 cd "$BACKEND_DIR"
-mvn test -pl my-tools-vaadin-app -Dtest=ReactE2ETest -am
+mvn test -pl my-tools-vaadin-app -DfailIfNoTests=false -Dsurefire.failIfNoSpecifiedTests=false -Dtest=ReactE2ETest -am
