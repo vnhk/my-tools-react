@@ -67,3 +67,24 @@ export const test = base.extend<{ authedPage: Page; token: string }>({
 })
 
 export { expect } from '@playwright/test'
+
+/**
+ * Authenticates the page via the real backend JWT login.
+ * Call this in beforeEach instead of mocking auth headers.
+ */
+export async function setupAuth(page: Page): Promise<void> {
+  await loginViaApi(page)
+}
+
+/**
+ * Wraps an array into the Spring Page response shape used by all list endpoints.
+ */
+export function pageResponse<T>(items: T[]): {
+  content: T[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+} {
+  return { content: items, totalElements: items.length, totalPages: 1, number: 0, size: items.length }
+}
