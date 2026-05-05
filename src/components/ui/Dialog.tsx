@@ -43,7 +43,7 @@ export function Dialog({
       ref={backdropRef}
       onClick={(e) => { if (e.target === backdropRef.current) onClose() }}
     >
-      <div className={styles.dialog} style={{ width }}>
+      <div className={styles.dialog} style={{ width }} role="dialog" aria-modal="true" aria-label={title}>
         <div className={styles.header}>
           <span className={styles.title}>{title}</span>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>

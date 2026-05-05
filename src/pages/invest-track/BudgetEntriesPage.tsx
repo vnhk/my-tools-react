@@ -103,7 +103,7 @@ function fmt(amount: number, currency = 'PLN'): string {
 const PAYMENT_ICONS: Record<string, string> = { Cash: '💵', Card: '💳', Transfer: '🏦' }
 
 const EMPTY_ENTRY: Partial<BudgetEntry> = {
-  name: '', category: '', currency: 'PLN', value: 0,
+  name: '', category: null, currency: 'PLN', value: 0,
   entryDate: new Date().toISOString().slice(0, 10),
   paymentMethod: 'Card', entryType: 'Expense', isRecurring: false,
 }
@@ -227,7 +227,7 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
   const collapseAll = () => { setExpandedMonths(new Set()); setExpandedCats(new Set()) }
 
   const openAdd = (date?: string, category?: string) => {
-    setEditItem({ ...EMPTY_ENTRY, entryDate: date ?? new Date().toISOString().slice(0, 10), category: category ?? '' })
+    setEditItem({ ...EMPTY_ENTRY, entryDate: date ?? new Date().toISOString().slice(0, 10), category: category || null })
     setFormErrors({})
     setEditOpen(true)
   }
@@ -240,7 +240,8 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
   }
 
   const handleSave = async () => {
-    const errors = validateFields('BudgetEntry', editItem as Record<string, unknown>)
+    const errors = validateFields('BudgetEntry', editItem as Record<string, unknown>, editItem.id ? 'edit' : 'save')
+    if (!editItem.category?.trim()) errors.category = 'Category is required'
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return }
     try {
       editItem.id
@@ -399,6 +400,21 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
       {/* Dialogs */}
       <Dialog open={editOpen} title={editItem.id ? 'Edit Entry' : 'New Entry'}
         onClose={() => setEditOpen(false)} onConfirm={handleSave} width="min(90vw, 720px)">
+        <div className={styles.dialogField}>
+          <label className={styles.dialogLabel} htmlFor="entry-category">Category</label>
+          <input
+            id="entry-category"
+            type="text"
+            list="entry-category-list"
+            className={styles.dialogInput}
+            value={editItem.category ?? ''}
+            onChange={e => setEditItem(s => ({ ...s, category: e.target.value || null }))}
+          />
+          <datalist id="entry-category-list">
+            {categories.map(c => <option key={c} value={c} />)}
+          </datalist>
+          {formErrors.category && <span style={{ color: 'var(--color-danger, red)', fontSize: '0.8em' }}>{formErrors.category}</span>}
+        </div>
         <DynamicForm entityName="BudgetEntry" mode={editItem.id ? 'edit' : 'save'}
           values={editItem as Record<string, unknown>}
           onChange={(field, value) => setEditItem(s => ({ ...s, [field]: value }))}
