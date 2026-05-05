@@ -293,7 +293,8 @@ test.describe('Interview — Session flow', () => {
 
     // ── Mark question as Correct ──
     await page.getByRole('button', { name: 'Correct' }).first().click()
-    await expect(page.getByRole('button', { name: 'Correct' }).first()).toHaveClass(/active|selected|current/i)
+    // Verify the question card received the CORRECT status class (CSS module hashes the name)
+    await expect(page.locator('[class*="status_CORRECT"]')).toBeVisible()
 
     // ── Save session ──
     await page.getByRole('button', { name: 'Save' }).first().click()
