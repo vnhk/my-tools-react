@@ -19,19 +19,19 @@ export function QuestionListPage() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [editItem, setEditItem] = useState<Partial<InterviewQuestion>>({name: ''})
     const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+    const [refreshKey, setRefreshKey] = useState(0)
 
     const columns = [
         ...buildColumnsFromConfig<InterviewQuestion>('Question')
     ]
 
     const openEdit = (item: Partial<InterviewQuestion>) => {
-        setEditItem({
-            ...item
-        })
+        setEditItem({...item})
         setDialogOpen(true)
     }
 
-    const load = () => {
+    useEffect(() => {
+        let cancelled = false
         setLoading(true)
         interviewQuestionsApi
             .getAll({
@@ -39,17 +39,18 @@ export function QuestionListPage() {
                 size: table.pageSize,
                 sort: table.sortBy,
                 direction: table.sortDir,
-                search: table.search || undefined
             })
             .then((res) => {
-                const p = toPage(res.data);
-                setRows(p.content);
+                if (cancelled) return
+                const p = toPage(res.data)
+                setRows(p.content)
                 setTotal(p.totalElements)
             })
-            .finally(() => setLoading(false))
-    }
+            .finally(() => { if (!cancelled) setLoading(false) })
+        return () => { cancelled = true }
+    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey])
 
-    useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir, table.search])
+    const load = () => setRefreshKey(k => k + 1)
 
     const actions = useTableActions<InterviewQuestion>({
         onDelete: async (selected) => {
@@ -83,12 +84,16 @@ export function QuestionListPage() {
         }
     }
 
+    const displayedRows = table.search
+        ? rows.filter(r => r.name?.toLowerCase().includes(table.search.toLowerCase()))
+        : rows
+
     return (
         <div className={styles.page}>
             <h2>Interview Questions</h2>
             <DataTable
                 columns={columns}
-                rows={rows}
+                rows={displayedRows}
                 rowKey={(r) => r.id}
                 loading={loading}
                 page={table.page}

@@ -103,8 +103,9 @@ test.describe('Interview — Questions', () => {
     })
 
     await page.goto('/interview/questions')
+    // Wait for initial load to finish before searching (prevents stale-fetch race)
+    await expect(page.getByRole('cell', { name: 'E2EQuestion OtherItem' })).toBeVisible()
     await page.getByPlaceholder(/search/i).fill('SearchTarget')
-    await page.waitForResponse(r => r.url().includes('/interview/questions') && r.status() === 200)
     await expect(page.getByRole('cell', { name: 'E2EQuestion SearchTarget' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'E2EQuestion OtherItem' })).not.toBeVisible()
 
