@@ -22,17 +22,14 @@ async function deleteByName(
 // ── Questions CRUD ────────────────────────────────────────────────────────────
 
 test.describe('Interview — Questions', () => {
+  let token = ''
+
   test.beforeEach(async ({ page }) => {
-    await loginViaApi(page)
+    token = await loginViaApi(page)
   })
 
   test('create question, verify in table, delete', async ({ page, request }) => {
-    let token = ''
-    const res = await page.request.post(`${BACKEND_URL}/api/auth/login`, {
-      data: { username: 'testUser', password: 'testUser!2#4%6', otp: null },
-      headers: { 'Content-Type': 'application/json' },
-    })
-    token = (await res.json()).token
+    await deleteByName(request, '/api/interview/questions', token, 'E2EQuestion Basic Java')
 
     await page.goto('/interview/questions')
     await expect(page.getByRole('heading', { name: 'Interview Questions' })).toBeVisible()
@@ -41,9 +38,8 @@ test.describe('Interview — Questions', () => {
     await page.getByRole('button', { name: /New Question/i }).click()
     await page.getByLabel('Name').fill('E2EQuestion Basic Java')
     await page.getByLabel('Tags (comma-separated)').fill('java')
-    // Difficulty is a select/number — find the Difficulty field
-    const difficultyInput = page.getByLabel('Difficulty')
-    await difficultyInput.selectOption('3')
+    await page.getByLabel('Difficulty').click()
+    await page.getByRole('option', { name: '3' }).click()
     await page.getByLabel('Max Points').fill('10')
     await page.getByRole('button', { name: 'Save' }).click()
 
@@ -53,19 +49,26 @@ test.describe('Interview — Questions', () => {
     // ── Cleanup ──
     await page.getByRole('row', { name: /E2EQuestion Basic Java/ }).getByRole('checkbox').check()
     page.once('dialog', (dialog) => dialog.accept())
+    const deletePromise = page.waitForResponse(
+      r => r.url().includes('/interview/questions') && r.request().method() === 'DELETE',
+    )
     await page.getByRole('button', { name: 'Delete' }).first().click()
+    await deletePromise
     await expect(page.getByRole('cell', { name: 'E2EQuestion Basic Java' })).not.toBeVisible()
   })
 
-  test('edit question name', async ({ page }) => {
+  test('edit question name', async ({ page, request }) => {
+    await deleteByName(request, '/api/interview/questions', token, 'E2EQuestion ToEdit')
+    await deleteByName(request, '/api/interview/questions', token, 'E2EQuestion Edited')
+
     await page.goto('/interview/questions')
 
     // ── Create question ──
     await page.getByRole('button', { name: /New Question/i }).click()
     await page.getByLabel('Name').fill('E2EQuestion ToEdit')
     await page.getByLabel('Tags (comma-separated)').fill('java')
-    const difficultyInput = page.getByLabel('Difficulty')
-    await difficultyInput.selectOption('2')
+    await page.getByLabel('Difficulty').click()
+    await page.getByRole('option', { name: '2' }).click()
     await page.getByLabel('Max Points').fill('5')
     await page.getByRole('button', { name: 'Save' }).click()
     await expect(page.getByRole('cell', { name: 'E2EQuestion ToEdit' })).toBeVisible()
@@ -78,21 +81,20 @@ test.describe('Interview — Questions', () => {
     await expect(page.getByRole('cell', { name: 'E2EQuestion Edited' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'E2EQuestion ToEdit', exact: true })).not.toBeVisible()
 
-    // ── Cleanup ──
+    // ── Cleanup — reload first so selection state is clean ──
+    await page.reload()
+    await expect(page.getByRole('cell', { name: 'E2EQuestion Edited' })).toBeVisible()
     await page.getByRole('row', { name: /E2EQuestion Edited/ }).getByRole('checkbox').check()
     page.once('dialog', (dialog) => dialog.accept())
+    const deletePromise = page.waitForResponse(
+      r => r.url().includes('/interview/questions') && r.request().method() === 'DELETE',
+    )
     await page.getByRole('button', { name: 'Delete' }).first().click()
+    await deletePromise
     await expect(page.getByRole('cell', { name: 'E2EQuestion Edited' })).not.toBeVisible()
   })
 
   test('search filters question list', async ({ page, request }) => {
-    // Create two questions via API for speed
-    const res = await page.request.post(`${BACKEND_URL}/api/auth/login`, {
-      data: { username: 'testUser', password: 'testUser!2#4%6', otp: null },
-      headers: { 'Content-Type': 'application/json' },
-    })
-    const token = (await res.json()).token
-
     await apiRequest(request, 'POST', '/api/interview/questions', token, {
       name: 'E2EQuestion SearchTarget', tags: 'python', difficulty: 1, maxPoints: 5,
     })
@@ -102,6 +104,7 @@ test.describe('Interview — Questions', () => {
 
     await page.goto('/interview/questions')
     await page.getByPlaceholder(/search/i).fill('SearchTarget')
+    await page.waitForResponse(r => r.url().includes('/interview/questions') && r.status() === 200)
     await expect(page.getByRole('cell', { name: 'E2EQuestion SearchTarget' })).toBeVisible()
     await expect(page.getByRole('cell', { name: 'E2EQuestion OtherItem' })).not.toBeVisible()
 
@@ -155,6 +158,8 @@ test.describe('Interview — Coding Tasks', () => {
     await expect(page.getByRole('cell', { name: 'E2ECodingTask Renamed' })).toBeVisible()
 
     // ── Cleanup ──
+    await page.reload()
+    await expect(page.getByRole('cell', { name: 'E2ECodingTask Renamed' })).toBeVisible()
     await page.getByRole('row', { name: /E2ECodingTask Renamed/ }).getByRole('checkbox').check()
     page.once('dialog', (dialog) => dialog.accept())
     await page.getByRole('button', { name: 'Delete' }).first().click()
@@ -204,7 +209,7 @@ test.describe('Interview — Question Configs', () => {
     await page.getByRole('button', { name: 'Save' }).click()
 
     // Warning notification should appear, dialog stays open
-    await expect(page.getByText(/Percentages must sum to 100/i)).toBeVisible()
+    await expect(page.getByText(/Percentages must sum to 100% \(currently/i)).toBeVisible()
     await page.getByRole('button', { name: 'Cancel' }).click()
   })
 })
@@ -225,10 +230,11 @@ test.describe('Interview — Plan', () => {
     await page.getByRole('button', { name: 'Save' }).click()
 
     // Notification confirms save
-    await expect(page.getByText(/saved/i)).toBeVisible()
+    await expect(page.getByText('Interview plan saved.')).toBeVisible()
 
     // Reload and verify content persists
     await page.reload()
+    await expect(editor).not.toBeDisabled()
     await expect(editor).toHaveValue('E2E Plan: Welcome {candidateName}! Questions: {questions}')
 
     // ── Cleanup: clear the plan ──
@@ -281,7 +287,7 @@ test.describe('Interview — Session flow', () => {
 
     // ── Open session page ──
     await page.goto(`/interview/sessions/${session.id}`)
-    await expect(page.getByText('E2ECandidate')).toBeVisible()
+    await expect(page.getByRole('heading', { name: /E2ECandidate/ })).toBeVisible()
     await expect(page.getByText('E2ESession Question One')).toBeVisible()
 
     // ── Mark question as Correct ──
@@ -290,11 +296,11 @@ test.describe('Interview — Session flow', () => {
 
     // ── Save session ──
     await page.getByRole('button', { name: 'Save' }).first().click()
-    await expect(page.getByText(/saved/i)).toBeVisible()
+    await expect(page.getByText('Session saved.')).toBeVisible()
 
     // ── Complete interview ──
     await page.getByRole('button', { name: /Complete Interview/i }).click()
-    await expect(page.getByText(/COMPLETED/i)).toBeVisible()
+    await expect(page.getByText('COMPLETED', { exact: true })).toBeVisible()
 
     // ── Cleanup ──
     await apiRequest(request, 'DELETE', `/api/interview/sessions/${session.id}`, token)

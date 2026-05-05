@@ -32,3 +32,4 @@ test-results/
 *.sln
 *.sw?
 /playwright-report-integration/index.html
+/playwright-report-integration/data/*

@@ -31,12 +31,13 @@ export function SelectField({
                                 className = '',
                                 id
                             }: SelectFieldProps) {
+    const fieldId = id ?? (label ? `field-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}` : undefined)
     return (
         <div className={styles.group}>
             {label &&
-                <label className={styles.label}>{label}{required && <span className={styles.required}>*</span>}</label>}
+                <label className={styles.label} htmlFor={fieldId}>{label}{required && <span className={styles.required}>*</span>}</label>}
             <CustomSelect
-                id={id}
+                id={fieldId}
                 options={placeholder ? [{value: '', label: String(placeholder)}, ...options] : options}
                 value={value ?? ''}
                 onChange={(v) => onChange?.({target: {value: v}})}

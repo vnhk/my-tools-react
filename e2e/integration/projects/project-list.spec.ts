@@ -56,10 +56,9 @@ test.describe('Project list', () => {
     await page.getByRole('button', { name: /New Project/i }).click()
     await page.getByLabel('Name').fill('Gamma')
     await page.getByLabel('Number').fill('PRJ-003')
-    // Status and Priority are required selects — pick first available option for each
-    await page.getByRole('button', { name: '— Select —' }).first().click()
+    await page.getByLabel('Status').click()
     await page.getByRole('option', { name: 'Open' }).click()
-    await page.getByRole('button', { name: '— Select —' }).first().click()
+    await page.getByLabel('Priority').click()
     await page.getByRole('option', { name: 'Medium' }).click()
     await page.getByRole('button', { name: 'Save' }).click()
 
