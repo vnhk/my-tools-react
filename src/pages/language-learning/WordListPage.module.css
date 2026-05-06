@@ -1,0 +1,5 @@
+.page {
+    padding: var(--space-md);
+    height: 100%;
+    overflow-y: auto;
+}

@@ -1,0 +1,171 @@
+.page {
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    max-width: 800px;
+    margin: 0 auto;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.filterLabel {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.levelCheckbox {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--color-text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.levelCheckbox input {
+    cursor: pointer;
+    accent-color: var(--color-primary);
+}
+
+.wordBank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+}
+
+.wordBankTitle {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    margin-bottom: var(--space-xs);
+    width: 100%;
+}
+
+.wordChip {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--color-surface-hover);
+    color: var(--color-primary);
+    font-size: 13px;
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+}
+
+.wordChip:hover {
+    background: var(--color-primary-subtle);
+}
+
+.wordChipUsed {
+    opacity: 0.35;
+    cursor: default;
+    text-decoration: line-through;
+}
+
+.questions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.questionCard {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.questionCard.correct {
+    border-color: var(--color-success);
+    background: var(--color-success-subtle);
+}
+
+.questionCard.incorrect {
+    border-color: var(--color-danger);
+    background: var(--color-danger-subtle);
+}
+
+.questionNumber {
+    color: var(--color-text-tertiary);
+    font-size: 12px;
+}
+
+.questionSentence {
+    color: var(--color-text-primary);
+    font-size: 16px;
+}
+
+.blank {
+    display: inline-block;
+    min-width: 80px;
+    border-bottom: 2px solid var(--color-primary);
+    text-align: center;
+    color: var(--color-primary);
+    font-weight: 600;
+    padding: 0 4px;
+}
+
+.clue {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.results {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    text-align: center;
+}
+
+.score {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: var(--space-sm);
+}
+
+.scoreBar {
+    width: 100%;
+    height: 8px;
+    background: var(--color-surface-hover);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: var(--space-sm);
+}
+
+.scoreBarFill {
+    height: 100%;
+    background: var(--color-success);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.actions {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.empty {
+    text-align: center;
+    color: var(--color-text-secondary);
+    padding: var(--space-2xl);
+}

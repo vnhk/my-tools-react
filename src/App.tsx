@@ -59,6 +59,11 @@ import {InterviewSessionListPage} from "./pages/interview/InterviewSessionListPa
 import {InterviewSessionPage} from "./pages/interview/InterviewSessionPage.tsx";
 import {StartInterviewPage} from "./pages/interview/StartInterviewPage.tsx";
 import {InterviewPlanPage} from "./pages/interview/InterviewPlanPage.tsx";
+import {LanguageLearningLayout} from "./pages/language-learning/LanguageLearningLayout.tsx";
+import {WordListPage} from "./pages/language-learning/WordListPage.tsx";
+import {FlashcardsPage} from "./pages/language-learning/FlashcardsPage.tsx";
+import {QuizPage} from "./pages/language-learning/QuizPage.tsx";
+import {CrosswordPage} from "./pages/language-learning/CrosswordPage.tsx";
 
 const cards: HomePageCard[] = [
     {
@@ -235,12 +240,26 @@ export default function App() {
                                        element={<VideoPlayerPage/>}/>
                                 <Route path="/streaming/remote" element={<RemoteControlPage/>}/>
                                 <Route path="/streaming/tv-pairing" element={<TvPairingPage/>}/>
+                                <Route path="/english" element={<LanguageLearningLayout/>}>
+                                    <Route index element={<Navigate to="words" replace/>}/>
+                                    <Route path="words" element={<WordListPage/>}/>
+                                    <Route path="flashcards" element={<FlashcardsPage/>}/>
+                                    <Route path="quiz" element={<QuizPage/>}/>
+                                    <Route path="crossword" element={<CrosswordPage/>}/>
+                                </Route>
+                                <Route path="/spanish" element={<LanguageLearningLayout/>}>
+                                    <Route index element={<Navigate to="words" replace/>}/>
+                                    <Route path="words" element={<WordListPage/>}/>
+                                    <Route path="flashcards" element={<FlashcardsPage/>}/>
+                                    <Route path="quiz" element={<QuizPage/>}/>
+                                    <Route path="crossword" element={<CrosswordPage/>}/>
+                                </Route>
                                 <Route path="/files" element={<FilesPage/>}/>
                                 <Route path="/projects" element={<ProjectListPage/>}/>
                                 <Route path="/projects/all-tasks" element={<AllTasksPage/>}/>
                                 <Route path="/projects/:projectId" element={<ProjectDetailsPage/>}/>
                                 <Route path="/projects/tasks/:taskId" element={<TaskDetailsPage/>}/>
-                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects').map((item) => (
+                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english').map((item) => (
                                     <Route
                                         key={item.path}
                                         path={`${item.path}/*`}
