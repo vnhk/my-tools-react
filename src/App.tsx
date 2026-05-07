@@ -124,7 +124,7 @@ const cards: HomePageCard[] = [
         title: "Investments",
         description: "Monitor your investments.",
         icon: <FaMoneyBill/>,
-        route: "/investments"
+        route: "/invest-track/dashboard"
     },
     {
         title: "Notepad",
