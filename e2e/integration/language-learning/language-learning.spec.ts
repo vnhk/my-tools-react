@@ -3,6 +3,11 @@ import { test, expect, loginViaApi } from '../fixtures'
 test.describe('Language Learning — English integration', () => {
   test.beforeEach(async ({ page }) => {
     await loginViaApi(page)
+    page.on('response', async (response) => {
+      if (response.url().includes('/api/')) {
+        console.log(`[NET] ${response.request().method()} ${response.url()} → ${response.status()}`)
+      }
+    })
   })
 
   test('create English word, verify it appears in list, then delete it', async ({ page }) => {
