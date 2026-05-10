@@ -70,6 +70,7 @@ import {TrackersPage} from "./pages/logs/TrackersPage.tsx";
 import {EbookLayout} from "./pages/ebook/EbookLayout.tsx";
 import {EbooksPage} from "./pages/ebook/EbooksPage.tsx";
 import {NotLearnedWordsPage} from "./pages/ebook/NotLearnedWordsPage.tsx";
+import {CanvasPage} from "./pages/canvas/CanvasPage.tsx";
 
 const cards: HomePageCard[] = [
     {
@@ -270,12 +271,13 @@ export default function App() {
                                     <Route path="all" element={<LogsPage/>}/>
                                     <Route path="trackers" element={<TrackersPage/>}/>
                                 </Route>
+                                <Route path="/canvas" element={<CanvasPage/>}/>
                                 <Route path="/files" element={<FilesPage/>}/>
                                 <Route path="/projects" element={<ProjectListPage/>}/>
                                 <Route path="/projects/all-tasks" element={<AllTasksPage/>}/>
                                 <Route path="/projects/:projectId" element={<ProjectDetailsPage/>}/>
                                 <Route path="/projects/tasks/:taskId" element={<TaskDetailsPage/>}/>
-                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english').map((item) => (
+                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english' && item.path !== '/canvas').map((item) => (
                                     <Route
                                         key={item.path}
                                         path={`${item.path}/*`}
