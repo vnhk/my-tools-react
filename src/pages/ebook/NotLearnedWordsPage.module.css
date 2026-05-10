@@ -1,0 +1,152 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  height: 100%;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.stats {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+.wordGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  overflow-y: auto;
+  flex: 1;
+  align-content: flex-start;
+}
+
+.wordCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  min-width: 100px;
+}
+
+.wordCard:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-primary);
+}
+
+.wordCardActive {
+  background: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+}
+
+.wordName {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.wordCount {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+}
+
+.empty {
+  color: var(--color-text-tertiary);
+  padding: var(--space-xl);
+  font-size: var(--font-size-md);
+}
+
+/* Dialog overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  min-width: 360px;
+  max-width: 560px;
+  width: 90vw;
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.dialogHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wordTitle {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.closeBtn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-surface-hover);
+}
+
+.dialogCount {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.dialogActions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.dialogHint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+.kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  background: var(--mono-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  margin-left: 4px;
+}

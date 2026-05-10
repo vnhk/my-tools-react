@@ -64,6 +64,12 @@ import {WordListPage} from "./pages/language-learning/WordListPage.tsx";
 import {FlashcardsPage} from "./pages/language-learning/FlashcardsPage.tsx";
 import {QuizPage} from "./pages/language-learning/QuizPage.tsx";
 import {CrosswordPage} from "./pages/language-learning/CrosswordPage.tsx";
+import {LogsLayout} from "./pages/logs/LogsLayout.tsx";
+import {LogsPage} from "./pages/logs/LogsPage.tsx";
+import {TrackersPage} from "./pages/logs/TrackersPage.tsx";
+import {EbookLayout} from "./pages/ebook/EbookLayout.tsx";
+import {EbooksPage} from "./pages/ebook/EbooksPage.tsx";
+import {NotLearnedWordsPage} from "./pages/ebook/NotLearnedWordsPage.tsx";
 
 const cards: HomePageCard[] = [
     {
@@ -253,6 +259,16 @@ export default function App() {
                                     <Route path="flashcards" element={<FlashcardsPage/>}/>
                                     <Route path="quiz" element={<QuizPage/>}/>
                                     <Route path="crossword" element={<CrosswordPage/>}/>
+                                </Route>
+                                <Route path="/ebook" element={<EbookLayout/>}>
+                                    <Route index element={<NotLearnedWordsPage/>}/>
+                                    <Route path="words" element={<NotLearnedWordsPage/>}/>
+                                    <Route path="ebooks" element={<EbooksPage/>}/>
+                                </Route>
+                                <Route path="/logs" element={<LogsLayout/>}>
+                                    <Route index element={<LogsPage/>}/>
+                                    <Route path="all" element={<LogsPage/>}/>
+                                    <Route path="trackers" element={<TrackersPage/>}/>
                                 </Route>
                                 <Route path="/files" element={<FilesPage/>}/>
                                 <Route path="/projects" element={<ProjectListPage/>}/>
