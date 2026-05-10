@@ -175,7 +175,9 @@ const NAV_ITEMS: NavItem[] = [
     { path: "/home", label: "Home", icon: <FaHome /> },
     { path: "/pocket", label: "Pocket", icon: <FaFolder /> },
     { path: "/cook-book", label: "Cook Book", icon: <FaBook /> },
-    { path: "/learning", label: "Learning", icon: <FaMicrophone /> },
+    { path: "/ebook", label: "Ebook", icon: <FaBookOpen /> },
+    { path: "/english", label: "English", icon: <FaMicrophone /> },
+    { path: "/spanish", label: "Spanish", icon: <FaFlag /> },
     { path: "/streaming", label: "Streaming", icon: <FaFilm /> },
     { path: "/canvas", label: "Canvas", icon: <FaPaintBrush /> },
     { path: "/invest-track", label: "Invest Track", icon: <FaChartLine /> },
@@ -183,8 +185,8 @@ const NAV_ITEMS: NavItem[] = [
     { path: "/projects", label: "Projects", icon: <FaTasks /> },
     { path: "/interview", label: "Interview", icon: <FaUserTie /> },
     { path: "/files", label: "Files", icon: <FaCloudUploadAlt /> },
+    { path: "/logs", label: "Logs", icon: <FaDatabase /> },
     { path: "/shopping", label: "Shopping", icon: <FaShoppingCart /> },
-    { path: "/english", label: "English Stats", icon: <FaBookOpen /> }
 ];
 
 function PlaceholderPage({name}: { name: string }) {
@@ -277,7 +279,7 @@ export default function App() {
                                 <Route path="/projects/all-tasks" element={<AllTasksPage/>}/>
                                 <Route path="/projects/:projectId" element={<ProjectDetailsPage/>}/>
                                 <Route path="/projects/tasks/:taskId" element={<TaskDetailsPage/>}/>
-                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english' && item.path !== '/canvas').map((item) => (
+                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english' && item.path !== '/spanish' && item.path !== '/canvas' && item.path !== '/ebook' && item.path !== '/logs').map((item) => (
                                     <Route
                                         key={item.path}
                                         path={`${item.path}/*`}
