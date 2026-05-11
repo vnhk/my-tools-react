@@ -25,6 +25,9 @@ test.describe('Invest Track — Budget Tree integration', () => {
   test('shows empty state when no entries in period', async ({ page }) => {
     await page.goto('/invest-track/budget-tree')
 
+    // Wait for the initial auto-load to finish before interacting (Load button is disabled while loading)
+    await expect(page.getByRole('button', { name: /Load/i })).toBeEnabled({ timeout: 60_000 })
+
     // Use a future date range with no data
     const startInput = page.locator('input[type="date"]').first()
     const endInput = page.locator('input[type="date"]').nth(1)
@@ -59,6 +62,8 @@ test.describe('Invest Track — Budget Tree integration', () => {
 
     try {
       await page.goto('/invest-track/budget-tree')
+      // Wait for the initial auto-load before clicking (Load button is disabled while loading)
+      await expect(page.getByRole('button', { name: /Load/i })).toBeEnabled({ timeout: 60_000 })
       await page.getByRole('button', { name: /Load/i }).click()
 
       // The tree should load and show the entry's category
@@ -88,6 +93,7 @@ test.describe('Invest Track — Budget Tree integration', () => {
 
     try {
       await page.goto('/invest-track/budget-tree')
+      await expect(page.getByRole('button', { name: /Load/i })).toBeEnabled({ timeout: 60_000 })
       await page.getByRole('button', { name: /Load/i }).click()
       await expect(page.getByText('E2EExpandCat')).toBeVisible({ timeout: 10_000 })
 

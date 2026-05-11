@@ -77,9 +77,10 @@ test.describe('Shopping Stats — integration', () => {
     await page.goto('/shopping/alerts')
 
     await page.getByRole('button', { name: /\+ New Alert/i }).click()
-    await expect(page.getByRole('dialog')).toBeVisible()
-    await expect(page.getByText('New Alert')).toBeVisible()
-    await expect(page.getByText('Name *')).toBeVisible()
+    // Use attribute selector — getByRole('dialog') can misfire with aria-modal in some Playwright versions
+    await expect(page.locator('[role="dialog"]')).toBeVisible()
+    await expect(page.locator('[role="dialog"]').getByText('New Alert')).toBeVisible()
+    await expect(page.locator('[role="dialog"]').getByText('Name *')).toBeVisible()
   })
 
   // ── Shop Config CRUD ─────────────────────────────────────────────────────
