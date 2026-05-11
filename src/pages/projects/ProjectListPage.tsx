@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
+import { EntityFilters } from '../../components/ui/EntityFilters'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { Button } from '../../components/ui/Button'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
+import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { projectsApi, type ProjectDto } from '../../api/projects'
 import { toPage } from '../../api/crud'
@@ -17,6 +19,7 @@ export function ProjectListPage() {
   const navigate = useNavigate()
   const { showSuccess, showError } = useNotification()
   const table = useTableState({ sortBy: 'name', sortDir: 'asc' }, 'project-list')
+  const { filters, setFilter, clearFilters } = useEntityFilters()
   const [rows, setRows] = useState<ProjectDto[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -33,12 +36,12 @@ export function ProjectListPage() {
   const load = () => {
     setLoading(true)
     projectsApi
-      .getAll({ page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir, search: table.search || undefined })
+      .getAll({ page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir, search: table.search || undefined, ...filters })
       .then((res) => { const p = toPage(res.data); setRows(p.content); setTotal(p.totalElements) })
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir, table.search])
+  useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir, table.search, JSON.stringify(filters)])
 
   const actions = useTableActions<ProjectDto>({
     onDelete: async (selected) => { for (const r of selected) await projectsApi.delete(r.id) },
@@ -71,6 +74,7 @@ export function ProjectListPage() {
           All Tasks
         </Button>
       </div>
+      <EntityFilters entityName="Project" filters={filters} onFiltersChange={setFilter} onClear={clearFilters} />
       <DataTable
         columns={columns}
         rows={rows}

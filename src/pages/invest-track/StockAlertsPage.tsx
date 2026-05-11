@@ -4,8 +4,10 @@ import { Dialog } from '../../components/ui/Dialog'
 import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
 import { SelectField } from '../../components/fields/SelectField'
+import { EntityFilters } from '../../components/ui/EntityFilters'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
+import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { stockAlertsApi, type StockAlert } from '../../api/investments'
 import { toPage } from '../../api/crud'
@@ -48,6 +50,7 @@ type EditState = Partial<StockAlert> & {
 export function StockAlertsPage() {
   const { showSuccess, showError } = useNotification()
   const table = useTableState({ sortBy: 'symbol', sortDir: 'asc' }, 'stock-alerts')
+  const { filters, setFilter, clearFilters } = useEntityFilters()
   const [rows, setRows] = useState<StockAlert[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -56,12 +59,12 @@ export function StockAlertsPage() {
 
   const load = () => {
     setLoading(true)
-    stockAlertsApi.getAll({ page: table.page, size: table.pageSize })
+    stockAlertsApi.getAll({ page: table.page, size: table.pageSize, ...filters })
       .then((res) => { const p = toPage(res.data); setRows(p.content); setTotal(p.totalElements) })
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [table.page, table.pageSize])
+  useEffect(load, [table.page, table.pageSize, JSON.stringify(filters)])
 
   const openEdit = (item: Partial<StockAlert>) => {
     setEditItem({
@@ -114,6 +117,7 @@ export function StockAlertsPage() {
 
   return (
     <div className={styles.page}>
+      <EntityFilters entityName="StockPriceAlert" filters={filters} onFiltersChange={setFilter} onClear={clearFilters} />
       <DataTable
         columns={COLUMNS}
         rows={rows}

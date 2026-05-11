@@ -11,7 +11,9 @@ import { TextField } from '../../components/fields/TextField'
 import { TabNav } from '../../components/layout/TabNav'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
+import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
+import { EntityFilters } from '../../components/ui/EntityFilters'
 import { pocketItemsApi, type PocketItem } from '../../api/pockets'
 import { toPage } from '../../api/crud'
 import styles from './PocketItemsPage.module.css'
@@ -39,6 +41,7 @@ export function PocketItemsPage() {
   const decodedName = decodeURIComponent(pocketName ?? '')
 
   const table = useTableState({ sortBy: 'orderInPocket', sortDir: 'asc' }, `pocket-items-${decodedName}`)
+  const { filters, setFilter, clearFilters } = useEntityFilters()
   const [rows, setRows] = useState<PocketItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -81,12 +84,12 @@ export function PocketItemsPage() {
     if (!decodedName) return
     setLoading(true)
     pocketItemsApi
-      .getByPocket(decodedName, { page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir })
+      .getByPocket(decodedName, { page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir, ...filters })
       .then((res) => { const p = toPage(res.data); setRows(p.content); setTotal(p.totalElements) })
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [decodedName, table.page, table.pageSize, table.sortBy, table.sortDir])
+  useEffect(load, [decodedName, table.page, table.pageSize, table.sortBy, table.sortDir, JSON.stringify(filters)])
 
   const openEdit = (item: Partial<PocketItem>) => {
     setEditItem(item)
@@ -155,7 +158,12 @@ export function PocketItemsPage() {
   return (
     <div className={styles.page}>
       <TabNav tabs={tabs} />
-
+      <EntityFilters
+        entityName="PocketItem"
+        filters={filters}
+        onFiltersChange={setFilter}
+        onClear={clearFilters}
+      />
       <DataTable
         columns={columns}
         rows={rows}

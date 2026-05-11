@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
+import { EntityFilters } from '../../components/ui/EntityFilters'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
+import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { toPage } from '../../api/crud'
 import { TextField } from '../../components/fields/TextField'
@@ -26,6 +28,7 @@ function empty(): Partial<QuestionConfig> {
 export function QuestionConfigListPage() {
     const { showSuccess, showError, showWarning } = useNotification()
     const table = useTableState({ sortBy: 'name', sortDir: 'asc' }, 'interview-question-configs')
+    const { filters, setFilter, clearFilters } = useEntityFilters()
     const [rows, setRows] = useState<QuestionConfig[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
@@ -35,7 +38,7 @@ export function QuestionConfigListPage() {
     const load = () => {
         setLoading(true)
         questionConfigsApi
-            .getAll({ page: table.page, size: table.pageSize })
+            .getAll({ page: table.page, size: table.pageSize, ...filters })
             .then(res => {
                 const p = toPage(res.data)
                 setRows(p.content)
@@ -44,7 +47,7 @@ export function QuestionConfigListPage() {
             .finally(() => setLoading(false))
     }
 
-    useEffect(load, [table.page, table.pageSize])
+    useEffect(load, [table.page, table.pageSize, JSON.stringify(filters)])
 
     const actions = useTableActions<QuestionConfig>({
         onDelete: async (selected) => { for (const r of selected) await questionConfigsApi.delete(r.id) },
@@ -77,6 +80,7 @@ export function QuestionConfigListPage() {
     return (
         <div className={styles.page}>
             <h2>Question Configs</h2>
+            <EntityFilters entityName="QuestionConfig" filters={filters} onFiltersChange={setFilter} onClear={clearFilters} />
             <DataTable
                 columns={COLUMNS}
                 rows={rows}

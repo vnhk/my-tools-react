@@ -2,9 +2,11 @@ import {useEffect, useState} from 'react'
 import {DataTable} from '../../components/table/DataTable'
 import {Dialog} from '../../components/ui/Dialog'
 import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
+import {EntityFilters} from '../../components/ui/EntityFilters'
 import {buildColumnsFromConfig} from '../../components/table/configColumns'
 import {useTableState} from '../../hooks/useTableState'
 import {useTableActions} from '../../hooks/useTableActions'
+import {useEntityFilters} from '../../hooks/useEntityFilters'
 import {useNotification} from '../../components/ui/Notification'
 import {toPage} from '../../api/crud'
 import styles from './QuestionListPage.module.css'
@@ -13,6 +15,7 @@ import {InterviewQuestion, interviewQuestionsApi} from "../../api/interview.ts";
 export function QuestionListPage() {
     const {showSuccess, showError} = useNotification()
     const table = useTableState({sortBy: 'name', sortDir: 'asc'}, 'interview-questions-list')
+    const { filters, setFilter, clearFilters } = useEntityFilters()
     const [rows, setRows] = useState<InterviewQuestion[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
@@ -39,6 +42,7 @@ export function QuestionListPage() {
                 size: table.pageSize,
                 sort: table.sortBy,
                 direction: table.sortDir,
+                ...filters,
             })
             .then((res) => {
                 if (cancelled) return
@@ -48,7 +52,7 @@ export function QuestionListPage() {
             })
             .finally(() => { if (!cancelled) setLoading(false) })
         return () => { cancelled = true }
-    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey])
+    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, JSON.stringify(filters)])
 
     const load = () => setRefreshKey(k => k + 1)
 
@@ -91,6 +95,12 @@ export function QuestionListPage() {
     return (
         <div className={styles.page}>
             <h2>Interview Questions</h2>
+            <EntityFilters
+                entityName="Question"
+                filters={filters}
+                onFiltersChange={setFilter}
+                onClear={clearFilters}
+            />
             <DataTable
                 columns={columns}
                 rows={displayedRows}

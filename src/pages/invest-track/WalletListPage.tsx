@@ -7,7 +7,9 @@ import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { Checkbox } from '../../components/fields/Checkbox'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
+import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
+import { EntityFilters } from '../../components/ui/EntityFilters'
 import { walletsApi, type Wallet } from '../../api/investments'
 import { toPage } from '../../api/crud'
 import styles from './WalletListPage.module.css'
@@ -45,6 +47,7 @@ export function WalletListPage() {
   const navigate = useNavigate()
   const { showSuccess, showError } = useNotification()
   const table = useTableState({ sortBy: 'name', sortDir: 'asc' }, 'wallet-list')
+  const { filters, setFilter, clearFilters } = useEntityFilters()
   const [rows, setRows] = useState<Wallet[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -62,12 +65,12 @@ export function WalletListPage() {
   const load = () => {
     setLoading(true)
     walletsApi
-      .getAll({ page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir })
+      .getAll({ page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir, ...filters })
       .then((res) => { const p = toPage(res.data); setRows(p.content); setTotal(p.totalElements) })
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir])
+  useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir, JSON.stringify(filters)])
 
   const openEdit = (item: Partial<Wallet>) => {
     setEditItem(item)
@@ -100,6 +103,12 @@ export function WalletListPage() {
 
   return (
     <div className={styles.page}>
+      <EntityFilters
+        entityName="Wallet"
+        filters={filters}
+        onFiltersChange={setFilter}
+        onClear={clearFilters}
+      />
       <DataTable
         columns={columns}
         rows={rows}
