@@ -1,0 +1,115 @@
+import client from './client'
+
+export interface PriceDto {
+  date: string | null
+  formattedDate: string | null
+  price: number | null
+}
+
+export interface ProductDto {
+  id: number
+  name: string
+  shop: string
+  offerLink: string | null
+  imgSrc: string | null
+  categories: string[]
+  minPrice: PriceDto | null
+  maxPrice: PriceDto | null
+  avgPrice: number | null
+  discount: number | null
+  prices: PriceDto[]
+}
+
+export interface SearchResponse {
+  allFound: number
+  page: number
+  pageSize: number
+  allPages: number
+  currentFound: number
+  items: ProductDto[]
+}
+
+export interface ProductAlertDto {
+  id?: number
+  name: string
+  priceMin: number | null
+  priceMax: number | null
+  discountMin: number | null
+  discountMax: number | null
+  productName: string | null
+  productCategories: string[]
+  emails: string[]
+}
+
+export interface ShopConfigDto {
+  id?: number
+  shopName: string
+  baseUrl: string | null
+}
+
+export interface ProductConfigDto {
+  id?: number
+  name: string
+  url: string | null
+  minPrice: number | null
+  maxPrice: number | null
+  scrapTime: string | null
+  categories: string[]
+  shopId: number | null
+  shopName: string | null
+}
+
+export interface ScrapAuditDto {
+  id: number
+  date: string | null
+  savedProducts: number
+  productDetails: string | null
+}
+
+export const shoppingApi = {
+  searchProducts: (params: {
+    category?: string; shop?: string; name?: string; page?: number; size?: number
+  }) => client.get<SearchResponse>('/api/shopping/products', { params }),
+
+  getProduct: (id: number) =>
+    client.get<SearchResponse>(`/api/shopping/products/${id}`),
+
+  getCategories: () =>
+    client.get<string[]>('/api/shopping/products/categories'),
+
+  getBestOffers: (params: {
+    discountMin?: number; discountMax?: number; months?: number;
+    categories?: string[]; shop?: string; name?: string;
+    prevPriceMin?: number; prevPriceMax?: number;
+    page?: number; size?: number
+  }) => client.get<SearchResponse>('/api/shopping/best-offers', {
+    params,
+    paramsSerializer: (p) => {
+      const sp = new URLSearchParams()
+      for (const [k, v] of Object.entries(p)) {
+        if (v === undefined || v === null || v === '') continue
+        if (Array.isArray(v)) v.forEach((item) => sp.append(k, item))
+        else sp.append(k, String(v))
+      }
+      return sp.toString()
+    },
+  }),
+
+  getProductAlerts: () => client.get<ProductAlertDto[]>('/api/shopping/product-alerts'),
+  createProductAlert: (dto: ProductAlertDto) => client.post<ProductAlertDto>('/api/shopping/product-alerts', dto),
+  updateProductAlert: (id: number, dto: ProductAlertDto) => client.put<ProductAlertDto>(`/api/shopping/product-alerts/${id}`, dto),
+  deleteProductAlert: (id: number) => client.delete(`/api/shopping/product-alerts/${id}`),
+
+  getShopConfigs: () => client.get<ShopConfigDto[]>('/api/shopping/shop-configs'),
+  createShopConfig: (dto: ShopConfigDto) => client.post<ShopConfigDto>('/api/shopping/shop-configs', dto),
+  updateShopConfig: (id: number, dto: ShopConfigDto) => client.put<ShopConfigDto>(`/api/shopping/shop-configs/${id}`, dto),
+  deleteShopConfig: (id: number) => client.delete(`/api/shopping/shop-configs/${id}`),
+
+  getProductConfigs: (shopId?: number) => client.get<ProductConfigDto[]>('/api/shopping/product-configs', { params: shopId ? { shopId } : {} }),
+  createProductConfig: (dto: ProductConfigDto) => client.post<ProductConfigDto>('/api/shopping/product-configs', dto),
+  updateProductConfig: (id: number, dto: ProductConfigDto) => client.put<ProductConfigDto>(`/api/shopping/product-configs/${id}`, dto),
+  deleteProductConfig: (id: number) => client.delete(`/api/shopping/product-configs/${id}`),
+
+  getScrapAudits: (date?: string) => client.get<ScrapAuditDto[]>('/api/shopping/scrap-audits', { params: date ? { date } : {} }),
+  deleteScrapAudit: (id: number) => client.delete(`/api/shopping/scrap-audits/${id}`),
+}

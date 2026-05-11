@@ -1,0 +1,210 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-md);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.dateLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.dateInput {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  padding: 5px 8px;
+}
+
+.balance {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  margin-left: var(--space-sm);
+}
+
+.empty {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-secondary);
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.monthBlock {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.monthHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.monthHeader:hover {
+  background: var(--color-surface-hover);
+}
+
+.monthLabel {
+  flex: 1;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.chevron {
+  font-size: 10px;
+  color: var(--color-text-secondary);
+  width: 14px;
+}
+
+.amount {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.income { color: var(--color-success); }
+.expense { color: var(--color-danger); }
+
+.typeBadge {
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-pill);
+  padding: 2px 8px;
+  font-weight: 500;
+}
+
+.incomeBadge {
+  background: var(--color-success-subtle);
+  color: var(--color-success);
+}
+
+.expenseBadge {
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.monthBody {
+  border-top: 1px solid var(--color-border);
+}
+
+.catBlock {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.catBlock:last-child {
+  border-bottom: none;
+}
+
+.catHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  padding-left: calc(var(--space-lg) + 20px);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.catHeader:hover {
+  background: var(--color-surface-hover);
+}
+
+.catName {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.itemCount {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.itemList {
+  background: var(--color-bg-elevated);
+  border-top: 1px solid var(--color-border);
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-lg);
+  padding-left: calc(var(--space-lg) + 40px);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--font-size-sm);
+}
+
+.itemRow:last-child {
+  border-bottom: none;
+}
+
+.itemDate {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  min-width: 40px;
+}
+
+.itemName {
+  flex: 1;
+  color: var(--color-text-primary);
+}
+
+.itemAmount {
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+}
+
+.recurringBadge {
+  font-size: var(--font-size-xs);
+  color: var(--color-info);
+  background: var(--color-info-subtle);
+  border-radius: var(--radius-pill);
+  padding: 1px 5px;
+}
+
+.payMethod {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-hover);
+  border-radius: var(--radius-pill);
+  padding: 1px 6px;
+}
+
+.itemNotes {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

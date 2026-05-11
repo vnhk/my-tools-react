@@ -75,6 +75,15 @@ import {SpreadsheetListPage} from "./pages/spreadsheet/SpreadsheetListPage.tsx";
 import {SpreadsheetEditorPage} from "./pages/spreadsheet/SpreadsheetEditorPage.tsx";
 import {AsyncTaskListPage} from "./pages/AsyncTaskListPage.tsx";
 import {AsyncTaskDetailsPage} from "./pages/AsyncTaskDetailsPage.tsx";
+import {ShoppingLayout} from "./pages/shopping/ShoppingLayout.tsx";
+import {ProductsSearchPage} from "./pages/shopping/ProductsSearchPage.tsx";
+import {ProductDetailPage} from "./pages/shopping/ProductDetailPage.tsx";
+import {BestOffersPage} from "./pages/shopping/BestOffersPage.tsx";
+import {ProductAlertsPage} from "./pages/shopping/ProductAlertsPage.tsx";
+import {ShopConfigPage} from "./pages/shopping/ShopConfigPage.tsx";
+import {ProductConfigPage} from "./pages/shopping/ProductConfigPage.tsx";
+import {ScrapAuditPage} from "./pages/shopping/ScrapAuditPage.tsx";
+import {BudgetTreePage} from "./pages/invest-track/BudgetTreePage.tsx";
 
 const cards: HomePageCard[] = [
     {
@@ -222,6 +231,7 @@ export default function App() {
                                     <Route path="wallets" element={<WalletListPage/>}/>
                                     <Route path="wallets/:walletId" element={<WalletDetailPage/>}/>
                                     <Route path="budget" element={<BudgetEntriesPage/>}/>
+                                    <Route path="budget-tree" element={<BudgetTreePage/>}/>
                                     <Route path="alerts" element={<StockAlertsPage/>}/>
                                     <Route path="stock-report" element={<StockReportPage/>}/>
                                     <Route path="recommendations" element={<RecommendationsPage/>}/>
@@ -287,7 +297,17 @@ export default function App() {
                                 <Route path="/projects/tasks/:taskId" element={<TaskDetailsPage/>}/>
                                 <Route path="/async" element={<AsyncTaskListPage/>}/>
                                 <Route path="/async/async-tasks/:id" element={<AsyncTaskDetailsPage/>}/>
-                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english' && item.path !== '/spanish' && item.path !== '/canvas' && item.path !== '/ebook' && item.path !== '/logs' && item.path !== '/spreadsheet' && item.path !== '/async').map((item) => (
+                                <Route path="/shopping" element={<ShoppingLayout/>}>
+                                    <Route index element={<Navigate to="products" replace/>}/>
+                                    <Route path="products" element={<ProductsSearchPage/>}/>
+                                    <Route path="best-offers" element={<BestOffersPage/>}/>
+                                    <Route path="alerts" element={<ProductAlertsPage/>}/>
+                                    <Route path="shop-config" element={<ShopConfigPage/>}/>
+                                    <Route path="product-config" element={<ProductConfigPage/>}/>
+                                    <Route path="scrap-audit" element={<ScrapAuditPage/>}/>
+                                </Route>
+                                <Route path="/shopping/product/:id" element={<ProductDetailPage/>}/>
+                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english' && item.path !== '/spanish' && item.path !== '/canvas' && item.path !== '/ebook' && item.path !== '/logs' && item.path !== '/spreadsheet' && item.path !== '/async' && item.path !== '/shopping').map((item) => (
                                     <Route
                                         key={item.path}
                                         path={`${item.path}/*`}

@@ -245,6 +245,40 @@ export const stockReportApi = {
     client.post<{ message: string }>('/invest-track/stock-report/trigger/evening'),
 }
 
+export interface BudgetEntryTreeDto {
+  id: string
+  name: string
+  entryType: string | null
+  paymentMethod: string | null
+  entryDate: string | null
+  notes: string | null
+  amount: number | null
+  currency: string | null
+  isRecurring: boolean | null
+}
+
+export interface BudgetCategoryDto {
+  name: string
+  totalPln: number
+  entryType: string
+  items: BudgetEntryTreeDto[]
+}
+
+export interface BudgetMonthDto {
+  key: string
+  label: string
+  totalPln: number
+  entryType: string
+  categories: BudgetCategoryDto[]
+}
+
+export const budgetTreeApi = {
+  getTree: (startDate?: string, endDate?: string) =>
+    client.get<BudgetMonthDto[]>('/api/invest-track/budget-tree', {
+      params: { startDate, endDate },
+    }),
+}
+
 export interface ImportResultDto {
   imported: number
   skipped: number
