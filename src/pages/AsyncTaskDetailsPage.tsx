@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { DataTable } from '../components/table/DataTable'
+import { Button } from '../components/ui/Button'
 import { useTableState } from '../hooks/useTableState'
 import { asyncTasksApi, type AsyncTask, type AsyncTaskHistory } from '../api/asyncTasks'
 import styles from './AsyncTaskDetailsPage.module.css'
@@ -55,9 +56,7 @@ export function AsyncTaskDetailsPage() {
 
   return (
     <div className={styles.page}>
-      <button className={styles.back} onClick={() => navigate('/async/async-tasks')}>
-        ← Back to list
-      </button>
+      <Button variant="ghost" size="sm" onClick={() => navigate('/async')}>← Back to list</Button>
 
       <div className={styles.card}>
         <h2>Task Details</h2>
