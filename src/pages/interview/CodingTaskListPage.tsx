@@ -4,6 +4,7 @@ import { Dialog } from '../../components/ui/Dialog'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
 import { useNotification } from '../../components/ui/Notification'
+import { ImportExportBar } from '../../components/ui/ImportExportBar'
 import { toPage } from '../../api/crud'
 import { TextField } from '../../components/fields/TextField'
 import { TextArea } from '../../components/fields/TextArea'
@@ -72,6 +73,12 @@ export function CodingTaskListPage() {
     return (
         <div className={styles.page}>
             <h2>Coding Tasks</h2>
+            <ImportExportBar
+                exportUrl="/interview/coding-tasks/export"
+                importUrl="/interview/coding-tasks/import"
+                entityLabel="Coding Tasks"
+                onImportSuccess={load}
+            />
             <DataTable
                 columns={COLUMNS}
                 rows={rows}

@@ -5,6 +5,7 @@ import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
 import { SelectField } from '../../components/fields/SelectField'
 import { EntityFilters } from '../../components/ui/EntityFilters'
+import { ImportExportBar } from '../../components/ui/ImportExportBar'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
 import { useEntityFilters } from '../../hooks/useEntityFilters'
@@ -117,6 +118,13 @@ export function StockAlertsPage() {
 
   return (
     <div className={styles.page}>
+      <ImportExportBar
+        exportUrl="/invest-track/stock-alerts/export"
+        importUrl="/invest-track/stock-alerts/import"
+        entityLabel="Stock Alerts"
+        onImportSuccess={load}
+        filters={filters}
+      />
       <EntityFilters entityName="StockPriceAlert" filters={filters} onFiltersChange={setFilter} onClear={clearFilters} />
       <DataTable
         columns={COLUMNS}

@@ -14,6 +14,7 @@ import { useTableActions } from '../../hooks/useTableActions'
 import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { EntityFilters } from '../../components/ui/EntityFilters'
+import { ImportExportBar } from '../../components/ui/ImportExportBar'
 import { pocketItemsApi, type PocketItem } from '../../api/pockets'
 import { toPage } from '../../api/crud'
 import styles from './PocketItemsPage.module.css'
@@ -158,6 +159,13 @@ export function PocketItemsPage() {
   return (
     <div className={styles.page}>
       <TabNav tabs={tabs} />
+      <ImportExportBar
+        exportUrl="/pocket-app/all-pocket-items/export"
+        importUrl="/pocket-app/all-pocket-items/import"
+        entityLabel="Pocket Items"
+        onImportSuccess={load}
+        filters={filters}
+      />
       <EntityFilters
         entityName="PocketItem"
         filters={filters}
