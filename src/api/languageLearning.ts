@@ -46,7 +46,7 @@ export type ReviewScore = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
 const BASE = '/api/language-learning/words'
 
 export const languageLearningApi = {
-  list: (params?: { page?: number; size?: number; sort?: string; direction?: string; language?: string }) =>
+  list: (params?: { page?: number; size?: number; sort?: string; direction?: string; language?: string; [key: string]: unknown }) =>
     client.get<Page<TranslationRecord>>(BASE, { params }),
 
   getById: (id: string) =>

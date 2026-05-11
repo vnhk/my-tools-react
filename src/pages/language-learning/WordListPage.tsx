@@ -3,9 +3,11 @@ import { useLocation } from 'react-router-dom'
 import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
+import { EntityFilters } from '../../components/ui/EntityFilters'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
+import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { toPage } from '../../api/crud'
 import { languageLearningApi, TranslationRecord } from '../../api/languageLearning'
@@ -16,6 +18,7 @@ export function WordListPage() {
     const { pathname } = useLocation()
     const language = pathname.startsWith('/english') ? 'EN' : 'ES'
     const table = useTableState({ sortBy: 'sourceText', sortDir: 'asc' }, `lang-words-${language}`)
+    const { filters, setFilter, clearFilters } = useEntityFilters()
     const [rows, setRows] = useState<TranslationRecord[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
@@ -36,6 +39,7 @@ export function WordListPage() {
                 sort: table.sortBy,
                 direction: table.sortDir,
                 language,
+                ...filters,
             })
             .then((res) => {
                 if (cancelled) return
@@ -45,7 +49,7 @@ export function WordListPage() {
             })
             .finally(() => { if (!cancelled) setLoading(false) })
         return () => { cancelled = true }
-    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, language])
+    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, language, JSON.stringify(filters)])
 
     const load = () => setRefreshKey((k) => k + 1)
 
@@ -91,6 +95,12 @@ export function WordListPage() {
 
     return (
         <div className={styles.page}>
+            <EntityFilters
+                entityName="TranslationRecord"
+                filters={filters}
+                onFiltersChange={setFilter}
+                onClear={clearFilters}
+            />
             <DataTable
                 columns={columns}
                 rows={displayedRows}

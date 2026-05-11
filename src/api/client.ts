@@ -2,6 +2,19 @@ import axios from 'axios'
 
 const client = axios.create({
   baseURL: '/api',
+  paramsSerializer: (params: Record<string, unknown>) => {
+    const sp = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (Array.isArray(value)) {
+        for (const v of value) {
+          if (v !== undefined && v !== null && v !== '') sp.append(key, String(v))
+        }
+      } else if (value !== undefined && value !== null && value !== '') {
+        sp.append(key, String(value))
+      }
+    }
+    return sp.toString()
+  },
 })
 
 client.interceptors.request.use((config) => {

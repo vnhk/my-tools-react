@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
+import { EntityFilters } from '../../components/ui/EntityFilters'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { Button } from '../../components/ui/Button'
 import { StatusBadge } from '../../components/ui/StatusBadge'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
+import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { tasksApi, type TaskDto } from '../../api/projects'
 import { toPage } from '../../api/crud'
@@ -25,6 +27,7 @@ export function AllTasksPage() {
   const navigate = useNavigate()
   const { showSuccess, showError } = useNotification()
   const table = useTableState({ sortBy: 'number', sortDir: 'asc' }, 'all-tasks')
+  const { filters, setFilter, clearFilters } = useEntityFilters()
   const [rows, setRows] = useState<TaskDto[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -48,12 +51,12 @@ export function AllTasksPage() {
   const load = () => {
     setLoading(true)
     tasksApi
-      .getAll({ page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir, search: table.search || undefined })
+      .getAll({ page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir, search: table.search || undefined, ...filters })
       .then((res) => { const p = toPage(res.data); setRows(p.content); setTotal(p.totalElements) })
       .finally(() => setLoading(false))
   }
 
-  useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir, table.search])
+  useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir, table.search, JSON.stringify(filters)])
 
   const actions = useTableActions<TaskDto>({
     onDelete: async (selected) => { for (const r of selected) await tasksApi.delete(r.id) },
@@ -81,6 +84,12 @@ export function AllTasksPage() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>← Projects</Button>
         <h2>All Tasks</h2>
       </div>
+      <EntityFilters
+        entityName="Task"
+        filters={filters}
+        onFiltersChange={setFilter}
+        onClear={clearFilters}
+      />
       <DataTable
         columns={columns}
         rows={rows}

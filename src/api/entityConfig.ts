@@ -61,6 +61,12 @@ export function getEditFormFields(entityName: string): FieldConfig[] {
     return Object.values(config).filter((f) => f.inEditForm)
 }
 
+export function getFilterableFields(entityName: string): FieldConfig[] {
+    const config = cache?.[entityName]
+    if (!config) return []
+    return Object.values(config).filter((f) => f.filterable)
+}
+
 export function validateFields(entityName: string, values: Record<string, unknown>, mode?: 'save' | 'edit'): Record<string, string> {
     const config = cache?.[entityName]
     if (!config) return {}
