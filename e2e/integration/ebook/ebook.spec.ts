@@ -21,7 +21,7 @@ test.describe('Ebook English Stats — integration', () => {
     await expect(page.getByRole('link', { name: /Not Learned Words/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /Ebooks/i })).toBeVisible()
     // No ebooks in test env → selector empty or shows no words
-    await expect(page.getByText(/No unknown words|Select an ebook|unknown words/i)).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText('Select an ebook to start')).toBeVisible({ timeout: 10_000 })
   })
 
   test('switches tabs between Ebooks and Not Learned Words', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Ebook English Stats — integration', () => {
     await page.getByRole('button', { name: /Add Ebook/i }).click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await expect(page.getByLabel(/Ebook Name/i)).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Add' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add', exact: true })).toBeVisible()
 
     // Close dialog
     await page.getByRole('button', { name: /Cancel|✕/i }).first().click()
@@ -56,7 +56,7 @@ test.describe('Ebook English Stats — integration', () => {
     await page.goto('/ebook/ebooks')
 
     await page.getByRole('button', { name: /Add Ebook/i }).click()
-    await page.getByRole('button', { name: 'Add' }).click()
+    await page.getByRole('button', { name: 'Add', exact: true }).click()
 
     // Validation error — name is required
     await expect(page.getByText(/required|is required/i)).toBeVisible()

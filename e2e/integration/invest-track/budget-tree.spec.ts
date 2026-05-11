@@ -84,7 +84,7 @@ test.describe('Invest Track — Budget Tree integration', () => {
       value: 10.0,
       entryDate: today,
       entryType: 'Expense',
-      paymentMethod: null,
+      paymentMethod: 'Card',
       notes: null,
       isRecurring: false,
     })
@@ -129,7 +129,7 @@ test.describe('Invest Track — Budget Tree integration', () => {
       value: 77.5,
       entryDate: today,
       entryType: 'Income',
-      paymentMethod: null,
+      paymentMethod: 'Card',
       notes: 'api test',
       isRecurring: false,
     })
