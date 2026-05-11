@@ -1,0 +1,58 @@
+.page {
+  padding: 2rem;
+  max-width: 480px;
+}
+
+.title {
+  margin: 0 0 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.card {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.codeBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  background: var(--color-primary-subtle);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.25);
+  border-radius: 10px;
+  text-align: center;
+}
+
+.codeLabel {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.code {
+  font-size: 2.25rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--color-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.codeNote {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}

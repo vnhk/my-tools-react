@@ -2,6 +2,7 @@ import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom'
 import {AuthProvider} from './auth/AuthContext'
 import {RequireAuth} from './auth/RequireAuth'
 import {LoginPage} from './pages/LoginPage'
+import {AcceptLoginPage} from './pages/AcceptLoginPage'
 import {AppLayout, NavItem} from './components/layout/AppLayout'
 import {NotificationProvider} from './components/ui/Notification'
 import {PocketListPage} from './pages/pocket/PocketListPage'
@@ -84,6 +85,8 @@ import {ShopConfigPage} from "./pages/shopping/ShopConfigPage.tsx";
 import {ProductConfigPage} from "./pages/shopping/ProductConfigPage.tsx";
 import {ScrapAuditPage} from "./pages/shopping/ScrapAuditPage.tsx";
 import {BudgetTreePage} from "./pages/invest-track/BudgetTreePage.tsx";
+import {SettingsPage} from "./pages/SettingsPage.tsx";
+import {OtpGeneratePage} from "./pages/OtpGeneratePage.tsx";
 
 const cards: HomePageCard[] = [
     {
@@ -218,6 +221,9 @@ export default function App() {
                     <Routes>
                         <Route path="/login" element={<LoginPage/>}/>
                         <Route element={<RequireAuth/>}>
+                            <Route path="/accept-login/:uuid" element={<AcceptLoginPage/>}/>
+                        </Route>
+                        <Route element={<RequireAuth/>}>
                             <Route element={<AppLayout navItems={NAV_ITEMS}/>}>
                                 <Route index element={<Navigate to="/home" replace/>}/>
                                 <Route path="/home" element={<HomePage welcomeText={"Hi Good to see ya!"} cards={
@@ -307,6 +313,8 @@ export default function App() {
                                     <Route path="scrap-audit" element={<ScrapAuditPage/>}/>
                                 </Route>
                                 <Route path="/shopping/product/:id" element={<ProductDetailPage/>}/>
+                                <Route path="/settings" element={<SettingsPage/>}/>
+                                <Route path="/otp" element={<OtpGeneratePage/>}/>
                                 {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english' && item.path !== '/spanish' && item.path !== '/canvas' && item.path !== '/ebook' && item.path !== '/logs' && item.path !== '/spreadsheet' && item.path !== '/async' && item.path !== '/shopping').map((item) => (
                                     <Route
                                         key={item.path}

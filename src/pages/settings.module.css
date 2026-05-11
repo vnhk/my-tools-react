@@ -1,0 +1,89 @@
+.page {
+  padding: 2rem;
+  max-width: 640px;
+}
+
+.title {
+  margin: 0 0 2rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.section {
+  background: var(--glass-surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.sectionHint {
+  margin: 0 0 1rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.cipherForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.input {
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  background: var(--color-surface);
+  color: var(--input-color);
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  border-color: var(--input-border-focus);
+}
+
+.cipherActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.themeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.themeBtn {
+  padding: 0.375rem 0.875rem;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-transform: capitalize;
+}
+
+.themeBtn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.themeBtnActive {
+  background: var(--color-primary-subtle);
+  border-color: rgba(var(--color-primary-rgb), 0.4);
+  color: var(--color-primary);
+}

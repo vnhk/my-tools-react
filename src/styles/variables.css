@@ -45,8 +45,8 @@
   --shadow-md:   0 4px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
   --shadow-lg:   0 12px 48px rgba(0,0,0,0.65), 0 4px 16px rgba(0,0,0,0.4);
   --shadow-xl:   0 24px 80px rgba(0,0,0,0.75), 0 8px 32px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 0 1px var(--color-primary-glow), 0 0 20px rgba(165,180,252,0.2), 0 0 40px rgba(165,180,252,0.08);
-  --shadow-glow-sm: 0 0 12px rgba(165,180,252,0.25);
+  --shadow-glow: 0 0 0 1px var(--color-primary-glow), 0 0 20px rgba(var(--color-primary-rgb),0.2), 0 0 40px rgba(var(--color-primary-rgb),0.08);
+  --shadow-glow-sm: 0 0 12px rgba(var(--color-primary-rgb),0.25);
 
   /* ── Spacing ── */
   --space-xs:  4px;
@@ -105,9 +105,9 @@
   --btn-color:            var(--color-text-primary);
   --btn-hover-bg:         var(--color-surface-hover);
   --btn-primary-bg:       var(--color-primary-subtle);
-  --btn-primary-border:   rgba(165, 180, 252, 0.4);
+  --btn-primary-border:   rgba(var(--color-primary-rgb), 0.4);
   --btn-primary-color:    var(--color-primary);
-  --btn-primary-hover-bg: rgba(165, 180, 252, 0.2);
+  --btn-primary-hover-bg: rgba(var(--color-primary-rgb), 0.2);
   --btn-success-bg:       var(--color-success-subtle);
   --btn-success-border:   rgba(52, 211, 153, 0.4);
   --btn-success-color:    var(--color-success);
@@ -139,7 +139,7 @@
 
   /* ── Tags / Chips ── */
   --tag-bg:     var(--color-primary-subtle);
-  --tag-border: rgba(165, 180, 252, 0.3);
+  --tag-border: rgba(var(--color-primary-rgb), 0.3);
   --tag-color:  var(--color-primary);
 
   /* ── Progress ── */
