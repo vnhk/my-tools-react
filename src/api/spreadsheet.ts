@@ -19,19 +19,19 @@ export interface SpreadsheetData {
 }
 
 export const spreadsheetApi = {
-  list: () => client.get<SpreadsheetItem[]>('/api/spreadsheet'),
+  list: () => client.get<SpreadsheetItem[]>('/spreadsheet'),
   create: (name: string, description?: string) =>
-    client.post<SpreadsheetItem>('/api/spreadsheet', { name, description }),
-  delete: (id: string) => client.delete(`/api/spreadsheet/${id}`),
+    client.post<SpreadsheetItem>('/spreadsheet', { name, description }),
+  delete: (id: string) => client.delete(`/spreadsheet/${id}`),
   updateMeta: (id: string, name: string, description?: string) =>
-    client.put<SpreadsheetItem>(`/api/spreadsheet/${id}`, { name, description }),
-  getData: (id: string) => client.get<SpreadsheetData>(`/api/spreadsheet/${id}/data`),
+    client.put<SpreadsheetItem>(`/spreadsheet/${id}`, { name, description }),
+  getData: (id: string) => client.get<SpreadsheetData>(`/spreadsheet/${id}/data`),
   saveData: (id: string, body: string, columnWidthsBody: string) =>
-    client.put<SpreadsheetData>(`/api/spreadsheet/${id}/data`, { body, columnWidthsBody }),
+    client.put<SpreadsheetData>(`/spreadsheet/${id}/data`, { body, columnWidthsBody }),
   evaluate: (id: string, body: string) =>
-    client.post<SpreadsheetRow[]>(`/api/spreadsheet/${id}/evaluate`, { body }),
+    client.post<SpreadsheetRow[]>(`/spreadsheet/${id}/evaluate`, { body }),
   rowOperation: (id: string, body: string, action: string, rowNumber: number) =>
-    client.post<SpreadsheetRow[]>(`/api/spreadsheet/${id}/row`, { body, action, rowNumber }),
+    client.post<SpreadsheetRow[]>(`/spreadsheet/${id}/row`, { body, action, rowNumber }),
   columnOperation: (id: string, body: string, action: string, columnNumber: number) =>
-    client.post<SpreadsheetRow[]>(`/api/spreadsheet/${id}/column`, { body, action, columnNumber }),
+    client.post<SpreadsheetRow[]>(`/spreadsheet/${id}/column`, { body, action, columnNumber }),
 }

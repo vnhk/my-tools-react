@@ -20,10 +20,10 @@ export function BudgetTreePage() {
     setLoading(true)
     budgetTreeApi.getTree(startDate, endDate)
       .then((r) => {
-        setMonths(r.data)
-        // Auto-expand first month
-        if (r.data.length > 0) {
-          setExpanded(new Set([r.data[0].key]))
+        const data = Array.isArray(r.data) ? r.data : []
+        setMonths(data)
+        if (data.length > 0) {
+          setExpanded(new Set([data[0].key]))
         }
       })
       .catch(() => showError('Failed to load budget tree'))

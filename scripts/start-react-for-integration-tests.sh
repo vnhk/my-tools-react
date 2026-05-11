@@ -27,7 +27,6 @@ cleanup() {
   echo "=== Stopping React dev server (pid $DEV_PID) ==="
   kill "$DEV_PID" 2>/dev/null || true
 }
-trap cleanup EXIT
 
 # Wait for the React dev server to be ready (up to 60s)
 echo "Waiting for React dev server at http://localhost:5173 ..."
@@ -42,3 +41,5 @@ until curl -sf http://localhost:5173 > /dev/null 2>&1; do
   WAITED=$((WAITED + 2))
 done
 echo "React dev server is ready."
+
+trap cleanup INT TERM

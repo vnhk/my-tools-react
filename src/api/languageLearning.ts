@@ -43,7 +43,7 @@ export interface LearningStats {
 
 export type ReviewScore = 'AGAIN' | 'HARD' | 'GOOD' | 'EASY'
 
-const BASE = '/api/language-learning/words'
+const BASE = '/language-learning/words'
 
 export const languageLearningApi = {
   list: (params?: { page?: number; size?: number; sort?: string; direction?: string; language?: string; [key: string]: unknown }) =>

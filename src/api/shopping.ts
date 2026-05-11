@@ -69,20 +69,20 @@ export interface ScrapAuditDto {
 export const shoppingApi = {
   searchProducts: (params: {
     category?: string; shop?: string; name?: string; page?: number; size?: number
-  }) => client.get<SearchResponse>('/api/shopping/products', { params }),
+  }) => client.get<SearchResponse>('/shopping/products', { params }),
 
   getProduct: (id: number) =>
-    client.get<SearchResponse>(`/api/shopping/products/${id}`),
+    client.get<SearchResponse>(`/shopping/products/${id}`),
 
   getCategories: () =>
-    client.get<string[]>('/api/shopping/products/categories'),
+    client.get<string[]>('/shopping/products/categories'),
 
   getBestOffers: (params: {
     discountMin?: number; discountMax?: number; months?: number;
     categories?: string[]; shop?: string; name?: string;
     prevPriceMin?: number; prevPriceMax?: number;
     page?: number; size?: number
-  }) => client.get<SearchResponse>('/api/shopping/best-offers', {
+  }) => client.get<SearchResponse>('/shopping/best-offers', {
     params,
     paramsSerializer: (p) => {
       const sp = new URLSearchParams()
@@ -95,21 +95,21 @@ export const shoppingApi = {
     },
   }),
 
-  getProductAlerts: () => client.get<ProductAlertDto[]>('/api/shopping/product-alerts'),
-  createProductAlert: (dto: ProductAlertDto) => client.post<ProductAlertDto>('/api/shopping/product-alerts', dto),
-  updateProductAlert: (id: number, dto: ProductAlertDto) => client.put<ProductAlertDto>(`/api/shopping/product-alerts/${id}`, dto),
-  deleteProductAlert: (id: number) => client.delete(`/api/shopping/product-alerts/${id}`),
+  getProductAlerts: () => client.get<ProductAlertDto[]>('/shopping/product-alerts'),
+  createProductAlert: (dto: ProductAlertDto) => client.post<ProductAlertDto>('/shopping/product-alerts', dto),
+  updateProductAlert: (id: number, dto: ProductAlertDto) => client.put<ProductAlertDto>(`/shopping/product-alerts/${id}`, dto),
+  deleteProductAlert: (id: number) => client.delete(`/shopping/product-alerts/${id}`),
 
-  getShopConfigs: () => client.get<ShopConfigDto[]>('/api/shopping/shop-configs'),
-  createShopConfig: (dto: ShopConfigDto) => client.post<ShopConfigDto>('/api/shopping/shop-configs', dto),
-  updateShopConfig: (id: number, dto: ShopConfigDto) => client.put<ShopConfigDto>(`/api/shopping/shop-configs/${id}`, dto),
-  deleteShopConfig: (id: number) => client.delete(`/api/shopping/shop-configs/${id}`),
+  getShopConfigs: () => client.get<ShopConfigDto[]>('/shopping/shop-configs'),
+  createShopConfig: (dto: ShopConfigDto) => client.post<ShopConfigDto>('/shopping/shop-configs', dto),
+  updateShopConfig: (id: number, dto: ShopConfigDto) => client.put<ShopConfigDto>(`/shopping/shop-configs/${id}`, dto),
+  deleteShopConfig: (id: number) => client.delete(`/shopping/shop-configs/${id}`),
 
-  getProductConfigs: (shopId?: number) => client.get<ProductConfigDto[]>('/api/shopping/product-configs', { params: shopId ? { shopId } : {} }),
-  createProductConfig: (dto: ProductConfigDto) => client.post<ProductConfigDto>('/api/shopping/product-configs', dto),
-  updateProductConfig: (id: number, dto: ProductConfigDto) => client.put<ProductConfigDto>(`/api/shopping/product-configs/${id}`, dto),
-  deleteProductConfig: (id: number) => client.delete(`/api/shopping/product-configs/${id}`),
+  getProductConfigs: (shopId?: number) => client.get<ProductConfigDto[]>('/shopping/product-configs', { params: shopId ? { shopId } : {} }),
+  createProductConfig: (dto: ProductConfigDto) => client.post<ProductConfigDto>('/shopping/product-configs', dto),
+  updateProductConfig: (id: number, dto: ProductConfigDto) => client.put<ProductConfigDto>(`/shopping/product-configs/${id}`, dto),
+  deleteProductConfig: (id: number) => client.delete(`/shopping/product-configs/${id}`),
 
-  getScrapAudits: (date?: string) => client.get<ScrapAuditDto[]>('/api/shopping/scrap-audits', { params: date ? { date } : {} }),
-  deleteScrapAudit: (id: number) => client.delete(`/api/shopping/scrap-audits/${id}`),
+  getScrapAudits: (date?: string) => client.get<ScrapAuditDto[]>('/shopping/scrap-audits', { params: date ? { date } : {} }),
+  deleteScrapAudit: (id: number) => client.delete(`/shopping/scrap-audits/${id}`),
 }

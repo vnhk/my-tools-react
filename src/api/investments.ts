@@ -274,7 +274,7 @@ export interface BudgetMonthDto {
 
 export const budgetTreeApi = {
   getTree: (startDate?: string, endDate?: string) =>
-    client.get<BudgetMonthDto[]>('/api/invest-track/budget-tree', {
+    client.get<BudgetMonthDto[]>('/invest-track/budget-tree', {
       params: { startDate, endDate },
     }),
 }

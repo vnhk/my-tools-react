@@ -13,12 +13,12 @@ export interface CanvasDetail extends CanvasItem {
 }
 
 export const canvasApi = {
-  list: () => client.get<CanvasItem[]>('/api/canvas'),
-  getCategories: () => client.get<string[]>('/api/canvas/categories'),
-  get: (id: string) => client.get<CanvasDetail>(`/api/canvas/${id}`),
+  list: () => client.get<CanvasItem[]>('/canvas'),
+  getCategories: () => client.get<string[]>('/canvas/categories'),
+  get: (id: string) => client.get<CanvasDetail>(`/canvas/${id}`),
   create: (name: string, category?: string) =>
-    client.post<CanvasItem>('/api/canvas', { name, category }),
+    client.post<CanvasItem>('/canvas', { name, category }),
   update: (id: string, req: { name?: string; category?: string; content?: string }) =>
-    client.put<CanvasDetail>(`/api/canvas/${id}`, req),
-  delete: (id: string) => client.delete(`/api/canvas/${id}`),
+    client.put<CanvasDetail>(`/canvas/${id}`, req),
+  delete: (id: string) => client.delete(`/canvas/${id}`),
 }

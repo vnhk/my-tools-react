@@ -1,4 +1,5 @@
-import {getEditFormFields, getSaveFormFields, validateFields} from '../../api/entityConfig'
+import { useState, useEffect } from 'react'
+import {getEditFormFields, getSaveFormFields, validateFields, getEntityConfigs, getEntityConfig} from '../../api/entityConfig'
 import {TextField} from '../fields/TextField'
 import {Checkbox} from '../fields/Checkbox'
 import {SelectField} from '../fields/SelectField'
@@ -23,6 +24,14 @@ export function DynamicForm({
                                 skip = [],
                                 dynamicOptions = {}
                             }: DynamicFormProps) {
+    const [, forceUpdate] = useState(0)
+
+    useEffect(() => {
+        if (!getEntityConfig(entityName)) {
+            getEntityConfigs().then(() => forceUpdate(n => n + 1))
+        }
+    }, [entityName])
+
     const fields = mode === 'save'
         ? getSaveFormFields(entityName)
         : getEditFormFields(entityName)
