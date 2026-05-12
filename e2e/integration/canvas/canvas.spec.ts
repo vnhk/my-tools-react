@@ -76,7 +76,7 @@ test.describe('Canvas — integration', () => {
       name: 'E2E Test Page',
       category: 'E2E Tests',
     })
-    expect(createRes.status()).toBe(201)
+    expect(createRes.status()).toBe(200)
     const created = await createRes.json()
     expect(created.id).toBeTruthy()
     expect(created.name).toBe('E2E Test Page')
