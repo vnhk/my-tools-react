@@ -1,0 +1,224 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  height: 100%;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.toolbarLeft {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.timeFilters {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.timeBtn {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.timeBtn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.timeBtnActive {
+  background: var(--color-primary-subtle);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.stats {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+}
+
+.tableWrapper {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.table th {
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.row {
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--transition);
+}
+
+.row:hover {
+  background: var(--color-surface-hover);
+}
+
+.row td {
+  padding: var(--space-xs) var(--space-sm);
+  vertical-align: top;
+}
+
+.colTimestamp {
+  white-space: nowrap;
+  min-width: 160px;
+}
+
+.colLevel {
+  min-width: 70px;
+}
+
+.colApp {
+  min-width: 100px;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.colProcess {
+  min-width: 100px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.colModule {
+  min-width: 80px;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.colLog {
+  min-width: 300px;
+}
+
+.levelBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.levelError {
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.levelWarn {
+  background: var(--color-warning-subtle);
+  color: var(--color-warning);
+}
+
+.levelInfo {
+  background: var(--color-info-subtle);
+  color: var(--color-info);
+}
+
+.levelDebug {
+  background: var(--color-surface);
+  color: var(--color-text-tertiary);
+}
+
+.logCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.logText {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+.jsonLog {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  background: var(--mono-bg);
+  border-radius: var(--radius-sm);
+  padding: var(--space-xs);
+  margin: 0;
+  word-break: break-all;
+  white-space: pre-wrap;
+  overflow: hidden;
+}
+
+.expandBtn {
+  align-self: flex-start;
+  padding: 2px 8px;
+  font-size: var(--font-size-xs);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.expandBtn:hover {
+  background: var(--color-primary-subtle);
+}
+
+.empty {
+  text-align: center;
+  color: var(--color-text-tertiary);
+  padding: var(--space-xl);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  justify-content: center;
+}
+
+.pageInfo {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: 0 var(--space-sm);
+}
