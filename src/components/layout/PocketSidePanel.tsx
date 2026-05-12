@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { pocketsApi, pocketItemsApi, type PocketItem } from '../../api/pockets'
 import { toPage } from '../../api/crud'
 import { Dialog } from '../ui/Dialog'

@@ -20,16 +20,6 @@ import { toPage } from '../../api/crud'
 import styles from './PocketItemsPage.module.css'
 
 const EXTRA_COLUMNS = [
-  {
-    key: 'encrypted',
-    header: 'Encrypted',
-    render: (row: PocketItem, onDecrypt: (item: PocketItem) => void) =>
-      row.encrypted ? (
-        <button className={styles.decryptBtn} onClick={(e) => { e.stopPropagation(); onDecrypt(row) }}>
-          🔓 Decrypt
-        </button>
-      ) : '—',
-  },
   { key: 'orderInPocket', header: 'Order', sortable: true },
   { key: 'modificationDate', header: 'Modified', sortable: true },
 ]
@@ -74,11 +64,16 @@ export function PocketItemsPage() {
           : <span className={styles.contentPreview}>{row.content?.replace(/<[^>]+>/g, '').slice(0, 80)}</span>,
       },
     }),
-    ...EXTRA_COLUMNS.map((col) =>
-      col.key === 'encrypted'
-        ? { ...col, render: (row: PocketItem) => col.render(row, openDecrypt) }
-        : col
-    ),
+    {
+      key: 'encrypted',
+      header: 'Encrypted',
+      render: (row: PocketItem) => row.encrypted ? (
+        <button className={styles.decryptBtn} onClick={(e) => { e.stopPropagation(); openDecrypt(row) }}>
+          🔓 Decrypt
+        </button>
+      ) : '—',
+    },
+    ...EXTRA_COLUMNS,
   ]
 
   const load = () => {

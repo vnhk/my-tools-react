@@ -198,7 +198,7 @@ export function DietDashboardPage() {
                 <YAxis tick={TICK_STYLE} />
                 <Tooltip
                   contentStyle={TOOLTIP_STYLE}
-                  formatter={(v: number) => [`${v} kcal (≈${(v/7700).toFixed(2)} kg)`, 'Cumul. deficit']}
+                  formatter={(v) => [`${Number(v)} kcal (≈${(Number(v)/7700).toFixed(2)} kg)`, 'Cumul. deficit']}
                 />
                 <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" />
                 <Line type="monotone" dataKey="cumul" name="Cumulative deficit" stroke="#818cf8" dot={false} strokeWidth={2} />

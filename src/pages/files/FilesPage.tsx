@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import {
   FaFolder, FaFolderOpen, FaFile, FaFileImage, FaFileVideo, FaFilePdf,
-  FaFileAlt, FaFileArchive, FaFileAudio, FaLock,
+  FaFileAlt, FaFileArchive, FaFileAudio,
 } from 'react-icons/fa'
 import client from '../../api/client'
 import { Button } from '../../components/ui/Button'

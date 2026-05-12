@@ -12,10 +12,10 @@ import styles from './QuestionListPage.module.css'
 import { CodingTask, codingTasksApi } from '../../api/interview'
 
 const COLUMNS = [
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'initialCode', label: 'Initial Code', sortable: false },
-    { key: 'exampleCode', label: 'Example Code', sortable: false },
-    { key: 'questions', label: 'Questions', sortable: false },
+    { key: 'name', header: 'Name', sortable: true },
+    { key: 'initialCode', header: 'Initial Code', sortable: false },
+    { key: 'exampleCode', header: 'Example Code', sortable: false },
+    { key: 'questions', header: 'Questions', sortable: false },
 ]
 
 function empty(): Partial<CodingTask> {

@@ -1,5 +1,4 @@
 import { ReactNode, FormEvent } from 'react'
-import { Button } from '../ui/Button'
 import { Dialog } from '../ui/Dialog'
 import styles from './EntityForm.module.css'
 

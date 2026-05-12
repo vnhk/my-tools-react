@@ -13,13 +13,13 @@ import styles from './QuestionListPage.module.css'
 import { QuestionConfig, questionConfigsApi } from '../../api/interview'
 
 const COLUMNS = [
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'difficulty1Percent', label: 'L1 %', sortable: false },
-    { key: 'difficulty2Percent', label: 'L2 %', sortable: false },
-    { key: 'difficulty3Percent', label: 'L3 %', sortable: false },
-    { key: 'difficulty4Percent', label: 'L4 %', sortable: false },
-    { key: 'difficulty5Percent', label: 'L5 %', sortable: false },
-    { key: 'codingTasksAmount', label: 'Coding Tasks', sortable: false },
+    { key: 'name', header: 'Name', sortable: true },
+    { key: 'difficulty1Percent', header: 'L1 %', sortable: false },
+    { key: 'difficulty2Percent', header: 'L2 %', sortable: false },
+    { key: 'difficulty3Percent', header: 'L3 %', sortable: false },
+    { key: 'difficulty4Percent', header: 'L4 %', sortable: false },
+    { key: 'difficulty5Percent', header: 'L5 %', sortable: false },
+    { key: 'codingTasksAmount', header: 'Coding Tasks', sortable: false },
 ]
 
 function empty(): Partial<QuestionConfig> {

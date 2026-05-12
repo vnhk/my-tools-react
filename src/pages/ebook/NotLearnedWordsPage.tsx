@@ -35,7 +35,7 @@ function WordDialog({
         </div>
         <div className={styles.dialogCount}>Appears {word.count} times</div>
         <div className={styles.dialogActions}>
-          <Button variant="warning" size="md" onClick={onLearn}>
+          <Button variant="secondary" size="md" onClick={onLearn}>
             Mark as learned <kbd className={styles.kbd}>[</kbd>
           </Button>
           <Button variant="primary" size="md" onClick={onFlashcard}>

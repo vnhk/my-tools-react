@@ -12,7 +12,7 @@ interface SelectFieldProps {
     options: Option[]
     placeholder?: string | number
     value?: string | number
-    onChange?: (e: { target: { value: string | number } }) => void
+    onChange?: (e: { target: { value: string } }) => void
     required?: boolean
     disabled?: boolean
     className?: string

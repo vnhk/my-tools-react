@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { languageLearningApi, ReviewScore, TranslationRecordDetail } from '../../api/languageLearning'
 import { Button } from '../../components/ui/Button'
@@ -87,7 +87,6 @@ export function FlashcardsPage() {
     }
 
     const isDone = loaded && index >= cards.length
-    const remaining = loaded ? Math.max(0, cards.length - index) : 0
 
     return (
         <div className={styles.page}>

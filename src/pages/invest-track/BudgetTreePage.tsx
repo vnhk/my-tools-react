@@ -125,7 +125,7 @@ function MonthNode({ month, open, onToggle, expandedCats, onToggleCat, monthKey 
   )
 }
 
-function CategoryNode({ cat, catKey, open, onToggle }: {
+function CategoryNode({ cat, catKey: _catKey, open, onToggle }: {
   cat: BudgetCategoryDto; catKey: string; open: boolean; onToggle: () => void
 }) {
   const isIncome = cat.entryType === 'Income'

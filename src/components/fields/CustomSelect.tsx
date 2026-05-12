@@ -9,7 +9,7 @@ export interface SelectOption {
 interface CustomSelectProps {
     options: SelectOption[]
     value?: string | number
-    onChange?: (value: string | number) => void
+    onChange?: (value: string) => void
     placeholder?: string | number
     disabled?: boolean
     size?: 'sm'
@@ -75,7 +75,7 @@ export function CustomSelect({
         } else if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             if (focusedIndex >= 0 && focusedIndex < options.length) {
-                onChange?.(options[focusedIndex].value)
+                onChange?.(String(options[focusedIndex].value))
                 setOpen(false)
             }
         }
@@ -89,8 +89,8 @@ export function CustomSelect({
         item?.scrollIntoView({block: 'nearest'})
     }, [focusedIndex, open])
 
-    const select = (optValue: string) => {
-        onChange?.(optValue)
+    const select = (optValue: string | number) => {
+        onChange?.(String(optValue))
         setOpen(false)
     }
 
