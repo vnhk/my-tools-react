@@ -11,7 +11,7 @@ import {useNotification} from '../../components/ui/Notification'
 import {type IngredientDto, ingredientsApi} from '../../api/cookBook'
 import {toPage} from '../../api/crud'
 import styles from './IngredientsPage.module.css'
-import {DynamicForm} from "../../components/ui/DynamicForm.tsx";
+import {DynamicForm} from '../../components/ui/DynamicForm'
 
 const COLUMNS: Column<IngredientDto>[] = [
     {key: 'name', header: 'Name', sortable: true},
@@ -43,8 +43,6 @@ const EMPTY: Partial<IngredientDto> = {
 
 export function IngredientsPage() {
     const {showSuccess, showError} = useNotification()
-    const [formErrors] = useState<Record<string, string>>({})
-
 
     const table = useTableState(
         {sortBy: 'name', sortDir: 'asc'},
@@ -57,40 +55,51 @@ export function IngredientsPage() {
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
-    const [editItem, setEditItem] = useState<Partial<IngredientDto>>({
-        ...EMPTY,
-    })
+    const [editItem, setEditItem] = useState<Partial<IngredientDto>>({...EMPTY})
+    const [refreshKey, setRefreshKey] = useState(0)
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
-    const load = () => {
+    const load = () => setRefreshKey(k => k + 1)
+
+    useEffect(() => {
+        let cancelled = false
+
         setLoading(true)
 
-        ingredientsApi
-            .getAll({
-                page: table.page,
-                size: table.pageSize,
-                ...filters,
-            })
+        ingredientsApi.getAll({
+            page: table.page,
+            size: table.pageSize,
+            sort: table.sortBy,
+            direction: table.sortDir,
+            ...filters,
+        })
             .then((res) => {
+                if (cancelled) return
+
                 const p = toPage(res.data)
                 setRows(p.content)
                 setTotal(p.totalElements)
             })
             .catch(() => showError('Failed to load ingredients'))
-            .finally(() => setLoading(false))
-    }
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
 
-    useEffect(load, [
+        return () => {
+            cancelled = true
+        }
+    }, [
         table.page,
         table.pageSize,
+        table.sortBy,
+        table.sortDir,
+        refreshKey,
         JSON.stringify(filters),
     ])
 
     const openEdit = (item: Partial<IngredientDto>) => {
-        setEditItem({
-            ...EMPTY,
-            ...item,
-        })
-
+        setEditItem({...EMPTY, ...item})
+        setFormErrors({})
         setDialogOpen(true)
     }
 
@@ -100,7 +109,7 @@ export function IngredientsPage() {
                 await ingredientsApi.delete(r.id)
             }
         },
-        onEdit: openEdit,
+        onEdit: (item) => openEdit(item),
         onRefresh: load,
     })
 
@@ -158,13 +167,10 @@ export function IngredientsPage() {
 
             <Dialog
                 open={dialogOpen}
-                title={
-                    editItem.id
-                        ? 'Edit Ingredient'
-                        : 'New Ingredient'
-                }
+                title={editItem.id ? 'Edit Ingredient' : 'New Ingredient'}
                 onClose={() => setDialogOpen(false)}
-                onConfirm={handleSave}>
+                onConfirm={handleSave}
+            >
                 <DynamicForm
                     entityName="Ingredient"
                     mode={editItem.id ? 'edit' : 'save'}
