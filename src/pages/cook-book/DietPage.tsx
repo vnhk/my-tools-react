@@ -90,7 +90,8 @@ function AddItemDialog({date, mealType, mealName, onAdded, onClose}: {
                 direction: "desc",
                 name: ingSearch
             }).then(r => setSuggestions(r.data.content))
-                .catch(() => {})
+                .catch(() => {
+                })
         }, 250)
     }, [ingSearch])
 
@@ -610,8 +611,8 @@ export function DietPage() {
     const allMealTypes = MEAL_TYPES
     const mealsMap = new Map((day?.meals ?? []).map(m => [m.mealType, m]))
 
-    const effectiveTdee = day
-        ? (day.estimatedDailyKcal ?? 0) + (day.activityKcal && day.activityKcalPercent ? day.activityKcal * day.activityKcalPercent / 100 : 0)
+    const effectiveTarget = day
+        ? (day.targetKcal ?? 0) + (day.activityKcal && day.activityKcalPercent ? day.activityKcal * day.activityKcalPercent / 100 : 0)
         : 0
 
     const handleExport = () => {
@@ -654,7 +655,7 @@ export function DietPage() {
                     {/* Summary */}
                     <div className={styles.summary}>
                         <div className={styles.macroTiles}>
-                            <MacroTile label="Calories" consumed={day.totalKcal} target={day.targetKcal} unit="kcal"/>
+                            <MacroTile label="Calories" consumed={day.totalKcal} target={effectiveTarget} unit="kcal"/>
                             <MacroTile label="Protein" consumed={day.totalProtein} target={day.targetProtein}/>
                             <MacroTile label="Fat" consumed={day.totalFat} target={day.targetFat}/>
                             <MacroTile label="Carbs" consumed={day.totalCarbs} target={day.targetCarbs}/>
@@ -663,8 +664,8 @@ export function DietPage() {
                         <div className={styles.profileChips}>
                             {day.estimatedDailyKcal != null &&
                                 <span className={styles.chip}>TDEE: {day.estimatedDailyKcal} kcal</span>}
-                            {effectiveTdee > 0 && day.activityKcal &&
-                                <span className={styles.chip}>Eff. TDEE: {effectiveTdee.toFixed(0)} kcal</span>}
+                            {effectiveTarget > 0 && day.activityKcal &&
+                                <span className={styles.chip}>Eff. TDEE: {effectiveTarget.toFixed(0)} kcal</span>}
                             {day.weightKg != null && <span className={styles.chip}>⚖ {day.weightKg} kg</span>}
                             {day.gender && <span className={styles.chip}>{day.gender === 'M' ? '♂' : '♀'}</span>}
                             {day.age != null && <span className={styles.chip}>{day.age} y</span>}
