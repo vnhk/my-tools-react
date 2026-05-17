@@ -9,6 +9,11 @@ export default defineConfig({
         target: 'https://127.0.0.1:8091',
         secure: false,
       },
+      '/ws': {
+        target: 'https://127.0.0.1:8091',
+        secure: false,
+        ws: true,
+      },
     },
   },
 })

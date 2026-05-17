@@ -11,7 +11,7 @@ export function fetchProductionDetails(name: string) {
 
 export function fetchVideoInfo(productionName: string, videoFolderId: string) {
   return client.get<VideoInfo>(
-    `/streaming/light-player/video-info/${encodeURIComponent(productionName)}/${videoFolderId}`
+    `/streaming/productions/${encodeURIComponent(productionName)}/video/${videoFolderId}`
   )
 }
 
