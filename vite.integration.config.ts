@@ -10,6 +10,10 @@ export default defineConfig({
         target: 'http://localhost:9091',
         secure: false,
       },
+      '/storage': {
+        target: 'http://localhost:9091',
+        secure: false,
+      },
       '/ws': {
         target: 'http://localhost:9091',
         secure: false,

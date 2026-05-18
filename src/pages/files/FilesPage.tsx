@@ -552,10 +552,10 @@ export function FilesPage() {
     })
   }
   const selectAll = () => {
-    if (selected.size === filtered.filter(i => !i.directory).length) {
+    if (selected.size === filtered.length) {
       setSelected(new Set())
     } else {
-      setSelected(new Set(filtered.filter(i => !i.directory).map(i => i.id)))
+      setSelected(new Set(filtered.map(i => i.id)))
     }
   }
 
@@ -634,9 +634,7 @@ export function FilesPage() {
       showNotification('ZIP download failed', 'error')
     }
   }
-
-  const filesOnlyCount = filtered.filter(i => !i.directory).length
-  const allSelected = filesOnlyCount > 0 && selected.size === filesOnlyCount
+  const allSelected = filtered.length > 0 && selected.size === filtered.length
 
   return (
     <div className={styles.page}>
@@ -733,15 +731,13 @@ export function FilesPage() {
               {filtered.map((item) => (
                 <tr key={item.id} className={`${styles.row} ${selected.has(item.id) ? styles.rowSelected : ''}`}>
                   <td className={styles.cell}>
-                    {!item.directory && (
-                      <input
-                        type="checkbox"
-                        className={styles.checkbox}
-                        checked={selected.has(item.id)}
-                        onChange={() => toggleSelect(item.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    )}
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={selected.has(item.id)}
+                      onChange={() => toggleSelect(item.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   </td>
                   <td>
                     {renaming === item.id ? (
@@ -827,19 +823,17 @@ export function FilesPage() {
                   className={`${styles.tile} ${selected.has(item.id) ? styles.tileSelected : ''}`}
                   onClick={() => navigate(item)}
                 >
-                  {!item.directory && (
-                    <div
-                      className={styles.tileCheckWrap}
-                      onClick={(e) => { e.stopPropagation(); toggleSelect(item.id) }}
-                    >
-                      <input
-                        type="checkbox"
-                        className={styles.checkbox}
-                        checked={selected.has(item.id)}
-                        readOnly
-                      />
-                    </div>
-                  )}
+                  <div
+                    className={styles.tileCheckWrap}
+                    onClick={(e) => { e.stopPropagation(); toggleSelect(item.id) }}
+                  >
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={selected.has(item.id)}
+                      readOnly
+                    />
+                  </div>
                   <div className={styles.tileThumb}>
                     {isImage && !item.encrypted ? (
                       <img
