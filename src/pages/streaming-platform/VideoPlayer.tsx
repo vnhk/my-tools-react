@@ -92,8 +92,16 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     hlsRef.current = null
     video.removeAttribute('src')
 
+    const token = localStorage.getItem('token')
     if (format === 'HLS' && Hls.isSupported()) {
-      const hls = new Hls({ enableWorker: true })
+      const hls = new Hls({
+        enableWorker: true,
+        xhrSetup: (xhr) => {
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+          }
+        }
+      })
       hlsRef.current = hls
       hls.loadSource(src)
       hls.attachMedia(video)
@@ -101,7 +109,8 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
         if (startTime > 5) video.currentTime = startTime
       })
     } else {
-      video.src = src
+      const sep = src.includes('?') ? '&' : '?'
+      video.src = token ? `${src}${sep}token=${encodeURIComponent(token)}` : src
       if (startTime > 5) {
         video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
       }

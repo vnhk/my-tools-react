@@ -77,11 +77,13 @@ export default function VideoPlayerPage() {
   if (loading) return <div className={styles.loading}>Loading…</div>
   if (!videoInfo) return null
 
-  const subtitles = Object.entries(videoInfo.subtitleUrls ?? {}).map(([lang, url]) => ({
-    lang,
-    label: lang.toUpperCase(),
-    url,
-  }))
+  const subtitles = Object.entries(videoInfo.subtitleUrls ?? {}).map(([lang, url]) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      url = url.includes('?') ? `${url}&token=${encodeURIComponent(token)}` : `${url}?token=${encodeURIComponent(token)}`
+    }
+    return { lang, label: lang.toUpperCase(), url }
+  })
 
   return (
     <div className={styles.page}>
