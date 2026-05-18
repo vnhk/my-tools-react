@@ -51,6 +51,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const onProgressRef = useRef(onProgress)
   onProgressRef.current = onProgress
+  const blobUrlRef = useRef<string | null>(null)
 
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -62,6 +63,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const [showControls, setShowControls] = useState(true)
   const [activeSub, setActiveSub] = useState<string | null>(null)
   const [showSubMenu, setShowSubMenu] = useState(false)
+  const [resolvedSubtitles, setResolvedSubtitles] = useState<SubtitleTrack[]>([])
 
   const handleToggleFullscreen = useCallback(() => {
     const c = containerRef.current
@@ -91,6 +93,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     hlsRef.current?.destroy()
     hlsRef.current = null
     video.removeAttribute('src')
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current)
+      blobUrlRef.current = null
+    }
 
     const token = localStorage.getItem('token')
     if (format === 'HLS' && Hls.isSupported()) {
@@ -108,15 +114,32 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (startTime > 5) video.currentTime = startTime
       })
+      return () => { hlsRef.current?.destroy(); hlsRef.current = null }
     } else {
-      const sep = src.includes('?') ? '&' : '?'
-      video.src = token ? `${src}${sep}token=${encodeURIComponent(token)}` : src
-      if (startTime > 5) {
-        video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
+      const controller = new AbortController()
+      fetch(src, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        signal: controller.signal,
+      })
+        .then((res) => res.blob())
+        .then((blob) => {
+          blobUrlRef.current = URL.createObjectURL(blob)
+          video.src = blobUrlRef.current
+          if (startTime > 5) {
+            video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
+          }
+        })
+        .catch((err) => {
+          if (err.name !== 'AbortError') console.error('Failed to load video:', err)
+        })
+      return () => {
+        controller.abort()
+        if (blobUrlRef.current) {
+          URL.revokeObjectURL(blobUrlRef.current)
+          blobUrlRef.current = null
+        }
       }
     }
-
-    return () => { hlsRef.current?.destroy(); hlsRef.current = null }
   }, [src, format])
 
   useEffect(() => {
@@ -161,6 +184,37 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
       track.mode = track.language === activeSub ? 'showing' : 'hidden'
     })
   }, [activeSub])
+
+  useEffect(() => {
+    if (!subtitles.length) {
+      setResolvedSubtitles([])
+      return
+    }
+    const token = localStorage.getItem('token')
+    const controller = new AbortController()
+    const blobUrls: string[] = []
+
+    Promise.all(subtitles.map(async (sub) => {
+      const res = await fetch(sub.url, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        signal: controller.signal,
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      blobUrls.push(blobUrl)
+      return { ...sub, url: blobUrl }
+    }))
+      .then((tracks) => setResolvedSubtitles(tracks))
+      .catch((err) => {
+        if (err.name !== 'AbortError') console.error('Failed to load subtitles:', err)
+      })
+
+    return () => {
+      controller.abort()
+      blobUrls.forEach((url) => URL.revokeObjectURL(url))
+    }
+  }, [subtitles])
 
   const cycleSub = useCallback(() => {
     if (!subtitles.length) return
@@ -223,7 +277,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
         onClick={togglePlay}
         onDoubleClick={handleToggleFullscreen}
       >
-        {subtitles.map((sub) => (
+        {resolvedSubtitles.map((sub) => (
           <track key={sub.lang} kind="subtitles" src={sub.url} srcLang={sub.lang} label={sub.label} />
         ))}
       </video>
@@ -249,7 +303,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
           <span className={styles.timeDisplay}>{fmt(currentTime)} / {fmt(duration)}</span>
 
           <div className={styles.controlsRight}>
-            {subtitles.length > 0 && (
+            {resolvedSubtitles.length > 0 && (
               <div className={styles.subtitleControl}>
                 <button
                   className={`${styles.ctrlBtn} ${activeSub ? styles.active : ''}`}
@@ -259,7 +313,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
                 {showSubMenu && (
                   <div className={styles.subtitleMenu}>
                     <button className={!activeSub ? styles.active : ''} onClick={() => { setActiveSub(null); setShowSubMenu(false) }}>Off</button>
-                    {subtitles.map((sub) => (
+                    {resolvedSubtitles.map((sub) => (
                       <button key={sub.lang} className={activeSub === sub.lang ? styles.active : ''} onClick={() => { setActiveSub(sub.lang); setShowSubMenu(false) }}>
                         {sub.label}
                       </button>
