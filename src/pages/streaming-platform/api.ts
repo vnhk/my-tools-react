@@ -16,7 +16,7 @@ export function fetchVideoInfo(productionName: string, videoFolderId: string) {
 }
 
 export function saveWatchProgress(videoId: string, currentTime: number) {
-  return client.post('/streaming/light-player/watch-progress', { videoId, currentTime })
+  return client.post('/streaming/watch-progress', { videoId, currentTime })
 }
 
 export function reloadConfig() {
