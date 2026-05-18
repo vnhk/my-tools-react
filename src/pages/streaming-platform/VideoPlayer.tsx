@@ -73,7 +73,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   }, [])
 
   useImperativeHandle(ref, () => ({
-    play: () => void videoRef.current?.play(),
+    play: () => { videoRef.current?.play()?.catch(() => {}) },
     pause: () => videoRef.current?.pause(),
     seek: (delta) => {
       const v = videoRef.current
@@ -232,7 +232,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
       const v = videoRef.current
       if (!v) return
       switch (e.key) {
-        case ' ': e.preventDefault(); v.paused ? void v.play() : v.pause(); break
+        case ' ': e.preventDefault(); v.paused ? v.play()?.catch(() => {}) : v.pause(); break
         case 'ArrowLeft': e.preventDefault(); v.currentTime = Math.max(0, v.currentTime - 5); break
         case 'ArrowRight': e.preventDefault(); v.currentTime = Math.min(v.duration || 0, v.currentTime + 5); break
         case 'f': case 'F': handleToggleFullscreen(); break
@@ -252,7 +252,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const togglePlay = useCallback(() => {
     const v = videoRef.current
     if (!v) return
-    v.paused ? void v.play() : v.pause()
+    v.paused ? v.play()?.catch(() => {}) : v.pause()
   }, [])
 
   const handleProgressClick = useCallback((e: React.MouseEvent) => {

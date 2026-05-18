@@ -47,10 +47,10 @@ export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void
         try {
           onCommandRef.current(JSON.parse(e.data) as RemoteCommand)
         } catch (_err) {
-          // ignore malformed messages
           void _err
         }
       }
+      ws.onerror = () => { ws.close() }
       ws.onclose = () => { timerRef.current = setTimeout(connect, 3_000) }
     }
     void connect()
@@ -77,6 +77,7 @@ export function useRemoteControlSender(roomId: string | null) {
       const ws = new WebSocket(wsUrl(roomId, token))
       wsRef.current = ws
       ws.onopen = () => setConnected(true)
+      ws.onerror = () => { ws.close() }
       ws.onclose = () => { setConnected(false); wsRef.current = null }
     }
     void connect()

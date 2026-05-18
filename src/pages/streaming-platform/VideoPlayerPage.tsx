@@ -45,7 +45,7 @@ export default function VideoPlayerPage() {
         case 'PAUSE': player.pause(); break
         case 'TOGGLE_PLAY': {
           const v = player.getVideoElement()
-          v?.paused ? void v.play() : v?.pause()
+          v?.paused ? v.play()?.catch(() => {}) : v?.pause()
           break
         }
         case 'SEEK': player.seek(cmd.relative ?? 0); break
