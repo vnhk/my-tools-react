@@ -36,7 +36,7 @@ export function CanvasPage() {
 
   const loadList = useCallback(() => {
     canvasApi.list().then((r) => {
-      setItems(r.data ?? [])
+      setItems(Array.isArray(r.data) ? r.data : [])
     })
   }, [])
 
@@ -127,9 +127,10 @@ export function CanvasPage() {
   }
 
   // Group items by category
+  const safeItems = Array.isArray(items) ? items : []
   const filtered = search
-    ? items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()))
-    : items
+    ? safeItems.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()))
+    : safeItems
 
   const groups: Map<string, CanvasItem[]> = new Map()
   for (const item of filtered) {
@@ -184,7 +185,7 @@ export function CanvasPage() {
                 <span className={styles.categoryCount}>{groups.get(cat)!.length}</span>
               </div>
 
-              {openCategories.has(cat) && groups.get(cat)!.map((page) => (
+              {openCategories.has(cat) && groups.has(cat) && groups.get(cat)!.map((page) => (
                 <div
                   key={page.id}
                   className={`${styles.pageItem} ${page.id === activeId ? styles.pageItemActive : ''}`}
