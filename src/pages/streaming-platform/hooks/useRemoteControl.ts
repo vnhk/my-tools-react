@@ -35,12 +35,18 @@ export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
   const onCommandRef = useRef(onCommand)
   onCommandRef.current = onCommand
+  const keyRef = useRef<string | null>(null)
+  const retriesRef = useRef(0)
 
   useEffect(() => {
+    let mounted = true
     const connect = async () => {
-      // Try backend-issued one-time key first; if unavailable, fall back to raw JWT token.
-      const key = await fetchWsKey(roomId)
-      const token = key ?? localStorage.getItem('token') ?? undefined
+      if (!mounted) return
+      if (!keyRef.current) {
+        keyRef.current = await fetchWsKey(roomId)
+      }
+      if (!mounted) return
+      const token = keyRef.current ?? localStorage.getItem('token') ?? undefined
       const ws = new WebSocket(wsUrl(roomId, token))
       wsRef.current = ws
       ws.onmessage = (e) => {
@@ -50,11 +56,18 @@ export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void
           void _err
         }
       }
+      ws.onopen = () => { retriesRef.current = 0 }
       ws.onerror = () => { ws.close() }
-      ws.onclose = () => { timerRef.current = setTimeout(connect, 3_000) }
+      ws.onclose = () => {
+        if (!mounted) return
+        retriesRef.current++
+        const delay = Math.min(30_000, 3_000 * Math.pow(2, retriesRef.current - 1))
+        timerRef.current = setTimeout(connect, delay)
+      }
     }
     void connect()
     return () => {
+      mounted = false
       clearTimeout(timerRef.current)
       if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close() }
     }
@@ -66,22 +79,36 @@ export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void
 export function useRemoteControlSender(roomId: string | null) {
   const wsRef = useRef<WebSocket | null>(null)
   const [connected, setConnected] = useState(false)
+  const keyRef = useRef<string | null>(null)
+  const retriesRef = useRef(0)
 
   useEffect(() => {
     if (!roomId) return
     let mounted = true
     const connect = async () => {
-      const key = await fetchWsKey(roomId)
-      const token = key ?? localStorage.getItem('token') ?? undefined
+      if (!keyRef.current) {
+        keyRef.current = await fetchWsKey(roomId)
+      }
       if (!mounted) return
+      const token = keyRef.current ?? localStorage.getItem('token') ?? undefined
       const ws = new WebSocket(wsUrl(roomId, token))
       wsRef.current = ws
-      ws.onopen = () => setConnected(true)
+      ws.onopen = () => { setConnected(true); retriesRef.current = 0 }
       ws.onerror = () => { ws.close() }
-      ws.onclose = () => { setConnected(false); wsRef.current = null }
+      ws.onclose = () => {
+        if (!mounted) return
+        setConnected(false)
+        wsRef.current = null
+        retriesRef.current++
+        const delay = Math.min(30_000, 3_000 * Math.pow(2, retriesRef.current - 1))
+        setTimeout(connect, delay)
+      }
     }
     void connect()
-    return () => { mounted = false; if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); setConnected(false) } }
+    return () => {
+      mounted = false
+      if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); setConnected(false) }
+    }
   }, [roomId])
 
   const send = useCallback((action: string, data?: Partial<RemoteCommand>) => {
