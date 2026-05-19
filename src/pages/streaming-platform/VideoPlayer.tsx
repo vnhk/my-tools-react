@@ -30,6 +30,12 @@ interface Props {
   hasPrev?: boolean
 }
 
+function appendToken(url: string, token: string | null): string {
+  if (!token) return url
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}token=${encodeURIComponent(token)}`
+}
+
 function fmt(secs: number) {
   if (!isFinite(secs) || secs < 0) return '0:00'
   const h = Math.floor(secs / 3600)
@@ -51,7 +57,6 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const onProgressRef = useRef(onProgress)
   onProgressRef.current = onProgress
-  const blobUrlRef = useRef<string | null>(null)
 
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -93,51 +98,32 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     hlsRef.current?.destroy()
     hlsRef.current = null
     video.removeAttribute('src')
-    if (blobUrlRef.current) {
-      URL.revokeObjectURL(blobUrlRef.current)
-      blobUrlRef.current = null
-    }
 
-    const token = localStorage.getItem('token')
     if (format === 'HLS' && Hls.isSupported()) {
+      const token = localStorage.getItem('token')
+      const srcWithToken = appendToken(src, token)
       const hls = new Hls({
         enableWorker: true,
         xhrSetup: (xhr) => {
-          if (token) {
-            xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+          const currentToken = localStorage.getItem('token')
+          if (currentToken) {
+            xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`)
           }
         }
       })
       hlsRef.current = hls
-      hls.loadSource(src)
+      hls.loadSource(srcWithToken)
       hls.attachMedia(video)
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (startTime > 5) video.currentTime = startTime
       })
       return () => { hlsRef.current?.destroy(); hlsRef.current = null }
     } else {
-      const controller = new AbortController()
-      fetch(src, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        signal: controller.signal,
-      })
-        .then((res) => res.blob())
-        .then((blob) => {
-          blobUrlRef.current = URL.createObjectURL(blob)
-          video.src = blobUrlRef.current
-          if (startTime > 5) {
-            video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
-          }
-        })
-        .catch((err) => {
-          if (err.name !== 'AbortError') console.error('Failed to load video:', err)
-        })
-      return () => {
-        controller.abort()
-        if (blobUrlRef.current) {
-          URL.revokeObjectURL(blobUrlRef.current)
-          blobUrlRef.current = null
-        }
+      const token = localStorage.getItem('token')
+      const srcWithToken = appendToken(src, token)
+      video.src = srcWithToken
+      if (startTime > 5) {
+        video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
       }
     }
   }, [src, format])
