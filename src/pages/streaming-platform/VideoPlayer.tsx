@@ -100,8 +100,6 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     video.removeAttribute('src')
 
     if (format === 'HLS' && Hls.isSupported()) {
-      const token = localStorage.getItem('token')
-      const srcWithToken = appendToken(src, token)
       const hls = new Hls({
         enableWorker: true,
         xhrSetup: (xhr) => {
@@ -112,13 +110,15 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
         }
       })
       hlsRef.current = hls
-      hls.loadSource(srcWithToken)
+      // Use plain src; Authorization header is injected via xhrSetup for all HLS requests
+      hls.loadSource(src)
       hls.attachMedia(video)
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (startTime > 5) video.currentTime = startTime
       })
       return () => { hlsRef.current?.destroy(); hlsRef.current = null }
     } else {
+      // Native fallback (e.g., Safari): append token via query parameter since headers can't be sent
       const token = localStorage.getItem('token')
       const srcWithToken = appendToken(src, token)
       video.src = srcWithToken
