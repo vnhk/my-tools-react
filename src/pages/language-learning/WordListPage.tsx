@@ -1,33 +1,34 @@
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
-import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
-import { EntityFilters } from '../../components/ui/EntityFilters'
-import { ImportExportBar } from '../../components/ui/ImportExportBar'
-import { buildColumnsFromConfig } from '../../components/table/configColumns'
-import { useTableState } from '../../hooks/useTableState'
-import { useTableActions } from '../../hooks/useTableActions'
-import { useEntityFilters } from '../../hooks/useEntityFilters'
-import { useNotification } from '../../components/ui/Notification'
-import { toPage } from '../../api/crud'
-import { languageLearningApi, TranslationRecord } from '../../api/languageLearning'
+import {useEffect, useState} from 'react'
+import {useLocation} from 'react-router-dom'
+import {DataTable} from '../../components/table/DataTable'
+import {Dialog} from '../../components/ui/Dialog'
+import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
+import {EntityFilters} from '../../components/ui/EntityFilters'
+import {ImportExportBar} from '../../components/ui/ImportExportBar'
+import {buildColumnsFromConfig} from '../../components/table/configColumns'
+import {useTableState} from '../../hooks/useTableState'
+import {useTableActions} from '../../hooks/useTableActions'
+import {useEntityFilters} from '../../hooks/useEntityFilters'
+import {useNotification} from '../../components/ui/Notification'
+import {toPage} from '../../api/crud'
+import {languageLearningApi, TranslationRecord} from '../../api/languageLearning'
 import styles from './WordListPage.module.css'
 
 export function WordListPage() {
-    const { showSuccess, showError } = useNotification()
-    const { pathname } = useLocation()
+    const {showSuccess, showError} = useNotification()
+    const {pathname} = useLocation()
     const language = pathname.startsWith('/english') ? 'EN' : 'ES'
-    const table = useTableState({ sortBy: 'sourceText', sortDir: 'asc' }, `lang-words-${language}`)
-    const { filters, setFilter, clearFilters } = useEntityFilters()
+    const table = useTableState({sortBy: 'sourceText', sortDir: 'asc'}, `lang-words-${language}`)
+    const {filters, setFilter, clearFilters} = useEntityFilters()
     const [rows, setRows] = useState<TranslationRecord[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
-    const [editItem, setEditItem] = useState<Partial<TranslationRecord>>({ language, markedForLearning: true })
-    const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+    const [editItem, setEditItem] = useState<Partial<TranslationRecord>>({language, markedForLearning: true})
     const [refreshKey, setRefreshKey] = useState(0)
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
+    const load = () => setRefreshKey((k) => k + 1)
     const columns = buildColumnsFromConfig<TranslationRecord>('TranslationRecord')
 
     useEffect(() => {
@@ -48,18 +49,20 @@ export function WordListPage() {
                 setRows(p.content)
                 setTotal(p.totalElements)
             })
-            .finally(() => { if (!cancelled) setLoading(false) })
-        return () => { cancelled = true }
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+        return () => {
+            cancelled = true
+        }
     }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, language, JSON.stringify(filters)])
-
-    const load = () => setRefreshKey((k) => k + 1)
 
     const actions = useTableActions<TranslationRecord>({
         onDelete: async (selected) => {
             for (const r of selected) await languageLearningApi.delete(r.id)
         },
         onEdit: (item) => {
-            setEditItem({ ...item })
+            setEditItem({...item})
             setFormErrors({})
             setDialogOpen(true)
         },
@@ -73,7 +76,7 @@ export function WordListPage() {
             return
         }
         try {
-            const payload = { ...editItem, language }
+            const payload = {...editItem, language}
             if (editItem.id) {
                 await languageLearningApi.update(editItem.id, payload)
             } else {
@@ -83,7 +86,7 @@ export function WordListPage() {
             setDialogOpen(false)
             load()
         } catch {
-            showError('Failed to save')
+            showError('Failed to save record')
         }
     }
 
@@ -91,7 +94,7 @@ export function WordListPage() {
         ? rows.filter((r) =>
             r.sourceText?.toLowerCase().includes(table.search.toLowerCase()) ||
             r.textTranslation?.toLowerCase().includes(table.search.toLowerCase())
-          )
+        )
         : rows
 
     return (
@@ -125,8 +128,16 @@ export function WordListPage() {
                 searchValue={table.search}
                 onSearchChange={table.setSearch}
                 actions={actions}
-                onRowClick={(item) => { setEditItem({ ...item }); setFormErrors({}); setDialogOpen(true) }}
-                onAdd={() => { setEditItem({ language, markedForLearning: true }); setFormErrors({}); setDialogOpen(true) }}
+                onRowClick={(item) => {
+                    setEditItem({...item});
+                    setFormErrors({});
+                    setDialogOpen(true)
+                }}
+                onAdd={() => {
+                    setEditItem({language, markedForLearning: true});
+                    setFormErrors({});
+                    setDialogOpen(true)
+                }}
                 addLabel="Add Word"
             />
 
@@ -141,7 +152,7 @@ export function WordListPage() {
                     entityName="TranslationRecord"
                     mode={editItem.id ? 'edit' : 'save'}
                     values={editItem as Record<string, unknown>}
-                    onChange={(field, value) => setEditItem((s) => ({ ...s, [field]: value }))}
+                    onChange={(field, value) => setEditItem((s) => ({...s, [field]: value}))}
                     errors={formErrors}
                 />
             </Dialog>

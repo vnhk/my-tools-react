@@ -80,6 +80,13 @@ export function validateFields(entityName: string, values: Record<string, unknow
             errors[fieldName] = `${col.displayName} is required`
             continue
         }
+        if (col.dataType.toLowerCase() === 'number' && str.trim() !== '' && str !== '0' && str !== '-0') {
+            console.log('number')
+            const num = Number(str)
+            if (isNaN(num) || num < col.min || (col.max > 0 && num > col.max)) {
+                errors[fieldName] = `${col.displayName} must be a number between ${col.min} and ${col.max}`
+            }
+        }
         if (str.trim()) {
             if (str.length < col.min) errors[fieldName] = `${col.displayName} must be at least ${col.min} characters`
             else if (col.max > 0 && str.length > col.max) errors[fieldName] = `${col.displayName} must be at most ${col.max} characters`

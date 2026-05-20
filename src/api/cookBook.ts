@@ -11,6 +11,7 @@ export interface IngredientDto {
     fatPer100g: number | null
     carbsPer100g: number | null
     fiberPer100g: number | null
+    notes: string | null
 }
 
 export interface RecipeIngredientDto {
@@ -121,7 +122,7 @@ export const recipesApi = {
 }
 
 export const ingredientsApi = {
-    getAll: (params?: Record<string, unknown>) =>
+    list: (params?: Record<string, unknown>) =>
         client.get<Page<IngredientDto>>('/cook-book/ingredients', {params}),
 
     create: (data: Partial<IngredientDto>) =>

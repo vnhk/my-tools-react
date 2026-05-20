@@ -113,7 +113,7 @@ function AddIngredientDialog({recipeId, existingCategories, units, onAdded, onCl
     useEffect(() => {
         if (debounce.current) clearTimeout(debounce.current)
         debounce.current = setTimeout(() => {
-            ingredientsApi.getAll({
+            ingredientsApi.list({
                 page: 0,
                 size: 50,
                 sort: "name",

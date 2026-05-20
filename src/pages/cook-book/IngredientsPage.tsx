@@ -10,90 +10,61 @@ import {useNotification} from '../../components/ui/Notification'
 import {type IngredientDto, ingredientsApi} from '../../api/cookBook'
 import {toPage} from '../../api/crud'
 import styles from './IngredientsPage.module.css'
-import {DynamicForm} from '../../components/ui/DynamicForm'
+import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
 import {buildColumnsFromConfig} from "../../components/table/configColumns.tsx";
 
-const COLUMNS = buildColumnsFromConfig<IngredientDto>('Ingredient',
-    {
-        category: {
-            render: (row) =>
-                row.category
-                    ? <span className={styles.catBadge}>{row.category}</span>
-                    : '—',
-        }
-    })
-
-const EMPTY: Partial<IngredientDto> = {
-    name: '',
-    category: '',
-    kcalPer100g: 0,
-    proteinPer100g: 0,
-    fatPer100g: 0,
-    carbsPer100g: 0,
-    fiberPer100g: 0,
-}
 
 export function IngredientsPage() {
     const {showSuccess, showError} = useNotification()
-
     const table = useTableState(
         {sortBy: 'name', sortDir: 'asc'},
         'ingredients',
     )
-
     const {filters, setFilter, clearFilters} = useEntityFilters()
-
     const [rows, setRows] = useState<IngredientDto[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [dialogOpen, setDialogOpen] = useState(false)
-    const [editItem, setEditItem] = useState<Partial<IngredientDto>>({...EMPTY})
+    const [editItem, setEditItem] = useState<Partial<IngredientDto>>({})
     const [refreshKey, setRefreshKey] = useState(0)
     const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
     const load = () => setRefreshKey(k => k + 1)
+    const COLUMNS = buildColumnsFromConfig<IngredientDto>('Ingredient',
+        {
+            category: {
+                render: (row) =>
+                    row.category
+                        ? <span className={styles.catBadge}>{row.category}</span>
+                        : '—',
+            }
+        })
 
     useEffect(() => {
         let cancelled = false
-
         setLoading(true)
-
-        ingredientsApi.getAll({
+        ingredientsApi.list({
             page: table.page,
             size: table.pageSize,
             sort: table.sortBy,
             direction: table.sortDir,
             ...filters,
+        }).then((res) => {
+            if (cancelled) return
+            const p = toPage(res.data)
+            setRows(p.content)
+            setTotal(p.totalElements)
         })
-            .then((res) => {
-                if (cancelled) return
-
-                const p = toPage(res.data)
-                setRows(p.content)
-                setTotal(p.totalElements)
-            })
             .catch(() => showError('Failed to load ingredients'))
             .finally(() => {
                 if (!cancelled) setLoading(false)
             })
-
         return () => {
             cancelled = true
         }
     }, [
-        table.page,
-        table.pageSize,
-        table.sortBy,
-        table.sortDir,
-        refreshKey,
-        JSON.stringify(filters),
+        table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, JSON.stringify(filters),
     ])
-
-    const openEdit = (item: Partial<IngredientDto>) => {
-        setEditItem({...EMPTY, ...item})
-        setFormErrors({})
-        setDialogOpen(true)
-    }
 
     const actions = useTableActions<IngredientDto>({
         onDelete: async (selected) => {
@@ -101,18 +72,26 @@ export function IngredientsPage() {
                 await ingredientsApi.delete(r.id)
             }
         },
-        onEdit: (item) => openEdit(item),
+        onEdit: (item) => {
+            setEditItem({...item})
+            setFormErrors({})
+            setDialogOpen(true)
+        },
         onRefresh: load,
     })
 
     const handleSave = async () => {
+        const errors = validateFields('Ingredient', editItem as Record<string, unknown>)
+        if (Object.keys(errors).length > 0) {
+            setFormErrors(errors)
+            return
+        }
         try {
             if (editItem.id) {
                 await ingredientsApi.update(editItem.id, editItem)
             } else {
                 await ingredientsApi.create(editItem)
             }
-
             showSuccess('Saved')
             setDialogOpen(false)
             load()
@@ -130,14 +109,12 @@ export function IngredientsPage() {
                 onImportSuccess={load}
                 filters={filters}
             />
-
             <EntityFilters
                 entityName="Ingredient"
                 filters={filters}
                 onFiltersChange={setFilter}
                 onClear={clearFilters}
             />
-
             <DataTable
                 columns={COLUMNS}
                 rows={rows}
@@ -152,8 +129,16 @@ export function IngredientsPage() {
                 sortDir={table.sortDir}
                 onSort={table.toggleSort}
                 actions={actions}
-                onRowClick={openEdit}
-                onAdd={() => openEdit({...EMPTY})}
+                onRowClick={(item) => {
+                    setEditItem({...item});
+                    setFormErrors({});
+                    setDialogOpen(true)
+                }}
+                onAdd={() => {
+                    setEditItem({});
+                    setFormErrors({});
+                    setDialogOpen(true)
+                }}
                 addLabel="New Ingredient"
             />
 

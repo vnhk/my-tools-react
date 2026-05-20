@@ -83,7 +83,7 @@ function AddItemDialog({date, mealType, mealName, onAdded, onClose}: {
             return
         }
         debounceRef.current = setTimeout(() => {
-            ingredientsApi.getAll({
+            ingredientsApi.list({
                 page: 0,
                 size: 50,
                 sort: "name",
