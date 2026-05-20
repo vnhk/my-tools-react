@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  min-width: 0; /* allow inner table wrapper to shrink to container width */
 }
 
 .catBadge {

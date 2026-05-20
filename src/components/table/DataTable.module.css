@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: var(--space-sm);
   position: relative;
+  min-width: 0; /* critical to prevent horizontal overflow in flex/grid layouts */
 }
 
 /* ══ Toolbar ══════════════════════════════════════════════════════════════════ */
@@ -58,6 +59,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* enforce ellipsis/truncation with td max-width */
   font-size: var(--font-size-sm);
 }
 
