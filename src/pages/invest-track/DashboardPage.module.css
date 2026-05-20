@@ -138,6 +138,7 @@
   border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
   border-radius: 12px;
   padding: 16px;
+  min-width: 0; /* allow Recharts container to use full available width inside grid/flex */
 }
 
 .chartCardWide {
@@ -265,6 +266,7 @@
   border: 1px solid var(--glass-border, rgba(255,255,255,0.08));
   border-radius: 12px;
   padding: 14px;
+  min-width: 0; /* ensure inner content (charts) can expand to full width */
 }
 
 /* ── FIRE tab ── */
