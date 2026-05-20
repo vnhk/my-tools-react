@@ -1,5 +1,4 @@
 import {useEffect, useState} from 'react'
-import type {Column} from '../../components/table/DataTable'
 import {DataTable} from '../../components/table/DataTable'
 import {Dialog} from '../../components/ui/Dialog'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
@@ -12,24 +11,17 @@ import {type IngredientDto, ingredientsApi} from '../../api/cookBook'
 import {toPage} from '../../api/crud'
 import styles from './IngredientsPage.module.css'
 import {DynamicForm} from '../../components/ui/DynamicForm'
+import {buildColumnsFromConfig} from "../../components/table/configColumns.tsx";
 
-const COLUMNS: Column<IngredientDto>[] = [
-    {key: 'name', header: 'Name', sortable: true},
+const COLUMNS = buildColumnsFromConfig<IngredientDto>('Ingredient',
     {
-        key: 'category',
-        header: 'Category',
-        sortable: true,
-        render: (row) =>
-            row.category
-                ? <span className={styles.catBadge}>{row.category}</span>
-                : '—',
-    },
-    {key: 'kcalPer100g', header: 'Kcal', sortable: true},
-    {key: 'proteinPer100g', header: 'Protein', sortable: true},
-    {key: 'fatPer100g', header: 'Fat', sortable: true},
-    {key: 'carbsPer100g', header: 'Carbs', sortable: true},
-    {key: 'fiberPer100g', header: 'Fiber', sortable: true},
-]
+        category: {
+            render: (row) =>
+                row.category
+                    ? <span className={styles.catBadge}>{row.category}</span>
+                    : '—',
+        }
+    })
 
 const EMPTY: Partial<IngredientDto> = {
     name: '',
