@@ -1,34 +1,37 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  min-width: 0; /* allow inner table wrapper to shrink to container width */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    min-width: 0; /* allow inner table wrapper to shrink to container width */
+    padding: var(--space-md);
+    height: 100%;
+    overflow-y: auto;
 }
 
 .catBadge {
-  padding: 2px 8px;
-  border-radius: 9999px;
-  background: rgba(99, 102, 241, 0.15);
-  color: var(--color-primary, #818cf8);
-  font-size: 11px;
-  white-space: nowrap;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--color-primary, #818cf8);
+    font-size: 11px;
+    white-space: nowrap;
 }
 
 .muted {
-  color: var(--color-text-secondary);
-  opacity: 0.5;
+    color: var(--color-text-secondary);
+    opacity: 0.5;
 }
 
 /* Dialog form */
 .form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .macroRow {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
 }
