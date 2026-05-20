@@ -209,34 +209,64 @@ function FilterRow({ filter, onChange }: { filter: Filter; onChange: (f: Filter)
 
 function WalletFilterPanel({
   aggMode, period, fromDate, toDate, onAggMode, onPeriod, onFromDate, onToDate,
+  allWallets, selectedWalletIds, onChangeSelectedWallets,
 }: {
   aggMode: AggMode; period: PeriodAgg; fromDate: string; toDate: string
   onAggMode: (v: AggMode) => void; onPeriod: (v: PeriodAgg) => void
   onFromDate: (v: string) => void; onToDate: (v: string) => void
+  allWallets: WalletTimeSeriesEntry[]
+  selectedWalletIds: Set<string>
+  onChangeSelectedWallets: (ids: Set<string>) => void
 }) {
   return (
-    <div className={styles.walletFilterRow}>
-      <span className={styles.walletFilterLabel}>Aggregation:</span>
-      <CustomSelect
-        className={styles.walletFilterSelect}
-        options={AGG_OPTS.map(o => ({ value: o, label: o }))}
-        value={aggMode}
-        onChange={v => onAggMode(v as AggMode)}
-      />
-      <span className={styles.walletFilterLabel}>Period:</span>
-      <CustomSelect
-        className={styles.walletFilterSelect}
-        options={PERIOD_OPTS.map(o => ({ value: o, label: o }))}
-        value={period}
-        onChange={v => onPeriod(v as PeriodAgg)}
-      />
-      <span className={styles.walletFilterLabel}>From:</span>
-      <input type="date" className={styles.walletFilterDate} value={fromDate}
-        onChange={e => onFromDate(e.target.value)} />
-      <span className={styles.walletFilterLabel}>To:</span>
-      <input type="date" className={styles.walletFilterDate} value={toDate}
-        onChange={e => onToDate(e.target.value)} />
-    </div>
+    <>
+      <div className={styles.walletFilterRow}>
+        <span className={styles.walletFilterLabel}>Aggregation:</span>
+        <CustomSelect
+          className={styles.walletFilterSelect}
+          options={AGG_OPTS.map(o => ({ value: o, label: o }))}
+          value={aggMode}
+          onChange={v => onAggMode(v as AggMode)}
+        />
+        <span className={styles.walletFilterLabel}>Period:</span>
+        <CustomSelect
+          className={styles.walletFilterSelect}
+          options={PERIOD_OPTS.map(o => ({ value: o, label: o }))}
+          value={period}
+          onChange={v => onPeriod(v as PeriodAgg)}
+        />
+        <span className={styles.walletFilterLabel}>From:</span>
+        <input type="date" className={styles.walletFilterDate} value={fromDate}
+          onChange={e => onFromDate(e.target.value)} />
+        <span className={styles.walletFilterLabel}>To:</span>
+        <input type="date" className={styles.walletFilterDate} value={toDate}
+          onChange={e => onToDate(e.target.value)} />
+      </div>
+      <div className={styles.walletSelectionRow}>
+        <span className={styles.walletFilterLabel}>Include Wallets:</span>
+        {allWallets.map(w => {
+          const checked = selectedWalletIds.has(w.walletId)
+          return (
+            <label key={w.walletId} className={styles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => {
+                  const copy = new Set(selectedWalletIds)
+                  if (checked) {
+                    if (copy.size > 1) copy.delete(w.walletId)
+                  } else {
+                    copy.add(w.walletId)
+                  }
+                  onChangeSelectedWallets(copy)
+                }}
+              />
+              <span>{w.walletName}</span>
+            </label>
+          )
+        })}
+      </div>
+    </>
   )
 }
 
@@ -310,9 +340,13 @@ interface DashboardTabProps {
   data: DashboardData
   investSeries: TimeSeriesPoint[]
   netWorthSeries: TimeSeriesPoint[]
+  showSp500: boolean
+  showWig20: boolean
+  showNasdaq: boolean
+  showDji: boolean
 }
 
-function DashboardTab({ data, investSeries, netWorthSeries }: DashboardTabProps) {
+function DashboardTab({ data, investSeries, netWorthSeries, showSp500, showWig20, showNasdaq, showDji }: DashboardTabProps) {
   const { kpi, allocation, heatmap, budget } = data
   return (
     <>
@@ -362,6 +396,10 @@ function DashboardTab({ data, investSeries, netWorthSeries }: DashboardTabProps)
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area type="monotone" dataKey="balance" name="Balance" stroke="#6366f1" fill="url(#balGrad)" strokeWidth={2} dot={false} />
                 <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b" fill="url(#depGrad)" strokeWidth={2} dot={false} />
+                {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899" strokeWidth={1.5} dot={false} />}
+                {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6" strokeWidth={1.5} dot={false} />}
+                {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4" strokeWidth={1.5} dot={false} />}
+                {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7" strokeWidth={1.5} dot={false} />}
               </AreaChart>
             </ResponsiveContainer>
           ) : <div className={styles.empty}>Not enough data</div>}
@@ -385,6 +423,10 @@ function DashboardTab({ data, investSeries, netWorthSeries }: DashboardTabProps)
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area type="monotone" dataKey="balance" name="Net Worth" stroke="#22c55e" fill="url(#nwGrad)" strokeWidth={2} dot={false} />
                 <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b" strokeWidth={2} dot={false} fill="none" />
+                {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899" strokeWidth={1.5} dot={false} />}
+                {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6" strokeWidth={1.5} dot={false} />}
+                {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4" strokeWidth={1.5} dot={false} />}
+                {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7" strokeWidth={1.5} dot={false} />}
               </AreaChart>
             </ResponsiveContainer>
           ) : <div className={styles.empty}>Not enough data</div>}
@@ -430,7 +472,13 @@ function WalletTileTitle({ w }: { w: WalletTimeSeriesEntry }) {
   return <h3 className={styles.chartTitle}>{w.walletName}{rr}</h3>
 }
 
-function BalanceTab({ wallets }: { wallets: WalletTimeSeriesEntry[] }) {
+function BalanceTab({ wallets, showSp500, showWig20, showNasdaq, showDji }: {
+  wallets: WalletTimeSeriesEntry[]
+  showSp500: boolean
+  showWig20: boolean
+  showNasdaq: boolean
+  showDji: boolean
+}) {
   const totalBalance = wallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.balance ?? 0), 0)
   const totalDeposit = wallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
 
@@ -463,6 +511,10 @@ function BalanceTab({ wallets }: { wallets: WalletTimeSeriesEntry[] }) {
                     fill={`url(#bg-${w.walletId})`} strokeWidth={2} dot={false} />
                   <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
                     fill="none" strokeWidth={1.5} dot={false} strokeDasharray="4 2" />
+                  {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899" strokeWidth={1.5} dot={false} />}
+                  {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6" strokeWidth={1.5} dot={false} />}
+                  {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4" strokeWidth={1.5} dot={false} />}
+                  {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7" strokeWidth={1.5} dot={false} />}
                 </AreaChart>
               </ResponsiveContainer>
             ) : <div className={styles.empty} style={{ height: 80 }}>Not enough data</div>}
@@ -476,10 +528,23 @@ function BalanceTab({ wallets }: { wallets: WalletTimeSeriesEntry[] }) {
 
 // ── Earnings tab ──────────────────────────────────────────────────────────────
 
-function EarningsTab({ wallets }: { wallets: WalletTimeSeriesEntry[] }) {
+function EarningsTab({ wallets, showSp500, showWig20, showNasdaq, showDji }: {
+  wallets: WalletTimeSeriesEntry[]
+  showSp500: boolean
+  showWig20: boolean
+  showNasdaq: boolean
+  showDji: boolean
+}) {
   const walletsWithEarnings = wallets.map(w => ({
     ...w,
-    series: w.series.map(p => ({ ...p, earnings: p.balance - p.cumDeposit })),
+    series: w.series.map(p => ({
+      ...p,
+      earnings: p.balance - p.cumDeposit,
+      sp500_earnings: (p as any).sp500 != null ? (p as any).sp500 - p.cumDeposit : null,
+      wig20_earnings: (p as any).wig20 != null ? (p as any).wig20 - p.cumDeposit : null,
+      nasdaq_earnings: (p as any).nasdaq != null ? (p as any).nasdaq - p.cumDeposit : null,
+      dji_earnings: (p as any).dji != null ? (p as any).dji - p.cumDeposit : null,
+    })),
   }))
 
   const totalEarnings = wallets.reduce((s, w) => {
@@ -512,6 +577,10 @@ function EarningsTab({ wallets }: { wallets: WalletTimeSeriesEntry[] }) {
                   <Tooltip content={<CurrencyTooltip />} />
                   <Area type="monotone" dataKey="earnings" name="Earnings" stroke="#22c55e"
                     fill={`url(#eg-${w.walletId})`} strokeWidth={2} dot={false} />
+                  {showSp500 && <Line type="monotone" dataKey="sp500_earnings" name="S&P 500" stroke="#ec4899" strokeWidth={1.5} dot={false} />}
+                  {showWig20 && <Line type="monotone" dataKey="wig20_earnings" name="WIG20" stroke="#3b82f6" strokeWidth={1.5} dot={false} />}
+                  {showNasdaq && <Line type="monotone" dataKey="nasdaq_earnings" name="NASDAQ-100" stroke="#06b6d4" strokeWidth={1.5} dot={false} />}
+                  {showDji && <Line type="monotone" dataKey="dji_earnings" name="Dow Jones" stroke="#a855f7" strokeWidth={1.5} dot={false} />}
                 </AreaChart>
               </ResponsiveContainer>
             ) : <div className={styles.empty} style={{ height: 80 }}>Not enough data</div>}
@@ -873,6 +942,12 @@ export function DashboardPage() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
+  const [showSp500, setShowSp500] = useState(false)
+  const [showWig20, setShowWig20] = useState(false)
+  const [showNasdaq, setShowNasdaq] = useState(false)
+  const [showDji, setShowDji] = useState(false)
+  const [selectedWalletIds, setSelectedWalletIds] = useState<Set<string>>(new Set())
+
   useEffect(() => {
     setLoading(true)
     investDashboardApi.get()
@@ -883,6 +958,7 @@ export function DashboardPage() {
           setFromDate(allDates[0])
           setToDate(allDates[allDates.length - 1])
         }
+        setSelectedWalletIds(new Set(res.data.walletSeries.map((w: any) => w.walletId)))
       })
       .finally(() => setLoading(false))
   }, [])
@@ -898,14 +974,15 @@ export function DashboardPage() {
 
   const processedWalletSeries = useMemo(() => {
     if (!data) return []
+    const filteredWallets = data.walletSeries.filter(w => selectedWalletIds.has(w.walletId))
     const wallets = aggMode === 'One Wallet'
-      ? [aggregateAllWallets(data.walletSeries)]
-      : data.walletSeries
+      ? [aggregateAllWallets(filteredWallets)]
+      : filteredWallets
     return wallets.map(w => ({
       ...w,
       series: applyPeriodAgg(applyDateRange(w.series, fromDate, toDate), period),
     }))
-  }, [data, aggMode, period, fromDate, toDate])
+  }, [data, aggMode, period, fromDate, toDate, selectedWalletIds])
 
   if (loading) return <div className={styles.loading}>Loading dashboard…</div>
   if (!data) return <div className={styles.empty}>Failed to load dashboard</div>
@@ -934,16 +1011,66 @@ export function DashboardPage() {
           aggMode={aggMode} period={period} fromDate={fromDate} toDate={toDate}
           onAggMode={setAggMode} onPeriod={setPeriod}
           onFromDate={setFromDate} onToDate={setToDate}
+          allWallets={data.walletSeries}
+          selectedWalletIds={selectedWalletIds}
+          onChangeSelectedWallets={setSelectedWalletIds}
         />
+      )}
+
+      {/* Index comparison options */}
+      {(activeTab === 'Dashboard' || activeTab === 'Balance' || activeTab === 'Earnings') && (
+        <div className={styles.walletSelectionRow}>
+          <span className={styles.walletFilterLabel}>Compare with:</span>
+          <label className={styles.checkboxLabel}>
+            <input type="checkbox" checked={showSp500} onChange={e => setShowSp500(e.target.checked)} />
+            <span>S&P 500</span>
+          </label>
+          <label className={styles.checkboxLabel}>
+            <input type="checkbox" checked={showWig20} onChange={e => setShowWig20(e.target.checked)} />
+            <span>WIG20</span>
+          </label>
+          <label className={styles.checkboxLabel}>
+            <input type="checkbox" checked={showNasdaq} onChange={e => setShowNasdaq(e.target.checked)} />
+            <span>NASDAQ-100</span>
+          </label>
+          <label className={styles.checkboxLabel}>
+            <input type="checkbox" checked={showDji} onChange={e => setShowDji(e.target.checked)} />
+            <span>Dow Jones</span>
+          </label>
+        </div>
       )}
 
       {/* Tab content */}
       <div className={styles.tabContent}>
         {activeTab === 'Dashboard' && (
-          <DashboardTab data={data} investSeries={investSeries} netWorthSeries={netWorthSeries} />
+          <DashboardTab
+            data={data}
+            investSeries={investSeries}
+            netWorthSeries={netWorthSeries}
+            showSp500={showSp500}
+            showWig20={showWig20}
+            showNasdaq={showNasdaq}
+            showDji={showDji}
+          />
         )}
-        {activeTab === 'Balance' && <BalanceTab wallets={processedWalletSeries} />}
-        {activeTab === 'Earnings' && <EarningsTab wallets={processedWalletSeries} />}
+        {activeTab === 'Balance' && (
+          <BalanceTab
+            wallets={processedWalletSeries}
+            showSp500={showSp500}
+            showWig20={showWig20}
+            showNasdaq={showNasdaq}
+            showDji={showDji}
+          />
+        )}
+        {activeTab === 'Earnings' && (
+          <EarningsTab
+            wallets={processedWalletSeries}
+            showSp500={showSp500}
+            showWig20={showWig20}
+            showNasdaq={showNasdaq}
+            showDji={showDji}
+          />
+        )}
         {activeTab === 'FIRE' && (
           <FireTab kpi={data.kpi} fireGoal={fireGoal} onGoalChange={setFireGoal} />
         )}

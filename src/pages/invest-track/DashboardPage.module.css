@@ -516,3 +516,33 @@
   .stageName { display: none; }
   .stageMonths { display: none; }
 }
+
+/* ── Wallet and Index check row styling ── */
+.walletSelectionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--glass-bg, rgba(255,255,255,0.01));
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.06));
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  accent-color: var(--color-primary, #6366f1);
+  cursor: pointer;
+}
+
+.checkboxLabel:hover {
+  color: var(--color-text-primary);
+}
