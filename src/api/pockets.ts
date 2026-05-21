@@ -59,4 +59,7 @@ export const pocketItemsApi = {
 
   decrypt: (id: string, password: string) =>
     client.post<{ content: string }>(`/pocket-app/all-pocket-items/${id}/decrypt`, { password }),
+
+  bulkMove: (itemIds: string[], targetPocketId: string) =>
+    client.post<void>('/pocket-app/all-pocket-items/bulk-move', { itemIds, targetPocketId }),
 }

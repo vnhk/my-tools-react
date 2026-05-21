@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { DataTable } from '../../components/table/DataTable'
+import { DataTable, type TableAction } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
@@ -8,6 +8,7 @@ import { NumberField } from '../../components/fields/NumberField'
 import { Checkbox } from '../../components/fields/Checkbox'
 import { RichTextEditor } from '../../components/ui/RichTextEditor'
 import { TextField } from '../../components/fields/TextField'
+import { SelectField } from '../../components/fields/SelectField'
 import { TabNav } from '../../components/layout/TabNav'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
@@ -15,7 +16,7 @@ import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { EntityFilters } from '../../components/ui/EntityFilters'
 import { ImportExportBar } from '../../components/ui/ImportExportBar'
-import { pocketItemsApi, type PocketItem } from '../../api/pockets'
+import { pocketItemsApi, pocketsApi, type PocketItem, type Pocket } from '../../api/pockets'
 import { toPage } from '../../api/crud'
 import styles from './PocketItemsPage.module.css'
 
@@ -48,6 +49,20 @@ export function PocketItemsPage() {
   const [decryptItem, setDecryptItem] = useState<PocketItem | null>(null)
   const [decryptPassword, setDecryptPassword] = useState('')
   const [decryptedContent, setDecryptedContent] = useState<string | null>(null)
+
+  const [moveToPocketOpen, setMoveToPocketOpen] = useState(false)
+  const [selectedItemsToMove, setSelectedItemsToMove] = useState<PocketItem[]>([])
+  const [targetPocketId, setTargetPocketId] = useState<string>('')
+  const [pockets, setPockets] = useState<Pocket[]>([])
+
+  useEffect(() => {
+    if (moveToPocketOpen) {
+      pocketsApi.getAll({ size: 1000 }).then((res) => {
+        const p = toPage(res.data)
+        setPockets(p.content.filter(pkt => pkt.name !== decodedName))
+      })
+    }
+  }, [moveToPocketOpen, decodedName])
 
   const openDecrypt = (item: PocketItem) => {
     setDecryptItem(item)
@@ -115,6 +130,37 @@ export function PocketItemsPage() {
     onRefresh: load,
   })
 
+  const handleBulkMove = async () => {
+    if (!targetPocketId) {
+      showError('Please select a target pocket')
+      return
+    }
+    const itemIds = selectedItemsToMove.map(item => item.id)
+    try {
+      await pocketItemsApi.bulkMove(itemIds, targetPocketId)
+      showSuccess(`Moved ${itemIds.length} item(s) successfully`)
+      setMoveToPocketOpen(false)
+      setSelectedItemsToMove([])
+      setTargetPocketId('')
+      load()
+    } catch {
+      showError('Failed to move selected items')
+    }
+  }
+
+  const allActions: TableAction<PocketItem>[] = [
+    ...actions,
+    {
+      label: 'Move to Pocket',
+      variant: 'secondary',
+      requiresSelection: true,
+      onClick: (selectedRows) => {
+        setSelectedItemsToMove(selectedRows)
+        setMoveToPocketOpen(true)
+      }
+    }
+  ]
+
   const handleSave = async () => {
     const payload = editUnlockedContent !== null
       ? { ...editItem, content: editItem.content ?? editUnlockedContent }
@@ -180,7 +226,7 @@ export function PocketItemsPage() {
         sortBy={table.sortBy}
         sortDir={table.sortDir}
         onSort={table.toggleSort}
-        actions={actions}
+        actions={allActions}
         onRowClick={(row) => openEdit(row)}
         onAdd={() => openEdit({ ...EMPTY_ITEM, orderInPocket: rows.length })}
         addLabel="New Item"
@@ -192,7 +238,8 @@ export function PocketItemsPage() {
         onClose={() => setEditOpen(false)}
         onConfirm={editUnlocked ? handleSave : handleUnlock}
         confirmLabel={editUnlocked ? 'Save' : 'Unlock'}
-        width="700px"
+        width="60vw"
+        height="80vh"
       >
         {!editUnlocked ? (
           <TextField
@@ -248,6 +295,27 @@ export function PocketItemsPage() {
             placeholder="Enter decryption password"
           />
         )}
+      </Dialog>
+
+      <Dialog
+        open={moveToPocketOpen}
+        title="Move Selected Items to Another Pocket"
+        onClose={() => { setMoveToPocketOpen(false); setSelectedItemsToMove([]) }}
+        onConfirm={handleBulkMove}
+        confirmLabel="Move"
+        width="450px"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+          <p>Moving {selectedItemsToMove.length} item(s) to another pocket.</p>
+          <SelectField
+            label="Target Pocket"
+            placeholder="Select a pocket..."
+            value={targetPocketId}
+            onChange={(e) => setTargetPocketId(e.target.value)}
+            options={pockets.map((pkt) => ({ value: pkt.id, label: pkt.name }))}
+            required
+          />
+        </div>
       </Dialog>
     </div>
   )

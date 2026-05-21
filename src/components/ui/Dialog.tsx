@@ -12,6 +12,7 @@ interface DialogProps {
   footer?: ReactNode
   children: ReactNode
   width?: string
+  height?: string
 }
 
 export function Dialog({
@@ -24,6 +25,7 @@ export function Dialog({
   footer,
   children,
   width = 'min(90vw, 720px)',
+  height,
 }: DialogProps) {
   const backdropRef = useRef<HTMLDivElement>(null)
 
@@ -43,7 +45,7 @@ export function Dialog({
       ref={backdropRef}
       onClick={(e) => { if (e.target === backdropRef.current) onClose() }}
     >
-      <div className={styles.dialog} style={{ width }} role="dialog" aria-modal="true" aria-label={title}>
+      <div className={styles.dialog} style={{ width, height }} role="dialog" aria-modal="true" aria-label={title}>
         <div className={styles.header}>
           <span className={styles.title}>{title}</span>
           <button className={styles.closeBtn} onClick={onClose}>✕</button>
