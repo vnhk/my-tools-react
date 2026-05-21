@@ -49,7 +49,7 @@ export function DynamicForm({
                             <RichTextEditor
                                 value={String(val ?? '')}
                                 onChange={(html) => onChange(f.field, html)}
-                                height="300px"
+                                height="70vh"
                                 placeholder={f.displayName}
                             />
                             {errors[f.field] && <span
