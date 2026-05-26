@@ -235,6 +235,7 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
+    input.setAttribute('capture', 'environment') // hint mobile to use rear camera
     input.style.display = 'none'
 
     const onBtnClick = () => input.click()
