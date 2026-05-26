@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -214,6 +214,8 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
   const [scanPreview, setScanPreview] = useState<string | null>(null)
   const [scanResult, setScanResult] = useState<BudgetEntry[] | null>(null)
 
+  const scanInputRef = useRef<HTMLInputElement>(null)
+
   // Floating "Scan receipt" button + hidden file input
   // Opens image picker, prepares base64 preview, and invokes existing handleScanReceipt.
   useEffect(() => {
@@ -247,6 +249,7 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
         const base64 = String(reader.result ?? '')
         if (!base64) return
         setScanPreview(base64)
+        setScanOpen(true)
         handleScanReceipt(base64)
       }
       reader.readAsDataURL(file)
@@ -368,8 +371,10 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
     if (file) {
       const reader = new FileReader()
       reader.onload = (event) => {
-        const result = event.target?.result as string
-        setScanPreview(result)
+        const base64 = event.target?.result as string
+        setScanPreview(base64)
+        setScanOpen(true)
+        void handleScanReceipt(base64)
       }
       reader.readAsDataURL(file)
     }
@@ -408,6 +413,7 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
       return
     }
 
+    setScanOpen(true)
     setScanLoading(true)
     try {
       const result = await budgetEntriesApi.scanReceipt(payload, scanDate)
@@ -421,11 +427,20 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
     }
   }
 
-  const handleSaveScanResult = () => {
+  const handleSaveScanResult = async () => {
     if (!scanResult) return
-    onReload()
-    setScanOpen(false)
-    setScanResult(null)
+    
+    try {
+      for (const entry of scanResult) {
+        await budgetEntriesApi.create(entry)
+      }
+      showSuccess(`Successfully saved ${scanResult.length} entries!`)
+      onReload()
+      setScanOpen(false)
+      setScanResult(null)
+    } catch (error) {
+      showError('Failed to save some entries')
+    }
   }
 
   const has = selectedIds.size > 0
@@ -441,8 +456,28 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
         <button className={`${styles.toolBtn} ${styles.primary}`} disabled={!has}    onClick={() => setCopyOpen(true)}>Copy</button>
         <button className={`${styles.toolBtn} ${styles.primary}`} disabled={!single} onClick={openEdit}>Edit</button>
         <button className={`${styles.toolBtn} ${styles.warning}`} disabled={!has}    onClick={() => setMoveOpen(true)}>Move</button>
-        <button className={`${styles.toolBtn} ${styles.success}`} style={{ marginLeft: 'auto' }} onClick={() => openAdd()}>+ New Entry</button>
+        <button
+          className={`${styles.toolBtn} ${styles.primary}`}
+          style={{ marginLeft: 'auto' }}
+          onClick={() => {
+            setScanOpen(true)
+            setScanResult(null)
+            setScanPreview(null)
+            scanInputRef.current?.click()
+          }}
+        >
+          Scan Receipt
+        </button>
+        <button className={`${styles.toolBtn} ${styles.success}`} onClick={() => openAdd()}>+ New Entry</button>
       </div>
+      <input
+        ref={scanInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        style={{ display: 'none' }}
+        onChange={handleCaptureImage}
+      />
 
       {/* Tree */}
       <div className={styles.treeWrap}>
@@ -556,6 +591,34 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
         <div className={styles.dialogField}>
           <label className={styles.dialogLabel}>New date</label>
           <input type="date" className={styles.dialogInput} value={copyDate} onChange={e => setCopyDate(e.target.value)} />
+        </div>
+      </Dialog>
+
+      {/* Scan result dialog */}
+      <Dialog open={scanOpen && !!scanResult} title="Scanned entries" onClose={() => setScanOpen(false)} onConfirm={handleSaveScanResult} width="min(90vw, 720px)" >
+        <div className={styles.dialogField} style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+          {scanResult && scanResult.length > 0 ? (
+            <table className={styles.scanTable}>
+              <thead>
+                <tr>
+                  <th>Name</th><th>Category</th><th>Value</th><th>Currency</th><th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {scanResult.map((e, i) => (
+                  <tr key={i}>
+                    <td>{e.name}</td>
+                    <td>{e.category}</td>
+                    <td>{e.value}</td>
+                    <td>{e.currency}</td>
+                    <td>{e.entryDate}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div>No items scanned</div>
+          )}
         </div>
       </Dialog>
 
