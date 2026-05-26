@@ -1,12 +1,13 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { Dialog } from '../../components/ui/Dialog'
-import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { useNotification } from '../../components/ui/Notification'
 import { budgetEntriesApi, type BudgetEntry } from '../../api/investments'
+import { Button } from '../../components/ui/Button'
+import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import styles from './BudgetEntriesPage.module.css'
 
 // ── Shared types & helpers ────────────────────────────────────────────────────
@@ -207,6 +208,63 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
   const [moveDate, setMoveDate] = useState('')
   const [moveCategory, setMoveCategory] = useState('')
 
+  const [scanOpen, setScanOpen] = useState(false)
+  const [scanDate, setScanDate] = useState(new Date().toISOString().slice(0, 10))
+  const [scanLoading, setScanLoading] = useState(false)
+  const [scanPreview, setScanPreview] = useState<string | null>(null)
+  const [scanResult, setScanResult] = useState<BudgetEntry[] | null>(null)
+
+  // Floating "Scan receipt" button + hidden file input
+  // Opens image picker, prepares base64 preview, and invokes existing handleScanReceipt.
+  useEffect(() => {
+    const btn = document.createElement('button')
+    btn.type = 'button'
+    btn.textContent = 'Scan receipt'
+    btn.style.position = 'fixed'
+    btn.style.right = '24px'
+    btn.style.bottom = '24px'
+    btn.style.zIndex = '1000'
+    btn.style.padding = '10px 14px'
+    btn.style.borderRadius = '8px'
+    btn.style.border = '1px solid var(--color-border, rgba(255,255,255,0.2))'
+    btn.style.background = 'var(--color-primary, #4f46e5)'
+    btn.style.color = '#fff'
+    btn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)'
+    btn.style.cursor = 'pointer'
+
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.style.display = 'none'
+
+    const onBtnClick = () => input.click()
+    const onInputChange = () => {
+      const file = input.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = () => {
+        const base64 = String(reader.result ?? '')
+        if (!base64) return
+        setScanPreview(base64)
+        handleScanReceipt(base64)
+      }
+      reader.readAsDataURL(file)
+    }
+
+    btn.addEventListener('click', onBtnClick)
+    input.addEventListener('change', onInputChange)
+    document.body.appendChild(btn)
+    document.body.appendChild(input)
+
+    return () => {
+      btn.removeEventListener('click', onBtnClick)
+      input.removeEventListener('change', onInputChange)
+      try { btn.remove() } catch {}
+      try { input.remove() } catch {}
+    }
+    // We intentionally don't add handleScanReceipt to deps to avoid init-order issues.
+  }, [scanDate])
+
   const tree = useMemo(() => buildTree(entries), [entries])
 
   useEffect(() => {
@@ -295,6 +353,78 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
       setSelectedIds(new Set())
       onReload()
     } catch { showError('Failed to move') }
+  }
+
+  const openScanReceipt = () => {
+    setScanOpen(true)
+    setScanPreview(null)
+    setScanResult(null)
+    setScanLoading(false)
+  }
+
+  const handleCaptureImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        const result = event.target?.result as string
+        setScanPreview(result)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleTakePhoto = () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+          const video = document.createElement('video')
+          video.srcObject = stream
+          video.play()
+          
+          const canvas = document.createElement('canvas')
+          video.addEventListener('loadedmetadata', () => {
+            canvas.width = video.videoWidth
+            canvas.height = video.videoHeight
+            
+            const ctx = canvas.getContext('2d')
+            ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
+            
+            const base64 = canvas.toDataURL('image/jpeg')
+            setScanPreview(base64)
+            
+            stream.getTracks().forEach(track => track.stop())
+          })
+        })
+        .catch(err => showError('Could not access camera: ' + err.message))
+    }
+  }
+
+  const handleScanReceipt = async (imageBase64?: string) => {
+    const payload = imageBase64 ?? scanPreview
+    if (!payload) {
+      showError('No image selected')
+      return
+    }
+
+    setScanLoading(true)
+    try {
+      const result = await budgetEntriesApi.scanReceipt(payload, scanDate)
+      const items = (result as any)?.data ?? result
+      setScanResult(items)
+      showSuccess(`Successfully scanned ${items.length} items!`)
+    } catch (error) {
+      showError('Failed to scan receipt. Please try again.')
+    } finally {
+      setScanLoading(false)
+    }
+  }
+
+  const handleSaveScanResult = () => {
+    if (!scanResult) return
+    onReload()
+    setScanOpen(false)
+    setScanResult(null)
   }
 
   const has = selectedIds.size > 0

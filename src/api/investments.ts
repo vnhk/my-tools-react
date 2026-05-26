@@ -122,6 +122,9 @@ export const budgetEntriesApi = {
 
   delete: (id: string) =>
     client.delete(`/invest-track/budget-entries/${id}`),
+
+  scanReceipt: (base64Image: string, entryDate: string) =>
+    client.post<BudgetEntry[]>('/invest-track/budget-entries/scan-receipt', { base64Image, entryDate }),
 }
 
 export const stockAlertsApi = {
