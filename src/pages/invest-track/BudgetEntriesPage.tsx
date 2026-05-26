@@ -213,6 +213,9 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
   const [scanLoading, setScanLoading] = useState(false)
   const [scanPreview, setScanPreview] = useState<string | null>(null)
   const [scanResult, setScanResult] = useState<BudgetEntry[] | null>(null)
+  const [scanIndex, setScanIndex] = useState(0)
+  const [scanCurrent, setScanCurrent] = useState<Partial<BudgetEntry> | null>(null)
+  const [scanFormErrors, setScanFormErrors] = useState<Record<string, string>>({})
 
   const scanInputRef = useRef<HTMLInputElement>(null)
 
@@ -419,7 +422,14 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
       const result = await budgetEntriesApi.scanReceipt(payload, scanDate)
       const items = (result as any)?.data ?? result
       setScanResult(items)
-      showSuccess(`Successfully scanned ${items.length} items!`)
+      if (Array.isArray(items) && items.length > 0) {
+        setScanIndex(0)
+        setScanCurrent({ ...items[0] })
+        setScanFormErrors({})
+      } else {
+        setScanCurrent(null)
+      }
+      showSuccess(`Successfully scanned ${Array.isArray(items) ? items.length : 0} items!`)
     } catch (error) {
       showError('Failed to scan receipt. Please try again.')
     } finally {
@@ -428,18 +438,39 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
   }
 
   const handleSaveScanResult = async () => {
-    if (!scanResult) return
-    
+    if (!scanCurrent) return
+
+    // Validate current entry
+    const errors = validateFields('BudgetEntry', scanCurrent as Record<string, unknown>, 'save')
+    if (!scanCurrent.category || !String(scanCurrent.category).trim()) {
+      errors.category = 'Category is required'
+    }
+    if (Object.keys(errors).length > 0) {
+      setScanFormErrors(errors)
+      return
+    }
+
     try {
-      for (const entry of scanResult) {
-        await budgetEntriesApi.create(entry)
+      await budgetEntriesApi.create(scanCurrent)
+      const total = scanResult?.length ?? 0
+      const next = scanIndex + 1
+
+      if (scanResult && next < total) {
+        setScanIndex(next)
+        setScanCurrent({ ...scanResult[next] })
+        setScanFormErrors({})
+        showSuccess(`Saved ${next} of ${total}. Continue…`)
+      } else {
+        showSuccess(`Saved ${total} entr${(total === 1 ? 'y' : 'ies')}!`)
+        onReload()
+        setScanOpen(false)
+        setScanResult(null)
+        setScanCurrent(null)
+        setScanFormErrors({})
+        setScanIndex(0)
       }
-      showSuccess(`Successfully saved ${scanResult.length} entries!`)
-      onReload()
-      setScanOpen(false)
-      setScanResult(null)
     } catch (error) {
-      showError('Failed to save some entries')
+      showError('Failed to save scanned entry')
     }
   }
 
@@ -595,27 +626,54 @@ function BudgetTreeTab({ entries, categories, onReload }: TreeTabProps) {
       </Dialog>
 
       {/* Scan result dialog */}
-      <Dialog open={scanOpen && !!scanResult} title="Scanned entries" onClose={() => setScanOpen(false)} onConfirm={handleSaveScanResult} width="min(90vw, 720px)" >
+      <Dialog
+        open={scanOpen && !!scanCurrent}
+        title={`Scanned entry ${scanIndex + 1} / ${scanResult?.length ?? 0}`}
+        onClose={() => {
+          setScanOpen(false)
+          setScanCurrent(null)
+          setScanFormErrors({})
+        }}
+        onConfirm={handleSaveScanResult}
+        width="min(90vw, 720px)"
+      >
         <div className={styles.dialogField} style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-          {scanResult && scanResult.length > 0 ? (
-            <table className={styles.scanTable}>
-              <thead>
-                <tr>
-                  <th>Name</th><th>Category</th><th>Value</th><th>Currency</th><th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scanResult.map((e, i) => (
-                  <tr key={i}>
-                    <td>{e.name}</td>
-                    <td>{e.category}</td>
-                    <td>{e.value}</td>
-                    <td>{e.currency}</td>
-                    <td>{e.entryDate}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {scanCurrent ? (
+            <>
+              <div className={styles.dialogField}>
+                <label className={styles.dialogLabel} htmlFor="scan-category">Category</label>
+                <input
+                  id="scan-category"
+                  type="text"
+                  list="entry-category-list"
+                  className={styles.dialogInput}
+                  value={scanCurrent.category ?? ''}
+                  onChange={e =>
+                    setScanCurrent(prev => ({ ...(prev ?? {}), category: e.target.value || null }))
+                  }
+                />
+                <datalist id="entry-category-list">
+                  {categories.map(c => <option key={c} value={c} />)}
+                </datalist>
+                {scanFormErrors.category && (
+                  <span style={{ color: 'var(--color-danger, red)', fontSize: '0.8em' }}>
+                    {scanFormErrors.category}
+                  </span>
+                )}
+              </div>
+
+              <DynamicForm
+                entityName="BudgetEntry"
+                mode="save"
+                values={scanCurrent as Record<string, unknown>}
+                onChange={(field, value) => {
+                  setScanCurrent(prev => ({ ...(prev ?? {}), [field]: value }))
+                }}
+                errors={scanFormErrors}
+                dynamicOptions={{ category: categories }}
+                skip={['category']}
+              />
+            </>
           ) : (
             <div>No items scanned</div>
           )}
