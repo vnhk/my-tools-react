@@ -228,7 +228,6 @@ function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
 
     const [scanOpen, setScanOpen] = useState(false)
     const [scanDate] = useState(new Date().toISOString().slice(0, 10))
-    const [setScanLoading] = useState(false)
     const [scanPreview, setScanPreview] = useState<string | null>(null)
     const [scanResult, setScanResult] = useState<BudgetEntry[] | null>(null)
     const [scanIndex, setScanIndex] = useState(0)
@@ -428,7 +427,6 @@ function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
         }
 
         setScanOpen(true)
-        setScanLoading(true)
         try {
             const result = await budgetEntriesApi.scanReceipt(payload, scanDate)
             const items = (result as any)?.data ?? result
@@ -444,7 +442,7 @@ function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
         } catch (error) {
             showError('Failed to scan receipt. Please try again.')
         } finally {
-            setScanLoading(false)
+            // setScanLoading = false
         }
     }
 
