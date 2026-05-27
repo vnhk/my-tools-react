@@ -406,13 +406,6 @@ function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
         }
     }
 
-    const openScanReceipt = () => {
-        setScanOpen(true)
-        setScanPreview(null)
-        setScanResult(null)
-        setScanLoading(false)
-    }
-
     const handleCaptureImage = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
@@ -424,32 +417,6 @@ function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                 void handleScanReceipt(base64)
             }
             reader.readAsDataURL(file)
-        }
-    }
-
-    const handleTakePhoto = () => {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({video: true})
-                .then(stream => {
-                    const video = document.createElement('video')
-                    video.srcObject = stream
-                    video.play()
-
-                    const canvas = document.createElement('canvas')
-                    video.addEventListener('loadedmetadata', () => {
-                        canvas.width = video.videoWidth
-                        canvas.height = video.videoHeight
-
-                        const ctx = canvas.getContext('2d')
-                        ctx?.drawImage(video, 0, 0, canvas.width, canvas.height)
-
-                        const base64 = canvas.toDataURL('image/jpeg')
-                        setScanPreview(base64)
-
-                        stream.getTracks().forEach(track => track.stop())
-                    })
-                })
-                .catch(err => showError('Could not access camera: ' + err.message))
         }
     }
 
