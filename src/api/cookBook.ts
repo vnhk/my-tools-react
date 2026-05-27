@@ -133,6 +133,10 @@ export const ingredientsApi = {
 
     delete: (id: string) =>
         client.delete(`/cook-book/ingredients/${id}`),
+
+    scanNutritionTable: (base64Image: string) =>
+        client.post<IngredientDto[]>('/cook-book/ingredients/scan-nutrition-table', {base64Image})
+
 }
 
 // ── Diet ────────────────────────────────────────────────────────────────────
