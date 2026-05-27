@@ -15,7 +15,6 @@ import {
 import {Dialog} from '../../components/ui/Dialog'
 import {useNotification} from '../../components/ui/Notification'
 import {budgetEntriesApi, type BudgetEntry} from '../../api/investments'
-import {Button} from '../../components/ui/Button'
 import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
 import styles from './BudgetEntriesPage.module.css'
 
@@ -228,8 +227,8 @@ function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
     const [moveCategory, setMoveCategory] = useState('')
 
     const [scanOpen, setScanOpen] = useState(false)
-    const [scanDate, setScanDate] = useState(new Date().toISOString().slice(0, 10))
-    const [scanLoading, setScanLoading] = useState(false)
+    const [scanDate] = useState(new Date().toISOString().slice(0, 10))
+    const [setScanLoading] = useState(false)
     const [scanPreview, setScanPreview] = useState<string | null>(null)
     const [scanResult, setScanResult] = useState<BudgetEntry[] | null>(null)
     const [scanIndex, setScanIndex] = useState(0)
