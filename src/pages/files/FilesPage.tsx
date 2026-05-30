@@ -372,7 +372,7 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
     const [editMode, setEditMode] = useState(false)
     const [editValue, setEditValue] = useState('')
     const [saving, setSaving] = useState(false)
-    const [textError, setTextError] = useState(false)
+    const [setTextError] = useState(false)
     const streamUrl = `/file-storage-app/files/stream?uuid=${item.id}`
     const downloadUrl = `/file-storage-app/files/download?uuid=${item.id}`
 
@@ -479,7 +479,7 @@ function UnlockDialog({item, onClose, onUnlocked}: {
             await client.post(`/files/${item.id}/unlock`, null, {params: {password}})
             showNotification('File unlocked', 'success')
             onUnlocked()
-        } catch (e: unknown) {
+        } catch (e: any) {
             if (e?.response?.status === 403) {
                 showNotification('Wrong password', 'error')
             } else {
