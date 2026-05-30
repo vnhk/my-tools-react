@@ -18,6 +18,7 @@ import {TextArea} from '../../components/fields/TextArea'
 import {Checkbox} from '../../components/fields/Checkbox'
 import {useNotification} from '../../components/ui/Notification'
 import styles from './FilesPage.module.css'
+import {AxiosError} from "axios";
 
 interface FileItem {
     id: string
@@ -372,7 +373,7 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
     const [editMode, setEditMode] = useState(false)
     const [editValue, setEditValue] = useState('')
     const [saving, setSaving] = useState(false)
-    const [setTextError] = useState(false)
+    const [textError, setTextError] = useState(false)
     const streamUrl = `/file-storage-app/files/stream?uuid=${item.id}`
     const downloadUrl = `/file-storage-app/files/download?uuid=${item.id}`
 
@@ -426,6 +427,9 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
         <Dialog open title={item.filename} onClose={onClose} width="min(95vw, 900px)"
                 footer={
                     <>
+                        <div>
+                            {textError && <p>Error occurred</p>}
+                        </div>
                         {vtype === 'text' && isEditable && !editMode && (
                             <Button variant="secondary" onClick={startEdit}>✏ Edit</Button>
                         )}
@@ -479,8 +483,9 @@ function UnlockDialog({item, onClose, onUnlocked}: {
             await client.post(`/files/${item.id}/unlock`, null, {params: {password}})
             showNotification('File unlocked', 'success')
             onUnlocked()
-        } catch (e: any) {
-            if (e?.response?.status === 403) {
+        } catch (e) {
+            const error = e as AxiosError;
+            if (error?.response?.status === 403) {
                 showNotification('Wrong password', 'error')
             } else {
                 showNotification('Unlock failed', 'error')
