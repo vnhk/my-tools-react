@@ -1,5 +1,8 @@
 import {Fragment, useCallback, useEffect, useRef, useState} from 'react'
 import {
+    FaDownload,
+    FaEdit,
+    FaEye,
     FaFile,
     FaFileAlt,
     FaFileArchive,
@@ -9,6 +12,8 @@ import {
     FaFileVideo,
     FaFolder,
     FaFolderOpen,
+    FaLongArrowAltRight,
+    FaTrash,
 } from 'react-icons/fa'
 import client from '../../api/client'
 import {Button} from '../../components/ui/Button'
@@ -854,7 +859,7 @@ export function FilesPage() {
                                                 className={styles.actionBtn}
                                                 title="Download"
                                                 onClick={() => window.open(`/download?uuid=${item.id}`, '_blank')}
-                                            >⬇</button>
+                                            ><FaDownload/></button>
                                         )}
                                         {!item.directory && getViewerType(item) && (
                                             <button
@@ -867,25 +872,25 @@ export function FilesPage() {
                                                         setViewItem(item)
                                                     }
                                                 }}
-                                            >👁</button>
+                                            ><FaEye/></button>
                                         )}
                                         <button
                                             className={styles.actionBtn}
                                             title="Rename"
                                             onClick={() => startRename(item)}
-                                        >✏
+                                        ><FaEdit/>
                                         </button>
                                         <button
                                             className={styles.actionBtn}
                                             title="Move"
                                             onClick={() => setMoveTarget(item)}
-                                        >↷
+                                        ><FaLongArrowAltRight/>
                                         </button>
                                         <button
                                             className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
                                             title="Delete"
                                             onClick={() => setDeleteTarget(item)}
-                                        >🗑
+                                        ><FaTrash/>
                                         </button>
                                     </div>
                                 </td>
