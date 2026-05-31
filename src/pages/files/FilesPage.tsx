@@ -50,7 +50,7 @@ export function useSecureFileUrl(fileId: string | undefined) {
         async function load() {
             setLoading(true)
             try {
-                const res = await client.get(`/file-storage-app/files/thumbnail?uuid=${fileId}`, {
+                const res = await client.get(`/thumbnail?uuid=${fileId}`, {
                     responseType: 'blob'
                 })
 
@@ -374,8 +374,8 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
     const [editValue, setEditValue] = useState('')
     const [saving, setSaving] = useState(false)
     const [textError, setTextError] = useState(false)
-    const streamUrl = `/file-storage-app/files/stream?uuid=${item.id}`
-    const downloadUrl = `/file-storage-app/files/download?uuid=${item.id}`
+    const streamUrl = `/thumbnail?uuid=${item.id}`
+    const downloadUrl = `/download?uuid=${item.id}`
 
     useEffect(() => {
         if (vtype === 'text') {
@@ -580,7 +580,7 @@ export function FilesPage() {
         if (vtype) {
             setViewItem(item)
         } else {
-            window.open(`/file-storage-app/files/download?uuid=${item.id}`, '_blank')
+            window.open(`/download?uuid=${item.id}`, '_blank')
         }
     }
 
@@ -598,7 +598,7 @@ export function FilesPage() {
             if (vtype) {
                 setViewItem(item)
             } else {
-                window.open(`/file-storage-app/files/stream?uuid=${item.id}`, '_blank')
+                window.open(`/thumbnail?uuid=${item.id}`, '_blank')
             }
         }
     }
@@ -853,7 +853,7 @@ export function FilesPage() {
                                             <button
                                                 className={styles.actionBtn}
                                                 title="Download"
-                                                onClick={() => window.open(`/file-storage-app/files/download?uuid=${item.id}`, '_blank')}
+                                                onClick={() => window.open(`/download?uuid=${item.id}`, '_blank')}
                                             >⬇</button>
                                         )}
                                         {!item.directory && getViewerType(item) && (
@@ -930,7 +930,7 @@ export function FilesPage() {
                                     <div className={styles.tileThumb}>
                                         {isImage && !item.encrypted ? (
                                             <img
-                                                src={`/file-storage-app/files/thumbnail?uuid=${item.id}`}
+                                                src={`/thumbnail?uuid=${item.id}`}
                                                 alt={item.filename}
                                                 className={styles.tileImg}
                                                 loading="lazy"
