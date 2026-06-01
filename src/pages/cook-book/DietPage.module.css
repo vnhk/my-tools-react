@@ -307,7 +307,7 @@
     border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
     border-radius: 14px;
     width: 480px;
-    min-width: 50vh;
+    min-width: 50vw;
     max-width: 95vw;
     min-height: 50vh;
     max-height: 85vh;
@@ -399,6 +399,7 @@
     color: var(--color-text-primary);
     font-size: 13px;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
 }
 
