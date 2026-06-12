@@ -1,10 +1,8 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  padding: var(--space-md);
-  height: 100%;
-  overflow: hidden;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
 }
 
 .toolbar {

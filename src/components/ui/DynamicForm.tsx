@@ -1,5 +1,11 @@
-import { useState, useEffect } from 'react'
-import {getEditFormFields, getSaveFormFields, validateFields, getEntityConfigs, getEntityConfig} from '../../api/entityConfig'
+import {useEffect, useState} from 'react'
+import {
+    getEditFormFields,
+    getEntityConfig,
+    getEntityConfigs,
+    getSaveFormFields,
+    validateFields
+} from '../../api/entityConfig'
 import {TextField} from '../fields/TextField'
 import {Checkbox} from '../fields/Checkbox'
 import {SelectField} from '../fields/SelectField'
@@ -39,7 +45,7 @@ export function DynamicForm({
     const visible = fields.filter((f) => !skip.includes(f.field))
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--space-md)'}}>
             {visible.map((f, i) => {
                 const val = values[f.field]
 
@@ -89,7 +95,7 @@ export function DynamicForm({
                 }
 
                 // Dropdown — dynamic options
-                if (f.dynamicStrValues) {
+                if (f.dynamicStrValues || f.dynamicStrValuesList != null && f.dynamicStrValuesList.length > 0) {
                     const opts = dynamicOptions[f.field] ?? []
                     return (
                         <SelectField

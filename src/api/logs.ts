@@ -44,7 +44,7 @@ export interface TrackerParams {
 }
 
 export const logsApi = {
-  getLogs: (params: LogParams) =>
+  getAll: (params?: Record<string, unknown>) =>
     client.get<Page<LogEntry>>('/logs', { params }),
 
   getTrackers: (params: TrackerParams) =>
