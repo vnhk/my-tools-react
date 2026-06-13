@@ -230,6 +230,9 @@ export const dietApi = {
     getDay: (date: string) =>
         client.get<DietDayDto>('/cook-book/diet/day', {params: {date}}),
 
+    recreateDay: (date: string) =>
+        client.post<DietDayDto>(`/cook-book/diet/recreate-day/${date}`),
+
     updateDay: (date: string, data: Record<string, unknown>) =>
         client.put<DietDayDto>('/cook-book/diet/day', data, {params: {date}}),
 

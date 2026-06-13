@@ -725,6 +725,16 @@ export function DietPage() {
     const allMealTypes = MEAL_TYPES
     const mealsMap = new Map((day?.meals ?? []).map(m => [m.mealType, m]))
 
+    const handleRecreateDay = (day: DietDayDto | null) => {
+        if (day) {
+            if (confirm('Are you sure you want to recreate the day? This will delete all meals and data for the day and cannot be undone.')) {
+                dietApi.recreateDay(day.date)
+                    .then(() => load(day.date))
+                    .catch(() => showError('Failed to recreate day'))
+            }
+        }
+    }
+
     const effectiveTarget = day
         ? (day.targetKcal ?? 0) + (day.activityKcal && day.activityKcalPercent ? day.activityKcal * day.activityKcalPercent / 100 : 0)
         : 0
@@ -770,6 +780,9 @@ export function DietPage() {
                 </button>
                 <button className={`${styles.btn} ${styles.secondary}`} onClick={() => handleShowAutoForm(day)}>Auto
                     form
+                </button>
+                <button className={`${styles.btn} ${styles.secondary}`} onClick={() => handleRecreateDay(day)}>Recreate
+                    Day
                 </button>
             </div>
 
