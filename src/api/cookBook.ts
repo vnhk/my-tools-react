@@ -233,6 +233,9 @@ export const dietApi = {
     updateDay: (date: string, data: Record<string, unknown>) =>
         client.put<DietDayDto>('/cook-book/diet/day', data, {params: {date}}),
 
+    autoSaveMeals: (date: string, data: Record<string, number>) =>
+        client.post<DietDayDto>(`/cook-book/diet/day/${date}/meals/auto`, data),
+
     addItem: (date: string, mealType: string, data: Record<string, unknown>) =>
         client.post<DietDayDto>(`/cook-book/diet/day/${date}/meals/${mealType}/items`, data),
 
@@ -245,6 +248,7 @@ export const dietApi = {
 
     getDashboard: (from: string, to: string, groupBy: string) =>
         client.get<DashboardDto>('/cook-book/diet/dashboard', {params: {from, to, groupBy}}),
+
 }
 
 export const unitsApi = {

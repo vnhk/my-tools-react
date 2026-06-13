@@ -129,7 +129,7 @@ function AddItemDialog({date, mealType, mealName, onAdded, onClose}: {
                 showError('Enter description or kcal');
                 return
             }
-            let body: Record<string, unknown> = {description: desc}
+            const body: Record<string, unknown> = {description: desc}
             if (quickMode === 'direct') {
                 if (kcal) body.kcal = parseFloat(kcal)
                 if (protein) body.protein = parseFloat(protein)
@@ -324,6 +324,119 @@ function CopyMealDialog({date, mealType, mealName, onCopied, onClose}: {
         </div>
     )
 }
+
+// ── Auto Meals Form dialog ───────────────────────────────────────────────────────────
+function AutoMealsFormDialog({day, onSaved, onClose}: {
+    day: DietDayDto; onSaved: (d: DietDayDto) => void; onClose: () => void
+}) {
+    const {showError, showSuccess} = useNotification()
+    const [kcalPercentage, setKcalPercentage] = useState(100)
+    const [proteinPercentage, setProteinPercentage] = useState(100)
+    const [fatPercentage, setFatPercentage] = useState(100)
+    const [carbsPercentage, setCarbsPercentage] = useState(100)
+    const [fiberPercentage, setFiberPercentage] = useState(100)
+
+    const handleSave = () => {
+        const body = {
+            kcalPercentage: kcalPercentage,
+            proteinPercentage: proteinPercentage,
+            fatPercentage: fatPercentage,
+            carbsPercentage: carbsPercentage,
+            fiberPercentage: fiberPercentage
+        }
+        dietApi.autoSaveMeals(day.date, body)
+            .then(r => {
+                onSaved(r.data);
+                onClose()
+            }).catch(() => showError('Failed to save meals'))
+
+        showSuccess(`Meals saved with % of estimated daily intake`)
+    }
+
+    const numField = (value: number, setValue: (value: (((prevState: number) => number) | number)) => void, label: string, step = '1') => (
+        <div className={styles.sdField}>
+            <label className={styles.sdLabel}>{label}</label>
+            <input className={styles.sdInput} type="number" min="1" step={step} max="1000"
+                   value={value as number}
+                   onChange={e => setValue(Number(e.target.value))}/>
+        </div>
+    )
+    return (
+        <Dialog open title={`Automatically calculate macro/kcal — ${day.date}`} onClose={onClose}
+                onConfirm={handleSave}
+                confirmLabel={'Save Meals - It will overwrite your existing meals'}
+                width="min(95vw, 580px)">
+
+            <button onClick={() => {
+                setKcalPercentage(80);
+                setProteinPercentage(40);
+                setFatPercentage(80);
+                setCarbsPercentage(80);
+                setFiberPercentage(50);
+            }}>Lean low protein day
+            </button>
+
+            <button onClick={() => {
+                setKcalPercentage(120);
+                setProteinPercentage(40);
+                setFatPercentage(120);
+                setCarbsPercentage(120);
+                setFiberPercentage(50);
+            }}>Fat low protein day
+            </button>
+
+            <button onClick={() => {
+                setKcalPercentage(80);
+                setProteinPercentage(100);
+                setFatPercentage(70);
+                setCarbsPercentage(70);
+                setFiberPercentage(50);
+            }}>Lean high protein day
+            </button>
+
+            <button onClick={() => {
+                setKcalPercentage(120);
+                setProteinPercentage(100);
+                setFatPercentage(110);
+                setCarbsPercentage(110);
+                setFiberPercentage(50);
+            }}>Fat high protein day
+            </button>
+
+            <div className={styles.sdSection}>
+                <div className={styles.sdSectionTitle}>Targets</div>
+                <div className={styles.sdGrid2}>
+                    {numField(kcalPercentage, setKcalPercentage, 'Estimated Daily Kcal Intake (%)', '5')}
+                </div>
+            </div>
+            <div className={styles.sdSection}>
+                <div className={styles.sdSectionTitle}>Targets</div>
+                <div className={styles.sdGrid2}>
+                    {numField(proteinPercentage, setProteinPercentage, 'Estimated Daily Protein Intake (%)', '5')}
+                </div>
+            </div>
+            <div className={styles.sdSection}>
+                <div className={styles.sdSectionTitle}>Targets</div>
+                <div className={styles.sdGrid2}>
+                    {numField(fatPercentage, setFatPercentage, 'Estimated Daily Fat Intake (%)', '5')}
+                </div>
+            </div>
+            <div className={styles.sdSection}>
+                <div className={styles.sdSectionTitle}>Targets</div>
+                <div className={styles.sdGrid2}>
+                    {numField(carbsPercentage, setCarbsPercentage, 'Estimated Daily Carbs Intake (%)', '5')}
+                </div>
+            </div>
+            <div className={styles.sdSection}>
+                <div className={styles.sdSectionTitle}>Targets</div>
+                <div className={styles.sdGrid2}>
+                    {numField(fiberPercentage, setFiberPercentage, 'Estimated Daily Fiber Intake (%)', '5')}
+                </div>
+            </div>
+        </Dialog>
+    )
+}
+
 
 // ── Set Data dialog ───────────────────────────────────────────────────────────
 const ACCURACY_OPTIONS = [40, 50, 60, 70, 80, 90, 100].map(p => ({value: String(p), label: `${p}%`}))
@@ -589,6 +702,7 @@ export function DietPage() {
     const [day, setDay] = useState<DietDayDto | null>(null)
     const [loading, setLoading] = useState(false)
     const [showSetData, setShowSetData] = useState(false)
+    const [showAutoForm, setShowAutoForm] = useState(false)
 
     const load = (d: string) => {
         setLoading(true)
@@ -634,6 +748,14 @@ export function DietPage() {
         alert('Copied to clipboard!')
     }
 
+    function handleShowAutoForm(day: DietDayDto | null) {
+        if (day && (day.targetKcal && day.targetKcal > 0 && day.targetFat && day.targetFat > 0 && day.targetProtein && day.targetProtein > 0 && day.targetCarbs && day.targetCarbs > 0)) {
+            setShowAutoForm(true)
+        } else {
+            showError('Set target calories and macros first to use auto meals feature')
+        }
+    }
+
     return (
         <div className={styles.page}>
             <div className={styles.toolbar}>
@@ -645,6 +767,9 @@ export function DietPage() {
                 <div style={{flex: 1}}/>
                 <button className={styles.btn} onClick={handleExport}>Export</button>
                 <button className={`${styles.btn} ${styles.primary}`} onClick={() => setShowSetData(true)}>Set Data
+                </button>
+                <button className={`${styles.btn} ${styles.secondary}`} onClick={() => handleShowAutoForm(day)}>Auto
+                    form
                 </button>
             </div>
 
@@ -696,6 +821,13 @@ export function DietPage() {
                     setDay(d);
                     setShowSetData(false)
                 }} onClose={() => setShowSetData(false)}/>
+            )}
+
+            {showAutoForm && day && (
+                <AutoMealsFormDialog day={day} onSaved={d => {
+                    setDay(d);
+                    setShowAutoForm(false)
+                }} onClose={() => setShowAutoForm(false)}/>
             )}
         </div>
     )
