@@ -41,7 +41,7 @@ const VIDEO_EXT = new Set(['mp4', 'webm', 'mov', 'mkv'])
 const TEXT_EXT = new Set(['txt', 'md', 'json', 'xml', 'csv', 'log', 'yaml', 'yml', 'vtt', 'srt'])
 const PDF_EXT = new Set(['pdf'])
 
-export function useSecureFileUrl(fileId: string | undefined) {
+export function useSecureFileUrl(fileId: string | undefined, maxSize: number | null, scale: boolean | null = true) {
     const [url, setUrl] = useState<string | undefined>(undefined)
     const [error, setError] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -55,7 +55,7 @@ export function useSecureFileUrl(fileId: string | undefined) {
         async function load() {
             setLoading(true)
             try {
-                const res = await client.get(`/files/thumbnail?uuid=${fileId}`, {
+                const res = await client.get(`/files/thumbnail?uuid=${fileId}&maxSize=${maxSize ?? 200}&scale=${scale ?? true}`, {
                     responseType: 'blob'
                 })
 
@@ -426,7 +426,7 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
         }
     }
 
-    const {url: secureUrl} = useSecureFileUrl(item.id)
+    const {url: secureUrl} = useSecureFileUrl(item.id, 1000, false)
 
     return (
         <Dialog open title={item.filename} onClose={onClose} width="min(95vw, 900px)"
@@ -728,8 +728,8 @@ export function FilesPage() {
     }
 
 
-    function SecureImage({item}: { item: FileItem }) {
-        const {url} = useSecureFileUrl(item.id);
+    function SecureImageForGridThumbnail({item}: { item: FileItem }) {
+        const {url} = useSecureFileUrl(item.id, 65, true);
         return <img src={url} alt={item.filename} className={styles.tileImg} loading="lazy"/>;
     }
 
@@ -955,7 +955,7 @@ export function FilesPage() {
                                     </div>
                                     <div className={styles.tileThumb}>
                                         {isImage && !item.encrypted ? (
-                                            <SecureImage key={item.id} item={item}/>
+                                            <SecureImageForGridThumbnail key={item.id} item={item}/>
                                         ) : (
                                             <FileIcon item={item} size={32}/>
                                         )}
