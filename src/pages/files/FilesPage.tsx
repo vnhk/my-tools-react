@@ -717,6 +717,21 @@ export function FilesPage() {
         }
     }
 
+    const downloadOne = async (item: FileItem) => {
+        if (item == null) return
+        try {
+            const response = await client.get('/files/download?uuid=' + item.id, {responseType: 'blob'})
+            const url = URL.createObjectURL(new Blob([response.data], {type: 'application/octet-stream'}))
+            const a = document.createElement('a')
+            a.href = url
+            a.download = item.filename
+            a.click()
+            URL.revokeObjectURL(url)
+        } catch {
+            showNotification('File download failed', 'error')
+        }
+    }
+
     const allSelected = filtered.length > 0 && selected.size === filtered.length
 
     function handleMoveOne(item: FileItem) {
@@ -879,7 +894,7 @@ export function FilesPage() {
                                             <button
                                                 className={styles.actionBtn}
                                                 title="Download"
-                                                onClick={() => window.open(`/download?uuid=${item.id}`, '_blank')}
+                                                onClick={() => downloadOne(item)}
                                             ><FaDownload/></button>
                                         )}
                                         {!item.directory && getViewerType(item) && (
