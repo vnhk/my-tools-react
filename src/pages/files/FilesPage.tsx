@@ -55,7 +55,7 @@ export function useSecureFileUrl(fileId: string | undefined) {
         async function load() {
             setLoading(true)
             try {
-                const res = await client.get(`/thumbnail?uuid=${fileId}`, {
+                const res = await client.get(`/files/thumbnail?uuid=${fileId}`, {
                     responseType: 'blob'
                 })
 
@@ -283,8 +283,8 @@ function UploadDialog({currentPath, onClose, onUploaded}: {
 
 // ---- Move Dialog ----
 function MoveDialog({
-                        item, currentPath, onClose, onMoved,
-                    }: { item: FileItem; currentPath: string; onClose: () => void; onMoved: () => void }) {
+                        items, currentPath, onClose, onMoved,
+                    }: { items: FileItem[]; currentPath: string; onClose: () => void; onMoved: () => void }) {
     const {showNotification} = useNotification()
     const [browsePath, setBrowsePath] = useState('/')
     const [dirs, setDirs] = useState<FileItem[]>([])
@@ -311,7 +311,7 @@ function MoveDialog({
         }
         setBusy(true)
         try {
-            await client.post(`/files/${item.id}/move`, null, {params: {destPath: browsePath}})
+            await client.post(`/files/move`, {ids: items.map((i) => i.id)}, {params: {destPath: browsePath}})
             showNotification('Moved successfully', 'success')
             onMoved()
             onClose()
@@ -325,7 +325,7 @@ function MoveDialog({
     const moveParts = pathParts(browsePath)
 
     return (
-        <Dialog open title={`Move "${item.filename}"`} onClose={onClose} width="min(90vw,420px)"
+        <Dialog open title={`Move "${items.length} files"`} onClose={onClose} width="min(90vw,420px)"
                 footer={
                     <>
                         <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -533,7 +533,7 @@ export function FilesPage() {
     const [search, setSearch] = useState('')
     const [renaming, setRenaming] = useState<string | null>(null)
     const [renameValue, setRenameValue] = useState('')
-    const [moveTarget, setMoveTarget] = useState<FileItem | null>(null)
+    const [moveTarget, setMoveTarget] = useState<FileItem[] | null>(null)
     const [newFolderDialog, setNewFolderDialog] = useState(false)
     const [newFolderName, setNewFolderName] = useState('')
     const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null)
@@ -716,7 +716,16 @@ export function FilesPage() {
             showNotification('ZIP download failed', 'error')
         }
     }
+
     const allSelected = filtered.length > 0 && selected.size === filtered.length
+
+    function handleMoveOne(item: FileItem) {
+        setMoveTarget([item])
+    }
+
+    function handleMoveMultiple() {
+        setMoveTarget(Array.from(selected).map(id => items.find(i => i.id === id)!))
+    }
 
     return (
         <div className={styles.page}>
@@ -743,6 +752,12 @@ export function FilesPage() {
                     {selected.size > 0 && (
                         <Button variant="secondary" onClick={downloadZip}>
                             ⬇ ZIP ({selected.size})
+                        </Button>
+                    )}
+                    {selected.size > 0 && (
+                        <Button variant="secondary" onClick={handleMoveMultiple}>
+                            <FaLongArrowAltRight/>
+                            Move ({selected.size})
                         </Button>
                     )}
                     {path !== '/' && <Button variant="ghost" onClick={goUp}>↑ Up</Button>}
@@ -883,7 +898,7 @@ export function FilesPage() {
                                         <button
                                             className={styles.actionBtn}
                                             title="Move"
-                                            onClick={() => setMoveTarget(item)}
+                                            onClick={() => handleMoveOne(item)}
                                         ><FaLongArrowAltRight/>
                                         </button>
                                         <button
@@ -1005,7 +1020,7 @@ export function FilesPage() {
             {/* Move dialog */}
             {moveTarget && (
                 <MoveDialog
-                    item={moveTarget}
+                    items={moveTarget}
                     currentPath={path}
                     onClose={() => setMoveTarget(null)}
                     onMoved={() => load(path)}
