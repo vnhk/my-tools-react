@@ -727,6 +727,12 @@ export function FilesPage() {
         setMoveTarget(Array.from(selected).map(id => items.find(i => i.id === id)!))
     }
 
+
+    function SecureImage({item}: { item: FileItem }) {
+        const {url} = useSecureFileUrl(item.id);
+        return <img src={url} alt={item.filename} className={styles.tileImg} loading="lazy"/>;
+    }
+
     return (
         <div className={styles.page}>
             {/* Toolbar */}
@@ -949,12 +955,7 @@ export function FilesPage() {
                                     </div>
                                     <div className={styles.tileThumb}>
                                         {isImage && !item.encrypted ? (
-                                            <img
-                                                src={`/thumbnail?uuid=${item.id}`}
-                                                alt={item.filename}
-                                                className={styles.tileImg}
-                                                loading="lazy"
-                                            />
+                                            <SecureImage key={item.id} item={item}/>
                                         ) : (
                                             <FileIcon item={item} size={32}/>
                                         )}
