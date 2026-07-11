@@ -125,6 +125,8 @@ const EMPTY_ENTRY: Partial<BudgetEntry> = {
     name: '', category: null, currency: 'PLN', value: 0,
     entryDate: new Date().toISOString().slice(0, 10),
     paymentMethod: 'Card', entryType: 'Expense', isRecurring: false,
+    tags: '',
+    notes: ''
 }
 
 // ── Analytics helpers ─────────────────────────────────────────────────────────
