@@ -79,7 +79,7 @@ function getCategoryIcon(name: string): string {
 
 // TO BE CHANGED, USE BACKED TODO
 function toPln(value: number, currency: string): number {
-    if (currency === 'EUR') return value * 4.3
+    if (currency === 'EUR') return value * 4.34
     if (currency === 'USD') return value * 3.7
     return value
 }
