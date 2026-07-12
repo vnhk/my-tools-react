@@ -77,6 +77,7 @@ function getCategoryIcon(name: string): string {
     return '🏷️'
 }
 
+// TO BE CHANGED, USE BACKED TODO
 function toPln(value: number, currency: string): number {
     if (currency === 'EUR') return value * 4.3
     if (currency === 'USD') return value * 3.7
@@ -151,7 +152,7 @@ function buildMonthlyChart(entries: BudgetEntry[], from: string, to: string, cat
         }))
 }
 
-function buildRanking(entries: BudgetEntry[], from: string, to: string, cats: Set<string>) {
+function buildCategoryRanking(entries: BudgetEntry[], from: string, to: string, cats: Set<string>) {
     const filtered = entries.filter(e =>
         e.entryDate && e.entryDate >= from && e.entryDate <= to &&
         cats.has(e.category || 'Uncategorized'),
@@ -167,9 +168,53 @@ function buildRanking(entries: BudgetEntry[], from: string, to: string, cats: Se
     }
     const rank = (obj: Record<string, number>) =>
         Object.entries(obj).sort(([, a], [, b]) => b - a).slice(0, 10)
-            .map(([category, total]) => ({category, total: Math.round(total)}))
-    return {topExp: rank(expByCat), topInc: rank(incByCat)}
+            .map(([category, total]) => ({
+                "name": category, total: Math.round(total)
+            }))
+    return {topExpByCategory: rank(expByCat), topIncByCategory: rank(incByCat)}
 }
+
+function buildTagsRanking(entries: BudgetEntry[], from: string, to: string) {
+    const filtered = entries.filter(e =>
+        e.entryDate && e.entryDate >= from && e.entryDate <= to &&
+        e.tags
+    )
+
+    const expByTag: Record<string, number> = {}
+    const incByTag: Record<string, number> = {}
+
+    for (const e of filtered) {
+        const tags = e.tags!
+            .split(',')
+            .map(tag => tag.trim())
+            .filter(Boolean)
+
+        const pln = toPln(Number(e.value), e.currency ?? 'PLN')
+
+        for (const tag of tags) {
+            if (e.entryType === 'Income') {
+                incByTag[tag] = (incByTag[tag] ?? 0) + pln
+            } else {
+                expByTag[tag] = (expByTag[tag] ?? 0) + pln
+            }
+        }
+    }
+
+    const rank = (obj: Record<string, number>) =>
+        Object.entries(obj)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 10)
+            .map(([tag, total]) => ({
+                "name": tag,
+                total: Math.round(total)
+            }))
+
+    return {
+        topExpByTag: rank(expByTag),
+        topIncByTag: rank(incByTag)
+    }
+}
+
 
 function buildAvgPie(entries: BudgetEntry[], year: number) {
     const yearEntries = entries.filter(e =>
@@ -749,7 +794,7 @@ function CurrencyTip({active, payload, label}: any) {
 
 function RankingList({title, items, isIncome}: {
     title: string;
-    items: { category: string; total: number }[];
+    items: { name: string; total: number }[];
     isIncome: boolean
 }) {
     const max = items[0]?.total ?? 1
@@ -760,9 +805,9 @@ function RankingList({title, items, isIncome}: {
             <h4 className={styles.rankTitle} style={{color}}>{title}</h4>
             {items.length === 0 && <span className={styles.noData}>No data</span>}
             {items.map((item, i) => (
-                <div key={item.category} className={styles.rankRow}>
+                <div key={item.name} className={styles.rankRow}>
                     <span className={styles.rankNum}>{i + 1}.</span>
-                    <span className={styles.rankName}>{item.category}</span>
+                    <span className={styles.rankName}>{item.name}</span>
                     <div className={styles.rankTrack}>
                         <div className={styles.rankBar}
                              style={{width: `${Math.round((item.total / max) * 100)}%`, background: barColor}}/>
@@ -804,9 +849,16 @@ function BudgetAnalyticsTab({entries}: { entries: BudgetEntry[] }) {
 
     const monthlyData = useMemo(() => buildMonthlyChart(entries, fromDate, toDate, activeCats), [entries, fromDate, toDate, activeCats])
     const {
-        topExp,
-        topInc
-    } = useMemo(() => buildRanking(entries, fromDate, toDate, activeCats), [entries, fromDate, toDate, activeCats])
+        topExpByCategory,
+        topIncByCategory
+    } = useMemo(() => buildCategoryRanking(entries, fromDate, toDate, activeCats), [entries, fromDate, toDate, activeCats])
+
+    const {
+        topExpByTag,
+        topIncByTag
+    } = useMemo(() => buildTagsRanking(entries, fromDate, toDate), [entries, fromDate, toDate, activeCats])
+
+
     const pieData = useMemo(() => buildAvgPie(entries, pieYear), [entries, pieYear])
 
     const toggleCat = (cat: string) => {
@@ -870,12 +922,21 @@ function BudgetAnalyticsTab({entries}: { entries: BudgetEntry[] }) {
                 ) : <div className={styles.noData}>No data for selected range/categories</div>}
             </div>
 
-            {/* Ranking */}
+            {/* Category Ranking */}
             <div className={styles.analyticsCard}>
                 <h3 className={styles.analyticsTitle}>Category Ranking</h3>
                 <div className={styles.rankRow2Col}>
-                    <RankingList title="Top Expenses" items={topExp} isIncome={false}/>
-                    <RankingList title="Top Income" items={topInc} isIncome={true}/>
+                    <RankingList title="Top Expenses" items={topExpByCategory} isIncome={false}/>
+                    <RankingList title="Top Income" items={topIncByCategory} isIncome={true}/>
+                </div>
+            </div>
+
+            {/* Tag Ranking */}
+            <div className={styles.analyticsCard}>
+                <h3 className={styles.analyticsTitle}>Tag Ranking</h3>
+                <div className={styles.rankRow2Col}>
+                    <RankingList title="Top Expenses" items={topExpByTag} isIncome={false}/>
+                    <RankingList title="Top Income" items={topIncByTag} isIncome={true}/>
                 </div>
             </div>
 
