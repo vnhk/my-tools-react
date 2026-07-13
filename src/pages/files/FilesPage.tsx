@@ -144,7 +144,7 @@ export async function createStreamUrl(fileId: string): Promise<string> {
         }
     )
 
-    return `/files/stream-download?downloadItemUuid=${res.data}`
+    return `/api/files/stream-download?downloadItemUuid=${res.data}`
 }
 
 // ---- Upload Dialog ----
