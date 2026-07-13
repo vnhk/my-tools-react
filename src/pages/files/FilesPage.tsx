@@ -439,7 +439,12 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
         }
     }
 
-    const {url: secureUrl} = useSecureFileUrl(item.id, 1000, false)
+    const {url: secureUrl} = useSecureFileUrl(
+        vtype === 'image' ? item.id : undefined,
+        1000,
+        false
+    )
+
     const [streamUrl, setStreamUrl] = useState<string>()
     useEffect(() => {
         if (vtype === 'video' || vtype === 'pdf') {
