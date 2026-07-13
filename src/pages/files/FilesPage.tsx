@@ -45,7 +45,6 @@ export function useSecureFileUrl(fileId: string | undefined, maxSize: number | n
     const [url, setUrl] = useState<string | undefined>(undefined)
     const [error, setError] = useState(false)
     const [loading, setLoading] = useState(true)
-    // const srcUrl = item.encrypted ? streamUrl : downloadUrl
 
     useEffect(() => {
         if (!fileId) return
@@ -132,6 +131,20 @@ function getViewerType(item: FileItem): 'image' | 'video' | 'pdf' | 'text' | nul
     if (PDF_EXT.has(ext)) return 'pdf'
     if (TEXT_EXT.has(ext)) return 'text'
     return null
+}
+
+export async function createStreamUrl(fileId: string): Promise<string> {
+    const res = await client.post<string>(
+        `/files/create-stream-download`,
+        null,
+        {
+            params: {
+                metadataUuid: fileId
+            }
+        }
+    )
+
+    return `/files/stream-download?downloadItemUuid=${res.data}`
 }
 
 // ---- Upload Dialog ----
@@ -379,13 +392,12 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
     const [editValue, setEditValue] = useState('')
     const [saving, setSaving] = useState(false)
     const [textError, setTextError] = useState(false)
-    const streamUrl = `/thumbnail?uuid=${item.id}`
-    const downloadUrl = `/download?uuid=${item.id}`
+    const thumbnailUrl = `/thumbnail?uuid=${item.id}`
 
     useEffect(() => {
         if (vtype === 'text') {
             if (item.encrypted) {
-                fetch(streamUrl)
+                fetch(thumbnailUrl)
                     .then((r) => {
                         if (r.status === 401) {
                             onUnlockNeeded(item);
@@ -397,7 +409,8 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
                     .then((t) => t !== null && setTextContent(t))
                     .catch(() => setTextError(true))
             } else {
-                fetch(downloadUrl)
+                createStreamUrl(item.id)
+                    .then((url) => fetch(url))
                     .then((r) => r.text())
                     .then(setTextContent)
                     .catch(() => setTextError(true))
@@ -427,6 +440,14 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
     }
 
     const {url: secureUrl} = useSecureFileUrl(item.id, 1000, false)
+    const [streamUrl, setStreamUrl] = useState<string>()
+    useEffect(() => {
+        if (vtype === 'video' || vtype === 'pdf') {
+            createStreamUrl(item.id)
+                .then(setStreamUrl)
+                .catch(() => setTextError(true))
+        }
+    }, [item.id, vtype])
 
     return (
         <Dialog open title={item.filename} onClose={onClose} width="min(95vw, 900px)"
@@ -448,8 +469,7 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
                         )}
                         {!editMode && <Button variant="ghost" onClick={onClose}>Close</Button>}
                     </>
-                }
-        >
+                }>
             <div className={styles.viewerBody}>
                 {vtype === 'image' && (
                     <img
@@ -459,12 +479,20 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
                     />
                 )}
 
-                {vtype === 'video' && (
-                    <video controls className={styles.viewerVideo} src={secureUrl}/>
+                {vtype === 'video' && streamUrl && (
+                    <video
+                        controls
+                        className={styles.viewerVideo}
+                        src={streamUrl}
+                    />
                 )}
 
-                {vtype === 'pdf' && (
-                    <iframe src={secureUrl} className={styles.viewerPdf} title={item.filename}/>
+                {vtype === 'pdf' && streamUrl && (
+                    <iframe
+                        src={streamUrl}
+                        className={styles.viewerPdf}
+                        title={item.filename}
+                    />
                 )}
             </div>
         </Dialog>
@@ -585,7 +613,9 @@ export function FilesPage() {
         if (vtype) {
             setViewItem(item)
         } else {
-            window.open(`/download?uuid=${item.id}`, '_blank')
+            createStreamUrl(item.id)
+                .then(url => window.open(url, '_blank'))
+                .catch(() => showNotification('Download failed', 'error'))
         }
     }
 
@@ -719,14 +749,15 @@ export function FilesPage() {
 
     const downloadOne = async (item: FileItem) => {
         if (item == null) return
+
         try {
-            const response = await client.get('/files/download?uuid=' + item.id, {responseType: 'blob'})
-            const url = URL.createObjectURL(new Blob([response.data], {type: 'application/octet-stream'}))
+            const url = await createStreamUrl(item.id)
+
             const a = document.createElement('a')
             a.href = url
             a.download = item.filename
             a.click()
-            URL.revokeObjectURL(url)
+
         } catch {
             showNotification('File download failed', 'error')
         }
@@ -878,7 +909,8 @@ export function FilesPage() {
                                         />
                                     ) : (
                                         <div className={styles.cellName} onClick={() => navigate(item)}>
-                                            <span className={styles.fileIcon}><FileIcon item={item} size={16}/></span>
+                                                <span className={styles.fileIcon}><FileIcon item={item}
+                                                                                            size={16}/></span>
                                             <span className={styles.fileName}>{item.filename}</span>
                                             {item.encrypted && <span className={styles.encBadge}>ENC</span>}
                                         </div>
@@ -979,7 +1011,10 @@ export function FilesPage() {
                                         {item.filename}
                                     </div>
                                     {item.encrypted && <span className={styles.encBadge}
-                                                             style={{alignSelf: 'center', marginBottom: 4}}>ENC</span>}
+                                                             style={{
+                                                                 alignSelf: 'center',
+                                                                 marginBottom: 4
+                                                             }}>ENC</span>}
                                 </div>
                             )
                         })}
