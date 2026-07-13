@@ -144,7 +144,7 @@ export async function createStreamUrl(fileId: string): Promise<string> {
         }
     )
 
-    return `/files/stream-download?downloadItemUuid=${res.data}`
+    return `/public/files/stream-download?downloadItemUuid=${res.data}`
 }
 
 // ---- Upload Dialog ----
@@ -767,7 +767,7 @@ export function FilesPage() {
             showNotification('File download failed', 'error')
         }
     }
-    
+
     const allSelected = filtered.length > 0 && selected.size === filtered.length
 
     function handleMoveOne(item: FileItem) {
