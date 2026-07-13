@@ -753,21 +753,21 @@ export function FilesPage() {
     }
 
     const downloadOne = async (item: FileItem) => {
-        if (item == null) return
-
         try {
             const url = await createStreamUrl(item.id)
 
             const a = document.createElement('a')
             a.href = url
             a.download = item.filename
+            document.body.appendChild(a)
             a.click()
+            document.body.removeChild(a)
 
         } catch {
             showNotification('File download failed', 'error')
         }
     }
-
+    
     const allSelected = filtered.length > 0 && selected.size === filtered.length
 
     function handleMoveOne(item: FileItem) {
