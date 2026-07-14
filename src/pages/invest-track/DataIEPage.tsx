@@ -69,7 +69,7 @@ export function DataIEPage() {
                     filters={filters}
                 />
                 <EntityFilters
-                    entityName="TranslationRecord"
+                    entityName="BudgetEntry"
                     filters={filters}
                     onFiltersChange={setFilter}
                     onClear={clearFilters}
