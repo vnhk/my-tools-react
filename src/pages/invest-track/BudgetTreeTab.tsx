@@ -116,6 +116,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
     const [editOpen, setEditOpen] = useState(false)
     const [bulkEditOpen, setBulkEditOpen] = useState(false)
     const [bulkEditField, setBulkEditField] = useState<keyof BudgetEntry>("id")
+    const [bulkEditValue, setBulkEditValue] = useState<unknown>(null)
     const [editItem, setEditItem] = useState<Partial<BudgetEntry>>(EMPTY_ENTRY)
     const [bulkEditItems, setBulkEditItems] = useState<Array<BudgetEntry>>([])
     const [formErrors, setFormErrors] = useState<Record<string, string>>({})
@@ -217,10 +218,25 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
         tree.forEach(m => m.categories.forEach(c => cats.add(`${m.key}::${c.name}`)))
         setExpandedCats(cats)
     }
+
     const collapseAll = () => {
         setExpandedMonths(new Set());
         setExpandedCats(new Set())
     }
+
+    const bulkUpdateFields =
+        [
+            {name: "Name", field: "name"},
+            {name: "Category", field: "category"},
+            {name: "Value", field: "value"},
+            {name: "Date", field: "entryDate"},
+            {name: "Payment Method", field: "paymentMethod"},
+            {name: "Entry Type", field: "entryType"},
+            {name: "Notes", field: "notes"},
+            {name: "Tags", field: "tags"},
+            {name: "Is Recurring", field: "isRecurring"},
+            {name: "Currency", field: "currency"}
+        ]
 
     const openAdd = (date?: string, category?: string) => {
         setEditItem({
@@ -257,7 +273,41 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
     }
 
     const handleBulkSave = async () => {
+        const updatedItems = bulkEditItems.map(item => ({
+            ...item,
+            [bulkEditField]: bulkEditValue
+        }))
 
+        for (const bulkEditItem of updatedItems) {
+            const errors = validateFields(
+                'BudgetEntry',
+                bulkEditItem as Record<string, unknown>,
+                'edit'
+            )
+
+            if (Object.keys(errors).length > 0) {
+                setFormErrors(errors)
+                return
+            }
+        }
+
+        try {
+            for (const bulkEditItem of updatedItems) {
+                await budgetEntriesApi.update(
+                    bulkEditItem.id,
+                    bulkEditItem
+                )
+            }
+
+            showSuccess(`Updated ${updatedItems.length} item(s)`)
+            setBulkEditOpen(false)
+            setBulkEditItems([])
+            setSelectedIds(new Set())
+            onReload()
+
+        } catch {
+            showError('Failed to save')
+        }
     }
 
     const handleSave = async () => {
@@ -585,16 +635,26 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                     <select id="entry-bulk-update-field-list" value={undefined}
                             onChange={e => setBulkEditField(e.target.value as keyof BudgetEntry)}>
                         <option value="null">Select a field</option>
-                        {[{name: "Name", field: "name"}, {name: "Category", field: "category"}, {
-                            name: "Date",
-                            field: "date"
-                        }].map(c => <option key={c.field} value={c.field}>{c.name}</option>)}
+                        {bulkUpdateFields.map(c => <option key={c.field} value={c.field}>{c.name}</option>)}
                     </select>
                     {bulkEditField !== 'id' &&
                         <div className={styles.dialogField} style={{marginTop: 12}}>
                             <span>Set values:</span>
                             <br/>
                             <div>{bulkEditItems.map(e => (<div key={e.id}>{e[bulkEditField]}</div>))}</div>
+                            <DynamicForm
+                                entityName="BudgetEntry"
+                                mode="edit"
+                                values={{
+                                    [bulkEditField]: bulkEditValue
+                                }}
+                                skip={bulkUpdateFields
+                                    .filter(f => f.field !== bulkEditField)
+                                    .map(f => f.field)}
+                                onChange={(_, value) => {
+                                    setBulkEditValue(value)
+                                }}
+                            />
                         </div>
                     }
                 </div>
@@ -618,8 +678,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                     setScanFormErrors({})
                 }}
                 onConfirm={handleSaveScanResult}
-                width="min(90vw, 720px)"
-            >
+                width="min(90vw, 720px)">
                 <div className={styles.dialogField} style={{maxHeight: '60vh', overflowY: 'auto'}}>
                     {scanCurrent ? (
                         <>
@@ -641,8 +700,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                                 {scanFormErrors.category && (
                                     <span style={{color: 'var(--color-danger, red)', fontSize: '0.8em'}}>
                     {scanFormErrors.category}
-                  </span>
-                                )}
+                  </span>)}
                             </div>
 
                             <DynamicForm

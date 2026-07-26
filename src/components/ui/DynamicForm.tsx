@@ -14,7 +14,7 @@ import {RichTextEditor} from './RichTextEditor'
 interface DynamicFormProps {
     entityName: string
     mode: 'save' | 'edit'
-    values: Record<string, unknown>
+    values: Record<string, unknown> | null
     onChange: (field: string, value: unknown) => void
     errors?: Record<string, string>
     skip?: string[]
@@ -47,7 +47,7 @@ export function DynamicForm({
     return (
         <div style={{display: 'flex', flexDirection: 'column', gap: 'var(--space-md)'}}>
             {visible.map((f, i) => {
-                const val = values[f.field]
+                const val = values == null ? null : values[f.field]
 
                 if (f.wysiwyg) {
                     return (
