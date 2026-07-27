@@ -1,11 +1,12 @@
 import {useNotification} from "../../components/ui/Notification.tsx";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {budgetEntriesApi, BudgetEntry} from "../../api/investments.ts";
 import {validateFields} from "../../api/entityConfig.ts";
 import styles from "./BudgetEntriesPage.module.css";
 import {Dialog} from '../../components/ui/Dialog'
 import {DynamicForm} from '../../components/ui/DynamicForm'
 import {fmt, getCategoryIcon, toPln} from "./BudgetEntriesPage.tsx";
+import {ScanReceipt} from "./ScanReceipt";
 
 function monthToDefaultDate(k: string): string {
     const {month, year} = parseMonthKey(k)
@@ -124,16 +125,6 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
     const [moveOpen, setMoveOpen] = useState(false)
     const [moveDate, setMoveDate] = useState('')
     const [moveCategory, setMoveCategory] = useState('')
-
-    const [scanOpen, setScanOpen] = useState(false)
-    const [scanDate] = useState(new Date().toISOString().slice(0, 10))
-    const [scanPreview, setScanPreview] = useState<string | null>(null)
-    const [scanResult, setScanResult] = useState<BudgetEntry[] | null>(null)
-    const [scanIndex, setScanIndex] = useState(0)
-    const [scanCurrent, setScanCurrent] = useState<Partial<BudgetEntry> | null>(null)
-    const [scanFormErrors, setScanFormErrors] = useState<Record<string, string>>({})
-
-    const scanInputRef = useRef<HTMLInputElement>(null)
 
     const tree = useMemo(() => buildTree(entries), [entries])
 
@@ -315,84 +306,6 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
         }
     }
 
-    const handleCaptureImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        if (file) {
-            const reader = new FileReader()
-            reader.onload = (event) => {
-                const base64 = event.target?.result as string
-                setScanPreview(base64)
-                setScanOpen(true)
-                void handleScanReceipt(base64)
-            }
-            reader.readAsDataURL(file)
-        }
-    }
-
-    const handleScanReceipt = async (imageBase64?: string) => {
-        const payload = imageBase64 ?? scanPreview
-        if (!payload) {
-            showError('No image selected')
-            return
-        }
-
-        setScanOpen(true)
-        try {
-            const result = await budgetEntriesApi.scanReceipt(payload, scanDate)
-            const items = (result as any)?.data ?? result
-            setScanResult(items)
-            if (Array.isArray(items) && items.length > 0) {
-                setScanIndex(0)
-                setScanCurrent({...items[0]})
-                setScanFormErrors({})
-            } else {
-                setScanCurrent(null)
-            }
-            showSuccess(`Successfully scanned ${Array.isArray(items) ? items.length : 0} items!`)
-        } catch (error) {
-            showError('Failed to scan receipt. Please try again.')
-        } finally {
-            // setScanLoading = false
-        }
-    }
-
-    const handleSaveScanResult = async () => {
-        if (!scanCurrent) return
-
-        // Validate current entry
-        const errors = validateFields('BudgetEntry', scanCurrent as Record<string, unknown>, 'save')
-        if (!scanCurrent.category || !String(scanCurrent.category).trim()) {
-            errors.category = 'Category is required'
-        }
-        if (Object.keys(errors).length > 0) {
-            setScanFormErrors(errors)
-            return
-        }
-
-        try {
-            await budgetEntriesApi.create(scanCurrent)
-            const total = scanResult?.length ?? 0
-            const next = scanIndex + 1
-
-            if (scanResult && next < total) {
-                setScanIndex(next)
-                setScanCurrent({...scanResult[next]})
-                setScanFormErrors({})
-                showSuccess(`Saved ${next} of ${total}. Continue…`)
-            } else {
-                showSuccess(`Saved ${total} entr${(total === 1 ? 'y' : 'ies')}!`)
-                onReload()
-                setScanOpen(false)
-                setScanResult(null)
-                setScanCurrent(null)
-                setScanFormErrors({})
-                setScanIndex(0)
-            }
-        } catch (error) {
-            showError('Failed to save scanned entry')
-        }
-    }
-
     const has = selectedIds.size > 0
     const single = selectedIds.size === 1
 
@@ -415,28 +328,14 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                 <button className={`${styles.toolBtn} ${styles.warning}`} disabled={!has}
                         onClick={() => setMoveOpen(true)}>Move
                 </button>
-                <button
-                    className={`${styles.toolBtn} ${styles.primary}`}
-                    style={{marginLeft: 'auto'}}
-                    onClick={() => {
-                        setScanOpen(true)
-                        setScanResult(null)
-                        setScanPreview(null)
-                        scanInputRef.current?.click()
-                    }}
-                >
-                    Scan Receipt
-                </button>
+                <span>
+                    <ScanReceipt
+                        categories={categories}
+                        onReload={onReload}
+                    />
+                </span>
                 <button className={`${styles.toolBtn} ${styles.success}`} onClick={() => openAdd()}>+ New Entry</button>
             </div>
-            <input
-                ref={scanInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{display: 'none'}}
-                onChange={handleCaptureImage}
-            />
 
             {/* Tree */}
             <div className={styles.treeWrap}>
@@ -599,59 +498,6 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                     <label className={styles.dialogLabel}>New date</label>
                     <input type="date" className={styles.dialogInput} value={copyDate}
                            onChange={e => setCopyDate(e.target.value)}/>
-                </div>
-            </Dialog>
-
-            {/* Scan result dialog */}
-            <Dialog
-                open={scanOpen && !!scanCurrent}
-                title={`Scanned entry ${scanIndex + 1} / ${scanResult?.length ?? 0}`}
-                onClose={() => {
-                    setScanOpen(false)
-                    setScanCurrent(null)
-                    setScanFormErrors({})
-                }}
-                onConfirm={handleSaveScanResult}
-                width="min(90vw, 720px)">
-                <div className={styles.dialogField} style={{maxHeight: '60vh', overflowY: 'auto'}}>
-                    {scanCurrent ? (
-                        <>
-                            <div className={styles.dialogField}>
-                                <label className={styles.dialogLabel} htmlFor="scan-category">Category</label>
-                                <input
-                                    id="scan-category"
-                                    type="text"
-                                    list="entry-category-list"
-                                    className={styles.dialogInput}
-                                    value={scanCurrent.category ?? ''}
-                                    onChange={e =>
-                                        setScanCurrent(prev => ({...(prev ?? {}), category: e.target.value || null}))
-                                    }
-                                />
-                                <datalist id="entry-category-list">
-                                    {categories.map(c => <option key={c} value={c}/>)}
-                                </datalist>
-                                {scanFormErrors.category && (
-                                    <span style={{color: 'var(--color-danger, red)', fontSize: '0.8em'}}>
-                    {scanFormErrors.category}
-                  </span>)}
-                            </div>
-
-                            <DynamicForm
-                                entityName="BudgetEntry"
-                                mode="save"
-                                values={scanCurrent as Record<string, unknown>}
-                                onChange={(field, value) => {
-                                    setScanCurrent(prev => ({...(prev ?? {}), [field]: value}))
-                                }}
-                                errors={scanFormErrors}
-                                dynamicOptions={{category: categories}}
-                                skip={['category']}
-                            />
-                        </>
-                    ) : (
-                        <div>No items scanned</div>
-                    )}
                 </div>
             </Dialog>
 

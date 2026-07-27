@@ -29,26 +29,34 @@ import ProductionDetailsPage from './pages/streaming-platform/ProductionDetailsP
 import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
 import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
 import TvPairingPage from './pages/streaming-platform/TvPairingPage'
-import { FilesPage } from './pages/files/FilesPage'
-import { ProjectListPage } from './pages/projects/ProjectListPage'
-import { ProjectDetailsPage } from './pages/projects/ProjectDetailsPage'
-import { AllTasksPage } from './pages/projects/AllTasksPage'
-import { TaskDetailsPage } from './pages/projects/TaskDetailsPage'
+import {FilesPage} from './pages/files/FilesPage'
+import {ProjectListPage} from './pages/projects/ProjectListPage'
+import {ProjectDetailsPage} from './pages/projects/ProjectDetailsPage'
+import {AllTasksPage} from './pages/projects/AllTasksPage'
+import {TaskDetailsPage} from './pages/projects/TaskDetailsPage'
 import {HomePage, HomePageCard} from "./components/layout/HomePage.tsx";
 import {
     FaBarcode,
-    FaBook, FaBookOpen, FaChartLine,
+    FaBook,
+    FaBookOpen,
+    FaChartLine,
     FaCloudUploadAlt,
     FaCog,
     FaDatabase,
     FaDesktop,
     FaEdit,
-    FaFilm, FaFlag, FaFolder, FaHome, FaMicrophone,
-    FaMoneyBill, FaPaintBrush,
+    FaFilm,
+    FaFlag,
+    FaFolder,
+    FaHome,
+    FaMicrophone,
+    FaMoneyBill,
+    FaPaintBrush,
     FaPlane,
     FaShoppingCart,
     FaTable,
-    FaTasks, FaUserTie
+    FaTasks,
+    FaUserTie
 } from "react-icons/fa";
 
 import {MdOutlineAddBox} from "react-icons/md";
@@ -87,6 +95,29 @@ import {ScrapAuditPage} from "./pages/shopping/ScrapAuditPage.tsx";
 import {BudgetTreePage} from "./pages/invest-track/BudgetTreePage.tsx";
 import {SettingsPage} from "./pages/SettingsPage.tsx";
 import {OtpGeneratePage} from "./pages/OtpGeneratePage.tsx";
+import {useEffect, useState} from "react";
+import {BudgetMobileScanPage} from "./pages/invest-track/BudgetMobileScanPage.tsx";
+
+const mobileCards: HomePageCard[] = [
+    {
+        title: "Scan Receipt",
+        description: "Scan receipts using your phone camera.",
+        icon: <FaBarcode/>,
+        route: "/invest-track/mobile/scan-receipt"
+    },
+    {
+        title: "TV Remote Control",
+        description: "Control your TV remotely.",
+        icon: <FaDesktop/>,
+        route: "/streaming/remote"
+    },
+    {
+        title: "Files",
+        description: "Upload and manage files.",
+        icon: <FaCloudUploadAlt/>,
+        route: "/files"
+    }
+];
 
 const cards: HomePageCard[] = [
     {
@@ -188,21 +219,21 @@ const cards: HomePageCard[] = [
 ];
 
 const NAV_ITEMS: NavItem[] = [
-    { path: "/home", label: "Home", icon: <FaHome /> },
-    { path: "/pocket", label: "Pocket", icon: <FaFolder /> },
-    { path: "/cook-book", label: "Cook Book", icon: <FaBook /> },
-    { path: "/ebook", label: "Ebook", icon: <FaBookOpen /> },
-    { path: "/english", label: "English", icon: <FaMicrophone /> },
-    { path: "/spanish", label: "Spanish", icon: <FaFlag /> },
-    { path: "/streaming", label: "Streaming", icon: <FaFilm /> },
-    { path: "/canvas", label: "Canvas", icon: <FaPaintBrush /> },
-    { path: "/invest-track", label: "Invest Track", icon: <FaChartLine /> },
-    { path: "/spreadsheet", label: "Spreadsheet", icon: <FaTable /> },
-    { path: "/projects", label: "Projects", icon: <FaTasks /> },
-    { path: "/interview", label: "Interview", icon: <FaUserTie /> },
-    { path: "/files", label: "Files", icon: <FaCloudUploadAlt /> },
-    { path: "/logs", label: "Logs", icon: <FaDatabase /> },
-    { path: "/shopping", label: "Shopping", icon: <FaShoppingCart /> },
+    {path: "/home", label: "Home", icon: <FaHome/>},
+    {path: "/pocket", label: "Pocket", icon: <FaFolder/>},
+    {path: "/cook-book", label: "Cook Book", icon: <FaBook/>},
+    {path: "/ebook", label: "Ebook", icon: <FaBookOpen/>},
+    {path: "/english", label: "English", icon: <FaMicrophone/>},
+    {path: "/spanish", label: "Spanish", icon: <FaFlag/>},
+    {path: "/streaming", label: "Streaming", icon: <FaFilm/>},
+    {path: "/canvas", label: "Canvas", icon: <FaPaintBrush/>},
+    {path: "/invest-track", label: "Invest Track", icon: <FaChartLine/>},
+    {path: "/spreadsheet", label: "Spreadsheet", icon: <FaTable/>},
+    {path: "/projects", label: "Projects", icon: <FaTasks/>},
+    {path: "/interview", label: "Interview", icon: <FaUserTie/>},
+    {path: "/files", label: "Files", icon: <FaCloudUploadAlt/>},
+    {path: "/logs", label: "Logs", icon: <FaDatabase/>},
+    {path: "/shopping", label: "Shopping", icon: <FaShoppingCart/>},
 ];
 
 function PlaceholderPage({name}: { name: string }) {
@@ -214,6 +245,22 @@ function PlaceholderPage({name}: { name: string }) {
 }
 
 export default function App() {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+        };
+
+        checkMobile();
+
+        window.addEventListener("resize", checkMobile);
+
+        return () => {
+            window.removeEventListener("resize", checkMobile);
+        };
+    }, []);
+
     return (
         <BrowserRouter>
             <NotificationProvider>
@@ -226,9 +273,8 @@ export default function App() {
                         <Route element={<RequireAuth/>}>
                             <Route element={<AppLayout navItems={NAV_ITEMS}/>}>
                                 <Route index element={<Navigate to="/home" replace/>}/>
-                                <Route path="/home" element={<HomePage welcomeText={"Hi Good to see ya!"} cards={
-                                    cards
-                                }/>}/>
+                                <Route path="/home"
+                                       element={<HomePage welcomeText={"Hi!"} cards={isMobile ? mobileCards : cards}/>}/>
                                 <Route path="/pocket" element={<PocketListPage/>}/>
                                 <Route path="/pocket/:pocketName" element={<PocketItemsPage/>}/>
                                 <Route path="/invest-track" element={<InvestTrackLayout/>}>
@@ -242,6 +288,7 @@ export default function App() {
                                     <Route path="stock-report" element={<StockReportPage/>}/>
                                     <Route path="recommendations" element={<RecommendationsPage/>}/>
                                     <Route path="data-ie" element={<DataIEPage/>}/>
+                                    <Route path="mobile/scan-receipt" element={<BudgetMobileScanPage/>}/>
                                 </Route>
                                 <Route path="/cook-book" element={<CookBookLayout/>}>
                                     <Route index element={<Navigate to="recipes" replace/>}/>
