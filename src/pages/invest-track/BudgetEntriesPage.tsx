@@ -85,10 +85,7 @@ export function BudgetEntriesPage() {
             ) : (
                 <>
                     {loading && <div className={styles.refreshing}>Updating...</div>}
-
-                    {activeTab === 'Budget Tree' && (
-                        <div>
-                            <span className={styles.filtersRow}>
+                    <span className={styles.filtersRow}>
                                 <div className={styles.root}>
                                      <div className={styles.toolbar}>
                                     <EntityFilters entityName="BudgetEntry" filters={filters}
@@ -97,6 +94,8 @@ export function BudgetEntriesPage() {
                                      </div>
                                 </div>
                             </span>
+                    {activeTab === 'Budget Tree' && (
+                        <div>
                             <BudgetTreeTab
                                 entries={entries}
                                 categories={categories}
