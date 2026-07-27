@@ -43,16 +43,22 @@ const TABS: BudgetTab[] = ['Budget Tree', 'Charts']
 export function BudgetEntriesPage() {
     const [entries, setEntries] = useState<BudgetEntry[]>([])
     const [categories, setCategories] = useState<string[]>([])
-    const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<BudgetTab>('Budget Tree')
     const {filters, setFilter, clearFilters} = useEntityFilters()
 
+    const [loading, setLoading] = useState(true)
+    const [initialLoading, setInitialLoading] = useState(true)
+
     const load = () => {
         setLoading(true)
+
         budgetEntriesApi
             .getAll({page: 0, size: 100000, ...filters})
             .then(res => setEntries((res.data as any).content ?? []))
-            .finally(() => setLoading(false))
+            .finally(() => {
+                setLoading(false)
+                setInitialLoading(false)
+            })
     }
 
     useEffect(() => {
@@ -74,10 +80,12 @@ export function BudgetEntriesPage() {
                 ))}
             </div>
 
-            {loading ? (
+            {initialLoading ? (
                 <div className={styles.stateMsg}>Loading…</div>
             ) : (
                 <>
+                    {loading && <div className={styles.refreshing}>Updating...</div>}
+
                     {activeTab === 'Budget Tree' && (
                         <div>
                             <span className={styles.filtersRow}>
@@ -89,9 +97,14 @@ export function BudgetEntriesPage() {
                                      </div>
                                 </div>
                             </span>
-                            <BudgetTreeTab entries={entries} categories={categories} onReload={load}/>
+                            <BudgetTreeTab
+                                entries={entries}
+                                categories={categories}
+                                onReload={load}
+                            />
                         </div>
                     )}
+
                     {activeTab === 'Charts' && (
                         <BudgetAnalyticsTab entries={entries}/>
                     )}
