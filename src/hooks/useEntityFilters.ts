@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 export type FilterValue = string | string[]
-export type FilterValues = Record<string, FilterValue>
+export type FilterValues = Record<string, FilterValue | undefined>
 
 export function useEntityFilters() {
   const [filters, setFilters] = useState<FilterValues>({})

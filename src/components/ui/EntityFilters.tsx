@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {type KeyboardEvent, useEffect, useState} from 'react'
 import {getFilterableFields} from '../../api/entityConfig'
 import type {FilterValues} from '../../hooks/useEntityFilters'
 import styles from './EntityFilters.module.css'
@@ -21,8 +21,54 @@ export function EntityFilters({
                                   onFiltersChange,
                                   onClear,
                               }: EntityFiltersProps) {
+
     const [open, setOpen] = useState(false)
+
+    const [draftFilters, setDraftFilters] = useState<FilterValues>(filters)
+
     const fields = getFilterableFields(entityName)
+
+    useEffect(() => {
+        setDraftFilters(filters)
+    }, [filters])
+
+    const updateDraftFilter = (
+        key: string,
+        value: string | string[] | undefined
+    ) => {
+        setDraftFilters(prev => ({
+            ...prev,
+            [key]: value
+        }))
+    }
+
+    const commitFilters = () => {
+        Object.entries(draftFilters).forEach(([key, value]) => {
+            if (JSON.stringify(filters[key]) !== JSON.stringify(value)) {
+                onFiltersChange(key, value)
+            }
+        })
+    }
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            Object.entries(draftFilters).forEach(([key, value]) => {
+                if (JSON.stringify(filters[key]) !== JSON.stringify(value)) {
+                    onFiltersChange(key, value)
+                }
+            })
+        }, 3000)
+        return () => clearTimeout(timer)
+    }, [draftFilters])
+
+    const inputEvents = {
+        onBlur: commitFilters,
+        onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => {
+            if (e.key === 'Enter') {
+                commitFilters()
+            }
+        }
+    }
 
     const hasActiveFilters = Object.keys(filters).length > 0
 
@@ -74,8 +120,14 @@ export function EntityFilters({
                             className={styles.textInput}
                             type="text"
                             placeholder="Type to search..."
-                            value={(filters['filter'] as string) ?? ''}
-                            onChange={(e) => onFiltersChange('filter', e.target.value || undefined)}
+                            value={(draftFilters['filter'] as string) ?? ''}
+                            onChange={(e) =>
+                                updateDraftFilter(
+                                    'filter',
+                                    e.target.value || undefined
+                                )
+                            }
+                            {...inputEvents}
                         />
                     </div>
 
@@ -91,7 +143,7 @@ export function EntityFilters({
                         } else {
                             options = [];
                         }
-                        const selected = (filters[f.field] as string[]) ?? []
+                        const selected = (draftFilters[f.field] as string[]) ?? []
                         return (
                             <div key={f.field} className={styles.filterGroup}>
                                 <label className={styles.label}>{f.displayName}</label>
@@ -103,11 +155,15 @@ export function EntityFilters({
                                                 <input
                                                     type="checkbox"
                                                     checked={checked}
+
                                                     onChange={() => {
                                                         const next = checked
                                                             ? selected.filter((v) => v !== opt)
                                                             : [...selected, opt]
-                                                        onFiltersChange(f.field, next.length ? next : undefined)
+                                                        updateDraftFilter(
+                                                            f.field,
+                                                            next.length ? next : undefined
+                                                        )
                                                     }}
                                                 />
                                                 {opt}
@@ -126,9 +182,14 @@ export function EntityFilters({
                             <input
                                 className={styles.textInput}
                                 type="text"
-                                placeholder={`Filter by ${f.displayName}...`}
-                                value={(filters[f.field] as string) ?? ''}
-                                onChange={(e) => onFiltersChange(f.field, e.target.value || undefined)}
+                                value={(draftFilters[f.field] as string) ?? ''}
+                                onChange={(e) =>
+                                    updateDraftFilter(
+                                        f.field,
+                                        e.target.value || undefined
+                                    )
+                                }
+                                {...inputEvents}
                             />
                         </div>
                     ))}
@@ -141,20 +202,27 @@ export function EntityFilters({
                                 <input
                                     className={styles.dateInput}
                                     type={f.dataType === 'DATETIME' ? 'datetime-local' : 'date'}
-                                    value={(filters[`${f.field}_from`] as string) ?? ''}
-                                    onChange={(e) => {
-                                        onFiltersChange(`${f.field}_from`, e.target.value || undefined)
-                                        console.log(e.target.value)
+                                    value={(draftFilters[`${f.field}_from`] as string) ?? ''}
+                                    onChange={(e) =>
+                                        updateDraftFilter(
+                                            `${f.field}_from`,
+                                            e.target.value || undefined
+                                        )
                                     }
-                                    }
+                                    {...inputEvents}
                                 />
                                 <span className={styles.rangeSep}>–</span>
                                 <input
                                     className={styles.dateInput}
                                     type={f.dataType === 'DATETIME' ? 'datetime-local' : 'date'}
-                                    value={(filters[`${f.field}_to`] as string) ?? ''}
-                                    onChange={(e) => onFiltersChange(`${f.field}_to`, e.target.value || undefined)}
-                                />
+                                    value={(draftFilters[`${f.field}_to`] as string) ?? ''}
+                                    onChange={(e) =>
+                                        updateDraftFilter(
+                                            `${f.field}_to`,
+                                            e.target.value || undefined
+                                        )
+                                    }
+                                    {...inputEvents}                                />
                             </div>
                         </div>
                     ))}
@@ -168,16 +236,27 @@ export function EntityFilters({
                                     className={styles.numberInput}
                                     type="number"
                                     placeholder="Min"
-                                    value={(filters[`${f.field}_from`] as string) ?? ''}
-                                    onChange={(e) => onFiltersChange(`${f.field}_from`, e.target.value || undefined)}
-                                />
+                                    value={(draftFilters[`${f.field}_from`] as string) ?? ''}
+                                    onChange={(e) =>
+                                        updateDraftFilter(
+                                            `${f.field}_from`,
+                                            e.target.value || undefined
+                                        )
+                                    }
+                                    {...inputEvents}                                />
                                 <span className={styles.rangeSep}>–</span>
                                 <input
                                     className={styles.numberInput}
                                     type="number"
                                     placeholder="Max"
-                                    value={(filters[`${f.field}_to`] as string) ?? ''}
-                                    onChange={(e) => onFiltersChange(`${f.field}_to`, e.target.value || undefined)}
+                                    value={(draftFilters[`${f.field}_to`] as string) ?? ''}
+                                    onChange={(e) =>
+                                        updateDraftFilter(
+                                            `${f.field}_to`,
+                                            e.target.value || undefined
+                                        )
+                                    }
+                                    {...inputEvents}
                                 />
                             </div>
                         </div>

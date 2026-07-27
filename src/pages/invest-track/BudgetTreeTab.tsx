@@ -1,10 +1,8 @@
 import {useNotification} from "../../components/ui/Notification.tsx";
 import {useEffect, useMemo, useRef, useState} from "react";
-import {useEntityFilters} from "../../hooks/useEntityFilters.ts";
 import {budgetEntriesApi, BudgetEntry} from "../../api/investments.ts";
 import {validateFields} from "../../api/entityConfig.ts";
 import styles from "./BudgetEntriesPage.module.css";
-import {EntityFilters} from "../../components/ui/EntityFilters.tsx";
 import {Dialog} from '../../components/ui/Dialog'
 import {DynamicForm} from '../../components/ui/DynamicForm'
 import {fmt, getCategoryIcon, toPln} from "./BudgetEntriesPage.tsx";
@@ -111,7 +109,6 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set())
     const [expandedCats, setExpandedCats] = useState<Set<string>>(new Set())
-    const {filters, setFilter, clearFilters} = useEntityFilters()
 
     const [editOpen, setEditOpen] = useState(false)
     const [bulkEditOpen, setBulkEditOpen] = useState(false)
@@ -137,67 +134,6 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
     const [scanFormErrors, setScanFormErrors] = useState<Record<string, string>>({})
 
     const scanInputRef = useRef<HTMLInputElement>(null)
-
-    // Floating "Scan receipt" button + hidden file input
-    // Opens image picker, prepares base64 preview, and invokes existing handleScanReceipt.
-    useEffect(() => {
-        const btn = document.createElement('button')
-        btn.type = 'button'
-        btn.textContent = 'Scan receipt'
-        btn.style.position = 'fixed'
-        btn.style.right = '24px'
-        btn.style.bottom = '24px'
-        btn.style.zIndex = '1000'
-        btn.style.padding = '10px 14px'
-        btn.style.borderRadius = '8px'
-        btn.style.border = '1px solid var(--color-border, rgba(255,255,255,0.2))'
-        btn.style.background = 'var(--color-primary, #4f46e5)'
-        btn.style.color = '#fff'
-        btn.style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)'
-        btn.style.cursor = 'pointer'
-
-        const input = document.createElement('input')
-        input.type = 'file'
-        input.accept = 'image/*'
-        input.setAttribute('capture', 'environment') // hint mobile to use rear camera
-        input.style.display = 'none'
-
-        const onBtnClick = () => input.click()
-        const onInputChange = () => {
-            const file = input.files?.[0]
-            if (!file) return
-            const reader = new FileReader()
-            reader.onload = () => {
-                const base64 = String(reader.result ?? '')
-                if (!base64) return
-                setScanPreview(base64)
-                setScanOpen(true)
-                handleScanReceipt(base64)
-            }
-            reader.readAsDataURL(file)
-        }
-
-        btn.addEventListener('click', onBtnClick)
-        input.addEventListener('change', onInputChange)
-        document.body.appendChild(btn)
-        document.body.appendChild(input)
-
-        return () => {
-            btn.removeEventListener('click', onBtnClick)
-            input.removeEventListener('change', onInputChange)
-            try {
-                btn.remove()
-            } catch (e) {
-                console.error('Failed to remove button', e)
-            }
-            try {
-                input.remove()
-            } catch (e) {
-                console.error('Failed to remove button', e)
-            }
-        }
-        // We intentionally don't add handleScanReceipt to deps to avoid init-order issues.
-    }, [scanDate])
 
     const tree = useMemo(() => buildTree(entries), [entries])
 
@@ -462,8 +398,6 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
 
     return (
         <div className={styles.treeTabWrap}>
-            <EntityFilters entityName="BudgetEntry" filters={filters} onFiltersChange={setFilter}
-                           onClear={clearFilters}/>
             {/* Toolbar */}
             <div className={styles.toolbar}>
                 <button className={styles.toolBtn} onClick={expandAll}>Expand All</button>
