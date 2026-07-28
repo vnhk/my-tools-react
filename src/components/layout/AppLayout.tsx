@@ -1,4 +1,4 @@
-import {ReactNode, useState} from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
 import { PocketSidePanel } from './PocketSidePanel'
@@ -18,10 +18,29 @@ export function AppLayout({ navItems }: AppLayoutProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768
+      setIsMobile(mobile)
+      if (mobile) setCollapsed(true)
+    }
+
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleLogout = async () => {
     await logout()
     navigate('/login')
+  }
+
+  const handleToggleCollapse = () => {
+    if (!isMobile) {
+      setCollapsed(!collapsed)
+    }
   }
 
   return (
@@ -29,9 +48,11 @@ export function AppLayout({ navItems }: AppLayoutProps) {
       <aside className={styles.sidebar}>
         <div className={styles.sidebarHeader}>
           <span className={styles.logo}>{collapsed ? '🛠' : '🛠 My Tools'}</span>
-          <button className={styles.collapseBtn} onClick={() => setCollapsed(!collapsed)}>
-            {collapsed ? '›' : '‹'}
-          </button>
+          {!isMobile && (
+            <button className={styles.collapseBtn} onClick={handleToggleCollapse}>
+              {collapsed ? '›' : '‹'}
+            </button>
+          )}
         </div>
 
         <nav className={styles.nav}>

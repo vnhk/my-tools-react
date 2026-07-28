@@ -5,6 +5,34 @@
   background: var(--color-bg);
 }
 
+/* ══ Main ══════════════════════════════════════════════════════════════════════ */
+.main {
+    flex: 1;
+    overflow: auto;
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ══ Mobile Styles ═════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .sidebar {
+        width: var(--sidebar-collapsed-width);
+    }
+
+    .shell:not(.collapsed) .sidebar {
+        width: var(--sidebar-collapsed-width);
+    }
+
+    .collapseBtn {
+        display: none;
+    }
+
+    .main {
+        padding: var(--space-md);
+    }
+}
+
 /* ══ Sidebar ══════════════════════════════════════════════════════════════════ */
 .sidebar {
   width: var(--sidebar-width);
