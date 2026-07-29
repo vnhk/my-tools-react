@@ -3,11 +3,18 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
     plugins: [react()],
+
     build: {
-
-        target: 'chrome69'
-
+        target: 'es2015',
+        modulePreload: false
     },
+
+    optimizeDeps: {
+        esbuildOptions: {
+            target: 'es2015'
+        }
+    },
+
     server: {
         proxy: {
             '/api': {
