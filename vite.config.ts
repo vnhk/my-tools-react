@@ -5,16 +5,10 @@ export default defineConfig({
     plugins: [react()],
 
     build: {
-        target: 'es2015',
-        modulePreload: false
+        target: 'chrome69',
+        modulePreload: false,
+        polyfillModulePreload: false
     },
-
-    optimizeDeps: {
-        esbuildOptions: {
-            target: 'es2015'
-        }
-    },
-
     server: {
         proxy: {
             '/api': {
