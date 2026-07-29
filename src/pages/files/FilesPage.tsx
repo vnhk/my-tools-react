@@ -499,6 +499,20 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
                         title={item.filename}
                     />
                 )}
+
+                {vtype === 'text' && (
+                    editMode ? (
+                        <textarea
+                            className={styles.viewerTextEdit}
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                        />
+                    ) : (
+                        <pre className={styles.viewerText}>
+            {textContent ?? 'Loading...'}
+        </pre>
+                    )
+                )}
             </div>
         </Dialog>
     )
