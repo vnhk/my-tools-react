@@ -227,11 +227,15 @@ export function PocketSidePanel() {
     return (
         <>
 
-            {localStorage.getItem('isTv') !== 'true'}: (
-            <button className={styles.toggleBtn} onClick={() => setOpen((o) => !o)} title="Pocket">
-                📌
-            </button>
-            )
+            {localStorage.getItem('isTv') !== 'true' && (
+                <button
+                    className={styles.toggleBtn}
+                    onClick={() => setOpen((o) => !o)}
+                    title="Pocket"
+                >
+                    📌
+                </button>
+            )}
             {open && (
                 <div className={styles.overlay}>
                     <div className={styles.backdrop} onClick={() => setOpen(false)}/>
