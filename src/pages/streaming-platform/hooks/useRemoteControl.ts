@@ -23,10 +23,10 @@ async function fetchWsKey(roomId: string): Promise<string | null> {
   }
 }
 
-function wsUrl(roomId: string, keyOrToken?: string) {
+function wsUrl(roomId: string, deviceType: 'TV' | 'REMOTE', keyOrToken?: string) {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
   const authPart = keyOrToken ? `&key=${encodeURIComponent(keyOrToken)}` : ''
-  return `${protocol}//${window.location.host}/ws/remote-control?roomId=${roomId}${authPart}`
+  return `${protocol}//${window.location.host}/ws/remote-control?roomId=${roomId}&deviceType=${deviceType}${authPart}`
 }
 
 export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void) {
@@ -54,7 +54,7 @@ export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void
       }
       if (!mounted) return
       const token = keyRef.current ?? localStorage.getItem('token') ?? undefined
-      const ws = new WebSocket(wsUrl(roomId, token))
+      const ws = new WebSocket(wsUrl(roomId, 'TV', token))
       wsRef.current = ws
       ws.onmessage = (e) => {
         try {
@@ -98,7 +98,7 @@ export function useRemoteControlSender(roomId: string | null) {
       }
       if (!mounted) return
       const token = keyRef.current ?? localStorage.getItem('token') ?? undefined
-      const ws = new WebSocket(wsUrl(roomId, token))
+      const ws = new WebSocket(wsUrl(roomId, 'REMOTE', token))
       wsRef.current = ws
       ws.onopen = () => { setConnected(true); retriesRef.current = 0 }
       ws.onerror = () => { ws.close() }
