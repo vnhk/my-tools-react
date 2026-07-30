@@ -9,12 +9,20 @@ import styles from './RemoteControlPage.module.css'
 
 const LAST_ROOM_ID_KEY = 'remoteControl.lastRoomId'
 
+function fmtTime(secs: number) {
+    if (!isFinite(secs) || secs < 0) return '0:00'
+    const m = Math.floor(secs / 60)
+    const s = Math.floor(secs % 60)
+    return `${m}:${String(s).padStart(2, '0')}`
+}
+
 export default function RemoteControlPage() {
     const [roomIdInput, setRoomIdInput] = useState('')
     const [connectedRoomId, setConnectedRoomId] = useState<string | null>(
         () => localStorage.getItem(LAST_ROOM_ID_KEY)
     )
-    const {connected, send} = useRemoteControlSender(connectedRoomId)
+    const {connected, send, status} = useRemoteControlSender(connectedRoomId)
+    const [scrubTime, setScrubTime] = useState<number | null>(null)
 
     const [productions, setProductions] = useState<ProductionSummary[]>([])
     const [loadingProds, setLoadingProds] = useState(false)
@@ -204,6 +212,11 @@ export default function RemoteControlPage() {
             {label}
         </button>
     )
+
+    const seekTo = (time: number) => {
+        if (!connected) return
+        send('SEEK_TO', {currentTime: time})
+    }
 
     return (
         <div className={styles.page}>
@@ -602,6 +615,49 @@ export default function RemoteControlPage() {
                             </div>
                         )}
                     </div>
+
+                    {status && (
+                        <div className={styles.nowPlaying}>
+                            <div className={styles.nowPlayingTitle}>
+                                <span>{status.playing ? '▶' : '⏸'}</span>
+                                <span className={styles.nowPlayingName}>
+                                    {status.title ?? 'Playing…'}
+                                </span>
+                            </div>
+
+                            <input
+                                type="range"
+                                className={styles.seekBar}
+                                min={0}
+                                max={Math.max(status.duration, 1)}
+                                step={1}
+                                disabled={!connected}
+                                value={scrubTime ?? status.currentTime}
+                                onChange={(e) =>
+                                    setScrubTime(Number(e.target.value))
+                                }
+                                onMouseUp={() => {
+                                    if (scrubTime != null) {
+                                        seekTo(scrubTime)
+                                        setScrubTime(null)
+                                    }
+                                }}
+                                onTouchEnd={() => {
+                                    if (scrubTime != null) {
+                                        seekTo(scrubTime)
+                                        setScrubTime(null)
+                                    }
+                                }}
+                            />
+
+                            <div className={styles.seekTimes}>
+                                <span>
+                                    {fmtTime(scrubTime ?? status.currentTime)}
+                                </span>
+                                <span>{fmtTime(status.duration)}</span>
+                            </div>
+                        </div>
+                    )}
 
                     <div className={styles.controls}>
                         <div className={styles.section}>

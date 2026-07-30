@@ -6,6 +6,7 @@ type Subscriber = (cmd: RemoteCommand) => void
 interface RemoteControlContextValue {
   roomId: string
   subscribe: (cb: Subscriber) => () => void
+  sendStatus: (status: { title?: string; playing: boolean; currentTime: number; duration: number }) => void
 }
 
 const RemoteControlContext = createContext<RemoteControlContextValue | null>(null)
@@ -20,7 +21,7 @@ export default function RemoteControlProvider({ children }: { children: React.Re
     })
   }, [])
 
-  const roomId = useRemoteControlReceiver(onCommand)
+  const { roomId, send } = useRemoteControlReceiver(onCommand)
 
   const value = useMemo<RemoteControlContextValue>(() => ({
     roomId,
@@ -28,7 +29,8 @@ export default function RemoteControlProvider({ children }: { children: React.Re
       subsRef.current.add(cb)
       return () => subsRef.current.delete(cb)
     },
-  }), [roomId])
+    sendStatus: (status) => send({ action: 'STATUS', ...status }),
+  }), [roomId, send])
 
   return (
     <RemoteControlContext.Provider value={value}>

@@ -7,6 +7,18 @@ export interface RemoteCommand {
   url?: string
   index?: number
   trackType?: string
+  // STATUS payload fields (TV -> remote)
+  playing?: boolean
+  currentTime?: number
+  duration?: number
+  title?: string
+}
+
+export interface RemoteStatus {
+  playing: boolean
+  currentTime: number
+  duration: number
+  title?: string
 }
 
 async function fetchWsKey(roomId: string): Promise<string | null> {
@@ -80,12 +92,19 @@ export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void
     }
   }, [roomId])
 
-  return roomId
+  const send = useCallback((data: Partial<RemoteCommand> & { action: string }) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(data))
+    }
+  }, [])
+
+  return { roomId, send }
 }
 
 export function useRemoteControlSender(roomId: string | null) {
   const wsRef = useRef<WebSocket | null>(null)
   const [connected, setConnected] = useState(false)
+  const [status, setStatus] = useState<RemoteStatus | null>(null)
   const keyRef = useRef<string | null>(null)
   const retriesRef = useRef(0)
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>()
@@ -104,10 +123,26 @@ export function useRemoteControlSender(roomId: string | null) {
       const ws = new WebSocket(wsUrl(roomId, 'REMOTE', token))
       wsRef.current = ws
       ws.onopen = () => { setConnected(true); retriesRef.current = 0 }
+      ws.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data) as RemoteCommand
+          if (data.action === 'STATUS') {
+            setStatus({
+              playing: !!data.playing,
+              currentTime: data.currentTime ?? 0,
+              duration: data.duration ?? 0,
+              title: data.title,
+            })
+          }
+        } catch (_err) {
+          void _err
+        }
+      }
       ws.onerror = () => { ws.close() }
       ws.onclose = () => {
         if (!mounted) return
         setConnected(false)
+        setStatus(null)
         wsRef.current = null
         retriesRef.current++
         const delay = Math.min(30_000, 3_000 * Math.pow(2, retriesRef.current - 1))
@@ -150,5 +185,5 @@ export function useRemoteControlSender(roomId: string | null) {
     }
   }, [])
 
-  return { connected, send }
+  return { connected, send, status }
 }

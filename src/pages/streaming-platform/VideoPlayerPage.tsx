@@ -57,6 +57,9 @@ export default function VideoPlayerPage() {
                 case 'SEEK':
                     player.seek(cmd.relative ?? 0);
                     break
+                case 'SEEK_TO':
+                    if (typeof cmd.currentTime === 'number') player.seekTo(cmd.currentTime);
+                    break
                 case 'VOLUME':
                     player.setVolume(cmd.relative ?? 0);
                     break
@@ -83,12 +86,30 @@ export default function VideoPlayerPage() {
         []
     )
 
-    const {roomId, subscribe} = useRemoteControlContext()
+    const {roomId, subscribe, sendStatus} = useRemoteControlContext()
 
     useEffect(() => {
         // Subscribe to remote commands while the player is mounted
         return subscribe(handleRemoteCommand)
     }, [subscribe, handleRemoteCommand])
+
+    useEffect(() => {
+        // Heartbeat so the remote knows current title/play-state/position
+        // to render a "now playing" seek bar without flooding the socket
+        // on every native timeupdate tick.
+        const interval = setInterval(() => {
+            const v = playerRef.current?.getVideoElement()
+            const info = videoInfoRef.current
+            if (!v || !info) return
+            sendStatus({
+                title: info.videoName,
+                playing: !v.paused,
+                currentTime: v.currentTime,
+                duration: isFinite(v.duration) ? v.duration : 0,
+            })
+        }, 1000)
+        return () => clearInterval(interval)
+    }, [sendStatus])
 
     useEffect(() => {
         if (!productionName || !videoFolderId) return

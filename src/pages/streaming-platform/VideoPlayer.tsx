@@ -12,6 +12,7 @@ export interface VideoPlayerHandle {
   play(): void
   pause(): void
   seek(delta: number): void
+  seekTo(time: number): void
   setVolume(delta: number): void
   toggleFullscreen(): void
   getVideoElement(): HTMLVideoElement | null
@@ -83,6 +84,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     seek: (delta) => {
       const v = videoRef.current
       if (v) v.currentTime = Math.max(0, Math.min(v.duration || 0, v.currentTime + delta))
+    },
+    seekTo: (time) => {
+      const v = videoRef.current
+      if (v) v.currentTime = Math.max(0, Math.min(v.duration || 0, time))
     },
     setVolume: (delta) => {
       const v = videoRef.current

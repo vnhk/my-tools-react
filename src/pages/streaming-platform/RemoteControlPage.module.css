@@ -310,6 +310,47 @@
   white-space: nowrap;
 }
 
+/* Now playing / seek bar */
+.nowPlaying {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.02);
+}
+.nowPlayingTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+.nowPlayingName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.seekBar {
+  width: 100%;
+  accent-color: #a5b4fc;
+  cursor: pointer;
+}
+.seekBar:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.seekTimes {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Controls */
 .controls {
   display: flex;
