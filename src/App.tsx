@@ -277,7 +277,8 @@ export default function App() {
                             <Route element={<AppLayout navItems={NAV_ITEMS}/>}>
                                 <Route index element={<Navigate to="/home" replace/>}/>
                                 <Route path="/home"
-                                       element={<HomePage welcomeText={"Hi!"} cards={isMobile ? mobileCards : cards}/>}/>
+                                       element={<HomePage welcomeText={"Hi!"}
+                                                          cards={isMobile ? mobileCards : cards}/>}/>
                                 <Route path="/pocket" element={<PocketListPage/>}/>
                                 <Route path="/pocket/:pocketName" element={<PocketItemsPage/>}/>
                                 <Route path="/invest-track" element={<InvestTrackLayout/>}>

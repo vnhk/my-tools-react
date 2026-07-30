@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { fetchVideoInfo } from './api'
 import VideoPlayer, { type VideoPlayerHandle } from './VideoPlayer'
-import { useRemoteControlReceiver, type RemoteCommand } from './hooks/useRemoteControl'
+import { type RemoteCommand } from './hooks/useRemoteControl'
+import { useRemoteControlContext } from './RemoteControlProvider'
 import { useWatchProgress } from './hooks/useWatchProgress'
 import type { VideoInfo } from './types'
 import styles from './VideoPlayerPage.module.css'
@@ -62,7 +63,12 @@ export default function VideoPlayerPage() {
     []
   )
 
-  const roomId = useRemoteControlReceiver(handleRemoteCommand)
+  const { roomId, subscribe } = useRemoteControlContext()
+
+  useEffect(() => {
+    // Subscribe to remote commands while the player is mounted
+    return subscribe(handleRemoteCommand)
+  }, [subscribe, handleRemoteCommand])
 
   useEffect(() => {
     if (!productionName || !videoFolderId) return

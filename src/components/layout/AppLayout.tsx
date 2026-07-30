@@ -19,6 +19,7 @@ export function AppLayout({navItems}: AppLayoutProps) {
     const navigate = useNavigate()
     const [collapsed, setCollapsed] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
+    const [isTv, setIsTv] = useState(false)
 
     useEffect(() => {
         const checkMobile = () => {
@@ -27,15 +28,21 @@ export function AppLayout({navItems}: AppLayoutProps) {
             if (mobile) setCollapsed(true)
         }
 
+        const checkTv = () => {
+            const tv = localStorage.getItem('isTv') === 'true'
+            setIsTv(tv)
+            if (tv) setCollapsed(true)
+        }
+
         checkMobile()
+        checkTv()
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
 
     const handleLogout = async () => {
         await logout()
-        localStorage.getItem('isTv') === 'true'
-            ? navigate('/login-tv') : navigate('/login')
+        isTv ? navigate('/login-tv') : navigate('/login')
     }
 
     const handleToggleCollapse = () => {
@@ -49,7 +56,7 @@ export function AppLayout({navItems}: AppLayoutProps) {
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarHeader}>
                     <span className={styles.logo}>{collapsed ? '🛠' : '🛠 My Tools'}</span>
-                    {!isMobile && (
+                    {!isMobile && !isTv && (
                         <button className={styles.collapseBtn} onClick={handleToggleCollapse}>
                             {collapsed ? '›' : '‹'}
                         </button>

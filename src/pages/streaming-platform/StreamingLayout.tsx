@@ -14,7 +14,29 @@ export default function StreamingLayout() {
   }, [navigate])
 
   const roomId = useRemoteControlReceiver(handleCmd)
+import { Outlet } from 'react-router-dom'
+import RemoteControlProvider, { useRemoteControlContext } from './RemoteControlProvider'
+import styles from './StreamingLayout.module.css'
 
+function RoomBadge() {
+  const { roomId } = useRemoteControlContext()
+  return (
+    <div className={styles.overlay} aria-hidden="true">
+      <div className={styles.badge} title="Room ID — enter this in the Remote Control page">
+        📱 {roomId}
+      </div>
+    </div>
+  )
+}
+
+export default function StreamingLayout() {
+  return (
+    <RemoteControlProvider>
+      <Outlet />
+      <RoomBadge />
+    </RemoteControlProvider>
+  )
+}
   return (
     <>
       <Outlet />
