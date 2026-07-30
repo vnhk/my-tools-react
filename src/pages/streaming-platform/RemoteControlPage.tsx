@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useRemoteControlSender } from './hooks/useRemoteControl'
-import { TextField } from '../../components/fields/TextField'
-import { Button } from '../../components/ui/Button'
-import { fetchProductions, fetchProductionDetails } from './api'
-import type { ProductionSummary, ProductionDetails } from './types'
+import {useEffect, useMemo, useState} from 'react'
+import {Link} from 'react-router-dom'
+import {useRemoteControlSender} from './hooks/useRemoteControl'
+import {TextField} from '../../components/fields/TextField'
+import {Button} from '../../components/ui/Button'
+import {fetchProductionDetails, fetchProductions} from './api'
+import type {ProductionDetails, ProductionSummary} from './types'
 import styles from './RemoteControlPage.module.css'
 
 export default function RemoteControlPage() {
     const [roomIdInput, setRoomIdInput] = useState('')
     const [connectedRoomId, setConnectedRoomId] = useState<string | null>(null)
-    const { connected, send } = useRemoteControlSender(connectedRoomId)
+    const {connected, send} = useRemoteControlSender(connectedRoomId)
 
     const [productions, setProductions] = useState<ProductionSummary[]>([])
     const [loadingProds, setLoadingProds] = useState(false)
@@ -25,7 +25,8 @@ export default function RemoteControlPage() {
             .then((res) => {
                 if (mounted) setProductions(res.data)
             })
-            .catch(() => {})
+            .catch(() => {
+            })
             .finally(() => {
                 if (mounted) setLoadingProds(false)
             })
@@ -63,7 +64,7 @@ export default function RemoteControlPage() {
 
     const navigateOnTv = (url: string) => {
         if (!connected) return
-        send('NAVIGATE', { url })
+        send('NAVIGATE', {url})
     }
 
     const openProduction = (name: string) => {
