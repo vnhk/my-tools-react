@@ -52,7 +52,7 @@ export function LoginTvPage() {
                         stopPolling()
                         localStorage.setItem('token', poll.data.token)
                         setUser({id: '', username: poll.data.username!, role: poll.data.role!})
-                        navigate('/', {replace: true})
+                        navigate('/streaming/tv-pairing', {replace: true})
                     }
                 } catch {
                     // network blip — keep polling
