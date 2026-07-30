@@ -89,9 +89,80 @@
   gap: 8px;
   margin-bottom: 10px;
 }
+.searchHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
 .searchLabel {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
+}
+.filterToggle,
+.filterToggleActive {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+.filterToggleActive {
+  background: rgba(165,180,252,0.14);
+  border-color: rgba(165,180,252,0.4);
+  color: var(--color-text-primary);
+}
+.filterPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+}
+.filterRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.filterLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip,
+.chipActive {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+.chipActive {
+  background: rgba(165,180,252,0.18);
+  border-color: rgba(165,180,252,0.5);
+  color: var(--color-text-primary);
+}
+.filterClearBtn {
+  align-self: flex-start;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  text-decoration: underline;
+  cursor: pointer;
 }
 .searchInput {
   width: 100%;
@@ -117,13 +188,18 @@
 }
 .resultItem {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   padding: 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: rgba(255,255,255,0.02);
+}
+.resultRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 .resultInfo {
   min-width: 0;
@@ -159,9 +235,79 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+.resultBtnActive {
+  composes: resultBtn;
+  background: rgba(165,180,252,0.18);
+  border-color: rgba(165,180,252,0.5);
+  color: var(--color-text-primary);
+}
 .playBtn {
   background: rgba(22,163,74,0.18);
   border-color: rgba(22,163,74,0.4);
+}
+
+/* Season / episode picker */
+.episodesPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
+}
+.epLoading {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+}
+.seasonTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.seasonTab,
+.seasonTabActive {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+.seasonTabActive {
+  background: rgba(165,180,252,0.18);
+  border-color: rgba(165,180,252,0.5);
+  color: var(--color-text-primary);
+}
+.episodeList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow: auto;
+}
+.episodeItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255,255,255,0.03);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  text-align: left;
+}
+.episodeItem:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.epName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Controls */

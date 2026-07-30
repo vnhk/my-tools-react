@@ -7,14 +7,27 @@ import {fetchProductionDetails, fetchProductions} from './api'
 import type {ProductionDetails, ProductionSummary} from './types'
 import styles from './RemoteControlPage.module.css'
 
+const LAST_ROOM_ID_KEY = 'remoteControl.lastRoomId'
+
 export default function RemoteControlPage() {
     const [roomIdInput, setRoomIdInput] = useState('')
-    const [connectedRoomId, setConnectedRoomId] = useState<string | null>(null)
+    const [connectedRoomId, setConnectedRoomId] = useState<string | null>(
+        () => localStorage.getItem(LAST_ROOM_ID_KEY)
+    )
     const {connected, send} = useRemoteControlSender(connectedRoomId)
 
     const [productions, setProductions] = useState<ProductionSummary[]>([])
     const [loadingProds, setLoadingProds] = useState(false)
     const [query, setQuery] = useState('')
+
+    const [showFilters, setShowFilters] = useState(false)
+    const [filterTypes, setFilterTypes] = useState<Set<string>>(new Set())
+    const [filterCategories, setFilterCategories] = useState<Set<string>>(new Set())
+
+    const [expanded, setExpanded] = useState<string | null>(null)
+    const [detailsCache, setDetailsCache] = useState<Record<string, ProductionDetails>>({})
+    const [detailsLoadingName, setDetailsLoadingName] = useState<string | null>(null)
+    const [openSeason, setOpenSeason] = useState<Record<string, string>>({})
 
     useEffect(() => {
         let mounted = true
@@ -38,28 +51,80 @@ export default function RemoteControlPage() {
 
     const normalizedQuery = query.trim().toLowerCase()
 
+    const categoryOptions = useMemo(() => {
+        const cats = new Set<string>()
+        productions.forEach((p) => p.categories?.forEach((c) => cats.add(c)))
+        return [...cats].sort()
+    }, [productions])
+
+    const filtersActive =
+        normalizedQuery !== '' || filterTypes.size > 0 || filterCategories.size > 0
+
+    const toggleTypeFilter = (t: string) => {
+        setFilterTypes((prev) => {
+            const next = new Set(prev)
+            next.has(t) ? next.delete(t) : next.add(t)
+            return next
+        })
+    }
+
+    const toggleCategoryFilter = (c: string) => {
+        setFilterCategories((prev) => {
+            const next = new Set(prev)
+            next.has(c) ? next.delete(c) : next.add(c)
+            return next
+        })
+    }
+
+    const clearFilters = () => {
+        setFilterTypes(new Set())
+        setFilterCategories(new Set())
+        setQuery('')
+    }
+
     const filtered = useMemo(() => {
-        if (!normalizedQuery) return []
+        if (!filtersActive) return []
 
         return productions
             .filter((p) => {
-                const hay = [
-                    p.title ?? '',
-                    p.productionName ?? '',
-                    ...(p.categories ?? []),
-                    ...(p.tags ?? []),
-                ]
-                    .join(' ')
-                    .toLowerCase()
+                if (normalizedQuery) {
+                    const hay = [
+                        p.title ?? '',
+                        p.productionName ?? '',
+                        p.description ?? '',
+                        ...(p.categories ?? []),
+                        ...(p.tags ?? []),
+                    ]
+                        .join(' ')
+                        .toLowerCase()
 
-                return hay.includes(normalizedQuery)
+                    if (!hay.includes(normalizedQuery)) return false
+                }
+
+                if (filterTypes.size > 0 && !filterTypes.has(p.type ?? '')) return false
+
+                if (
+                    filterCategories.size > 0 &&
+                    !p.categories?.some((c) => filterCategories.has(c))
+                )
+                    return false
+
+                return true
             })
-            .slice(0, 12)
-    }, [productions, normalizedQuery])
+            .slice(0, 20)
+    }, [productions, normalizedQuery, filterTypes, filterCategories, filtersActive])
 
     const connect = () => {
         const id = roomIdInput.trim()
-        if (id) setConnectedRoomId(id)
+        if (id) {
+            localStorage.setItem(LAST_ROOM_ID_KEY, id)
+            setConnectedRoomId(id)
+        }
+    }
+
+    const disconnect = () => {
+        localStorage.removeItem(LAST_ROOM_ID_KEY)
+        setConnectedRoomId(null)
     }
 
     const navigateOnTv = (url: string) => {
@@ -69,6 +134,37 @@ export default function RemoteControlPage() {
 
     const openProduction = (name: string) => {
         navigateOnTv(`/streaming/production/${encodeURIComponent(name)}`)
+    }
+
+    const playEpisode = (name: string, episodeId: string) => {
+        navigateOnTv(`/streaming/player/${encodeURIComponent(name)}/${episodeId}`)
+    }
+
+    const toggleExpanded = async (name: string) => {
+        if (expanded === name) {
+            setExpanded(null)
+            return
+        }
+        setExpanded(name)
+
+        if (!detailsCache[name]) {
+            setDetailsLoadingName(name)
+            try {
+                const res = await fetchProductionDetails(name)
+                const details: ProductionDetails = res.data
+                setDetailsCache((prev) => ({...prev, [name]: details}))
+                if (details.seasons && details.seasons.length > 0) {
+                    setOpenSeason((prev) => ({
+                        ...prev,
+                        [name]: prev[name] ?? details.seasons![0].name,
+                    }))
+                }
+            } catch {
+                // leave expanded with no details; user can retry by collapsing/expanding
+            } finally {
+                setDetailsLoadingName(null)
+            }
+        }
     }
 
     const playFirstAvailable = async (name: string) => {
@@ -166,16 +262,34 @@ export default function RemoteControlPage() {
 
                         <Button
                             variant="ghost"
-                            onClick={() => setConnectedRoomId(null)}
+                            onClick={disconnect}
                         >
                             Disconnect
                         </Button>
                     </div>
 
                     <div className={styles.searchSection}>
-                        <label className={styles.searchLabel}>
-                            Search to play
-                        </label>
+                        <div className={styles.searchHeader}>
+                            <label className={styles.searchLabel}>
+                                Search to play
+                            </label>
+
+                            <button
+                                className={
+                                    showFilters
+                                        ? styles.filterToggleActive
+                                        : styles.filterToggle
+                                }
+                                onClick={() => setShowFilters((p) => !p)}
+                            >
+                                ⚙ Filters
+                                {(filterTypes.size > 0 ||
+                                    filterCategories.size > 0) &&
+                                    !showFilters
+                                    ? ' •'
+                                    : ''}
+                            </button>
+                        </div>
 
                         <input
                             type="search"
@@ -189,7 +303,74 @@ export default function RemoteControlPage() {
                             onChange={(e) => setQuery(e.target.value)}
                         />
 
-                        {normalizedQuery && (
+                        {showFilters && (
+                            <div className={styles.filterPanel}>
+                                <div className={styles.filterRow}>
+                                    <span className={styles.filterLabel}>
+                                        Type
+                                    </span>
+                                    <div className={styles.filterChips}>
+                                        {(
+                                            [
+                                                ['MOVIE', 'Movies'],
+                                                ['TV_SERIES', 'Series'],
+                                                ['OTHER', 'Other'],
+                                            ] as const
+                                        ).map(([value, label]) => (
+                                            <button
+                                                key={value}
+                                                className={
+                                                    filterTypes.has(value)
+                                                        ? styles.chipActive
+                                                        : styles.chip
+                                                }
+                                                onClick={() =>
+                                                    toggleTypeFilter(value)
+                                                }
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {categoryOptions.length > 0 && (
+                                    <div className={styles.filterRow}>
+                                        <span className={styles.filterLabel}>
+                                            Category
+                                        </span>
+                                        <div className={styles.filterChips}>
+                                            {categoryOptions.map((c) => (
+                                                <button
+                                                    key={c}
+                                                    className={
+                                                        filterCategories.has(c)
+                                                            ? styles.chipActive
+                                                            : styles.chip
+                                                    }
+                                                    onClick={() =>
+                                                        toggleCategoryFilter(c)
+                                                    }
+                                                >
+                                                    {c}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {filtersActive && (
+                                    <button
+                                        className={styles.filterClearBtn}
+                                        onClick={clearFilters}
+                                    >
+                                        Clear all filters
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {filtersActive && (
                             <div className={styles.results}>
                                 {filtered.length === 0 && !loadingProds && (
                                     <div className={styles.noResults}>
@@ -197,49 +378,227 @@ export default function RemoteControlPage() {
                                     </div>
                                 )}
 
-                                {filtered.map((p) => (
-                                    <div
-                                        key={p.productionName}
-                                        className={styles.resultItem}
-                                    >
-                                        <div className={styles.resultInfo}>
-                                            <div className={styles.resultTitle}>
-                                                {p.title ?? p.productionName}
+                                {filtered.map((p) => {
+                                    const isSeries = p.type === 'TV_SERIES'
+                                    const isExpanded =
+                                        expanded === p.productionName
+                                    const details =
+                                        detailsCache[p.productionName]
+                                    const currentSeasonName =
+                                        openSeason[p.productionName]
+                                    const episodesToShow =
+                                        details?.seasons?.find(
+                                            (s) => s.name === currentSeasonName
+                                        )?.episodes ?? details?.episodes ?? []
+
+                                    return (
+                                        <div
+                                            key={p.productionName}
+                                            className={styles.resultItem}
+                                        >
+                                            <div className={styles.resultRow}>
+                                                <div
+                                                    className={
+                                                        styles.resultInfo
+                                                    }
+                                                >
+                                                    <div
+                                                        className={
+                                                            styles.resultTitle
+                                                        }
+                                                    >
+                                                        {p.title ??
+                                                            p.productionName}
+                                                    </div>
+
+                                                    <div
+                                                        className={
+                                                            styles.resultMeta
+                                                        }
+                                                    >
+                                                        {p.type?.toLowerCase() ??
+                                                            'unknown'}{' '}
+                                                        ·{' '}
+                                                        {p.releaseYearStart ??
+                                                            ''}
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    className={
+                                                        styles.resultActions
+                                                    }
+                                                >
+                                                    <button
+                                                        className={
+                                                            styles.resultBtn
+                                                        }
+                                                        disabled={!connected}
+                                                        onClick={() =>
+                                                            openProduction(
+                                                                p.productionName
+                                                            )
+                                                        }
+                                                        title="Open details on TV"
+                                                    >
+                                                        Open
+                                                    </button>
+
+                                                    <button
+                                                        className={`${styles.resultBtn} ${styles.playBtn}`}
+                                                        disabled={!connected}
+                                                        onClick={() =>
+                                                            void playFirstAvailable(
+                                                                p.productionName
+                                                            )
+                                                        }
+                                                        title="Play now on TV"
+                                                    >
+                                                        ▶ Play
+                                                    </button>
+
+                                                    {isSeries && (
+                                                        <button
+                                                            className={
+                                                                isExpanded
+                                                                    ? styles.resultBtnActive
+                                                                    : styles.resultBtn
+                                                            }
+                                                            onClick={() =>
+                                                                void toggleExpanded(
+                                                                    p.productionName
+                                                                )
+                                                            }
+                                                            title="Choose season / episode"
+                                                        >
+                                                            {isExpanded
+                                                                ? '▲'
+                                                                : 'Episodes ▾'}
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            <div className={styles.resultMeta}>
-                                                {p.type?.toLowerCase() ?? 'unknown'} ·{' '}
-                                                {p.releaseYearStart ?? ''}
-                                            </div>
-                                        </div>
+                                            {isExpanded && (
+                                                <div
+                                                    className={
+                                                        styles.episodesPanel
+                                                    }
+                                                >
+                                                    {detailsLoadingName ===
+                                                        p.productionName && (
+                                                        <div
+                                                            className={
+                                                                styles.epLoading
+                                                            }
+                                                        >
+                                                            Loading…
+                                                        </div>
+                                                    )}
 
-                                        <div className={styles.resultActions}>
-                                            <button
-                                                className={styles.resultBtn}
-                                                disabled={!connected}
-                                                onClick={() =>
-                                                    openProduction(p.productionName)
-                                                }
-                                                title="Open details on TV"
-                                            >
-                                                Open
-                                            </button>
+                                                    {details?.seasons &&
+                                                        details.seasons.length >
+                                                            0 && (
+                                                            <div
+                                                                className={
+                                                                    styles.seasonTabs
+                                                                }
+                                                            >
+                                                                {details.seasons.map(
+                                                                    (s) => (
+                                                                        <button
+                                                                            key={
+                                                                                s.name
+                                                                            }
+                                                                            className={
+                                                                                currentSeasonName ===
+                                                                                s.name
+                                                                                    ? styles.seasonTabActive
+                                                                                    : styles.seasonTab
+                                                                            }
+                                                                            onClick={() =>
+                                                                                setOpenSeason(
+                                                                                    (
+                                                                                        prev
+                                                                                    ) => ({
+                                                                                        ...prev,
+                                                                                        [p.productionName]:
+                                                                                            s.name,
+                                                                                    })
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                s.name
+                                                                            }
+                                                                        </button>
+                                                                    )
+                                                                )}
+                                                            </div>
+                                                        )}
 
-                                            <button
-                                                className={`${styles.resultBtn} ${styles.playBtn}`}
-                                                disabled={!connected}
-                                                onClick={() =>
-                                                    void playFirstAvailable(
-                                                        p.productionName
-                                                    )
-                                                }
-                                                title="Play now on TV"
-                                            >
-                                                ▶ Play
-                                            </button>
+                                                    {details &&
+                                                        episodesToShow.length ===
+                                                            0 &&
+                                                        detailsLoadingName !==
+                                                            p.productionName && (
+                                                            <div
+                                                                className={
+                                                                    styles.noResults
+                                                                }
+                                                            >
+                                                                No episodes
+                                                            </div>
+                                                        )}
+
+                                                    {episodesToShow.length >
+                                                        0 && (
+                                                        <div
+                                                            className={
+                                                                styles.episodeList
+                                                            }
+                                                        >
+                                                            {episodesToShow.map(
+                                                                (ep) => (
+                                                                    <button
+                                                                        key={
+                                                                            ep.id
+                                                                        }
+                                                                        className={
+                                                                            styles.episodeItem
+                                                                        }
+                                                                        disabled={
+                                                                            !connected
+                                                                        }
+                                                                        onClick={() =>
+                                                                            playEpisode(
+                                                                                p.productionName,
+                                                                                ep.id
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <span
+                                                                            className={
+                                                                                styles.epName
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                ep.name
+                                                                            }
+                                                                        </span>
+                                                                        <span>
+                                                                            ▶
+                                                                        </span>
+                                                                    </button>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         )}
                     </div>
