@@ -97,6 +97,7 @@ import {SettingsPage} from "./pages/SettingsPage.tsx";
 import {OtpGeneratePage} from "./pages/OtpGeneratePage.tsx";
 import {useEffect, useState} from "react";
 import {BudgetMobileScanPage} from "./pages/invest-track/BudgetMobileScanPage.tsx";
+import {LoginTvPage} from "./pages/LoginTvPage.tsx";
 
 const mobileCards: HomePageCard[] = [
     {
@@ -266,6 +267,7 @@ export default function App() {
             <NotificationProvider>
                 <AuthProvider>
                     <Routes>
+                        <Route path="/login-tv" element={<LoginTvPage/>}/>
                         <Route path="/login" element={<LoginPage/>}/>
                         <Route element={<RequireAuth/>}>
                             <Route path="/accept-login/:uuid" element={<AcceptLoginPage/>}/>

@@ -1,22 +1,17 @@
-import {FormEvent, useEffect, useRef, useState} from 'react'
+import {useEffect, useRef, useState} from 'react'
 import {useNavigate} from 'react-router-dom'
-import {login, loginWithOtp, qrGenerate, QrGenerateResponse, qrPoll} from '../api/auth'
+import {qrGenerate, QrGenerateResponse, qrPoll} from '../api/auth'
 import {useAuth} from '../auth/AuthContext'
 import {Button} from '../components/ui/Button'
 import styles from './login.module.css'
 
-type Mode = 'password' | 'otp' | 'qr'
+type Mode = 'qr'
 
-export function LoginPage() {
+export function LoginTvPage() {
     const {setUser} = useAuth()
     const navigate = useNavigate()
 
-    const [mode, setMode] = useState<Mode>('password')
-    const [username, setUsername] = useState('')
-    const [password, setPassword] = useState('')
-    const [otp, setOtp] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
+    const [mode, setMode] = useState<Mode>('qr')
 
     const [qrData, setQrData] = useState<QrGenerateResponse | null>(null)
     const [qrLoading, setQrLoading] = useState(false)
@@ -64,37 +59,19 @@ export function LoginPage() {
                 }
             }, 2000)
         } catch {
-            setError('Could not generate QR code')
+            console.log('Could not generate QR code')
         } finally {
             setQrLoading(false)
         }
     }
 
     useEffect(() => {
-        localStorage.setItem('isTv', "false");
+        localStorage.setItem('isTv', "true");
 
         if (mode === 'qr') startQr()
         else stopPolling()
         return stopPolling
     }, [mode])
-
-    const submit = async (e: FormEvent) => {
-        e.preventDefault()
-        setError('')
-        setLoading(true)
-        try {
-            const res = mode === 'otp'
-                ? await loginWithOtp(otp)
-                : await login(username, password)
-            localStorage.setItem('token', res.data.token)
-            setUser({id: '', username: res.data.username, role: res.data.role})
-            navigate('/', {replace: true})
-        } catch {
-            setError('Invalid credentials')
-        } finally {
-            setLoading(false)
-        }
-    }
 
     return (
         <div className={styles.page}>
@@ -103,17 +80,16 @@ export function LoginPage() {
                 <p className={styles.subtitle}>Sign in to My Tools</p>
 
                 <div className={styles.tabs}>
-                    {(['password', 'otp', 'qr'] as Mode[]).map(m => (
+                    {(['qr'] as Mode[]).map(m => (
                         <button
                             key={m}
                             type="button"
                             className={`${styles.tab} ${mode === m ? styles.tabActive : ''}`}
                             onClick={() => {
-                                setError('');
                                 setMode(m)
                             }}
                         >
-                            {m === 'password' ? 'Password' : m === 'otp' ? 'OTP' : 'QR Code'}
+                            {'QR Code'}
                         </button>
                     ))}
                 </div>
@@ -146,58 +122,7 @@ export function LoginPage() {
                             </>
                         )}
                     </div>
-                ) : (
-                    <form onSubmit={submit} className={styles.form}>
-                        {mode === 'password' ? (
-                            <>
-                                <div className={styles.field}>
-                                    <label className={styles.label}>Username</label>
-                                    <input
-                                        className={styles.input}
-                                        placeholder="Enter username"
-                                        value={username}
-                                        onChange={e => setUsername(e.target.value)}
-                                        autoComplete="username"
-                                        required
-                                    />
-                                </div>
-                                <div className={styles.field}>
-                                    <label className={styles.label}>Password</label>
-                                    <input
-                                        className={styles.input}
-                                        type="password"
-                                        placeholder="Enter password"
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        autoComplete="current-password"
-                                        required
-                                    />
-                                </div>
-                            </>
-                        ) : (
-                            <div className={styles.field}>
-                                <label className={styles.label}>OTP Code</label>
-                                <input
-                                    className={styles.input}
-                                    placeholder="Enter OTP code"
-                                    value={otp}
-                                    onChange={e => setOtp(e.target.value)}
-                                    autoComplete="one-time-code"
-                                    required
-                                />
-                            </div>
-                        )}
-                        {error && <div className={styles.error}>{error}</div>}
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            className={styles.submitBtn}
-                            disabled={loading}
-                        >
-                            {loading ? 'Signing in…' : 'Sign in'}
-                        </Button>
-                    </form>
-                )}
+                ) : null}
             </div>
         </div>
     )
