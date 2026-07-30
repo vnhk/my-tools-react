@@ -30,7 +30,14 @@ function wsUrl(roomId: string, keyOrToken?: string) {
 }
 
 export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void) {
-  const [roomId] = useState(() => String(Math.floor(10_000 + Math.random() * 90_000)))
+  const [roomId] = useState(() => {
+    // Reuse the same room across streaming pages in the same tab
+    const stored = sessionStorage.getItem('streaming.roomId')
+    if (stored) return stored
+    const id = String(Math.floor(10_000 + Math.random() * 90_000))
+    sessionStorage.setItem('streaming.roomId', id)
+    return id
+  })
   const wsRef = useRef<WebSocket | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
   const onCommandRef = useRef(onCommand)

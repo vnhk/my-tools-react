@@ -29,6 +29,7 @@ import ProductionDetailsPage from './pages/streaming-platform/ProductionDetailsP
 import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
 import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
 import TvPairingPage from './pages/streaming-platform/TvPairingPage'
+import StreamingLayout from './pages/streaming-platform/StreamingLayout'
 import {FilesPage} from './pages/files/FilesPage'
 import {ProjectListPage} from './pages/projects/ProjectListPage'
 import {ProjectDetailsPage} from './pages/projects/ProjectDetailsPage'
@@ -312,12 +313,13 @@ export default function App() {
                                     <Route path="start" element={<StartInterviewPage/>}/>
                                     <Route path="plan" element={<InterviewPlanPage/>}/>
                                 </Route>
-                                <Route path="/streaming" element={<ProductionListPage/>}/>
-                                <Route path="/streaming/production/:name" element={<ProductionDetailsPage/>}/>
-                                <Route path="/streaming/player/:productionName/:videoFolderId"
-                                       element={<VideoPlayerPage/>}/>
-                                <Route path="/streaming/remote" element={<RemoteControlPage/>}/>
-                                <Route path="/streaming/tv-pairing" element={<TvPairingPage/>}/>
+                                <Route path="/streaming" element={<StreamingLayout/>}>
+                                    <Route index element={<ProductionListPage/>}/>
+                                    <Route path="production/:name" element={<ProductionDetailsPage/>}/>
+                                    <Route path="player/:productionName/:videoFolderId" element={<VideoPlayerPage/>}/>
+                                    <Route path="remote" element={<RemoteControlPage/>}/>
+                                    <Route path="tv-pairing" element={<TvPairingPage/>}/>
+                                </Route>
                                 <Route path="/english" element={<LanguageLearningLayout/>}>
                                     <Route index element={<Navigate to="words" replace/>}/>
                                     <Route path="words" element={<WordListPage/>}/>
