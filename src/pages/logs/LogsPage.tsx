@@ -1,11 +1,10 @@
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react'
 import {type LogEntry, logsApi} from '../../api/logs'
-import {DataTable} from '../../components/table/DataTable'
+import {type Column} from '../../components/table/DataTable'
+import tableStyles from '../../components/table/DataTable.module.css'
 import {EntityFilters} from '../../components/ui/EntityFilters'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
 import {buildColumnsFromConfig} from '../../components/table/configColumns'
-import {useTableState} from '../../hooks/useTableState'
-import {useTableActions} from '../../hooks/useTableActions'
 import {useEntityFilters} from '../../hooks/useEntityFilters'
 import {useAutoRefresh} from '../../common/hooks/useAutoRefresh'
 import {toPage} from '../../api/crud'
@@ -36,8 +35,9 @@ const LIVE_INTERVALS = [
     {label: '5m', ms: 300000},
 ]
 
-// Cap on how many new rows we pull per tick — the tail buffer trims down to
-// pageSize right after anyway, this just bounds a single request's payload.
+// CloudWatch-style default: last 50, scrolling up loads 50 more at a time.
+const LOGS_BATCH_SIZE = 50
+// Cap on how many new rows a single live tick pulls in.
 const LIVE_FETCH_SIZE = 200
 
 // Which JSON log fields to hide is a display preference, not data — kept
@@ -150,45 +150,53 @@ function JsonFieldsMenu({fields, hidden, onToggle}: {
 }
 
 export function LogsPage() {
-    const {showError} = useNotification()
-    // Sorted newest-first by default so page 1 is always the most recent slice —
-    // for other entities defaulting to page 1 is fine, but for an ever-growing
-    // log table "page 1, oldest first" would bury the newest entries on later pages.
-    const table = useTableState({sortBy: 'timestamp', sortDir: 'desc'}, 'logs-list')
+    const {showError, showSuccess} = useNotification()
     const [appNames, setAppNames] = useState<string[]>([])
     const [appName, setAppName] = useState('')
     const [activeMinutes, setActiveMinutes] = useState(0)
     const {filters, setFilter, clearFilters} = useEntityFilters()
+
+    // Rows are always ascending by timestamp (oldest first) — scrolling up
+    // prepends older batches, live mode appends new ones at the bottom.
     const [rows, setRows] = useState<LogEntry[]>([])
     const [total, setTotal] = useState(0)
-    const [loading, setLoading] = useState(false)
-    const [refreshKey, setRefreshKey] = useState(0)
+    const [initialLoading, setInitialLoading] = useState(false)
+    const [loadingOlder, setLoadingOlder] = useState(false)
+    const [hasMoreOlder, setHasMoreOlder] = useState(true)
+    const [search, setSearch] = useState('')
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+
     const [expandAll, setExpandAll] = useState(false)
     const [liveMode, setLiveMode] = useState(false)
     const [liveIntervalMs, setLiveIntervalMs] = useState(5000)
     const [hiddenJsonFields, setHiddenJsonFields] = useState<Set<string>>(loadHiddenJsonFields)
 
-    // Cursor + dedupe set for the live tail — refs so updating them doesn't
-    // itself trigger a render; they only matter to the next poll tick.
-    const lastSeenTimestampRef = useRef<string | null>(null)
     const knownLogIdsRef = useRef<Set<number>>(new Set())
-    // Bumped on every reset (filters/appName/pageSize change, or enabling live).
-    // A fetch started under an older generation discards its response instead
-    // of applying it, so a slow request from before a filter change can't
-    // land after — and overwrite — the fresher one.
-    const liveGenerationRef = useRef(0)
+    // Bottom cursor for live-tail appends — only meaningful once resetView() has run.
+    const lastSeenTimestampRef = useRef<string | null>(null)
+    // Bumped on every reset (filters/appName change). A fetch (initial load,
+    // load-older, or live tick) started under an older generation discards its
+    // response instead of applying it, so a slow request from before a filter
+    // change can't land after — and corrupt — the fresher view.
+    const viewGenerationRef = useRef(0)
+
+    const scrollRef = useRef<HTMLDivElement>(null)
+    // Set right before prepending older rows so the layout effect can keep the
+    // viewport anchored to the same content instead of jumping on the prepend.
+    const prependAnchorRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null)
+    // Whether the user is parked at the bottom (following along) — only then
+    // do live-appended rows auto-scroll into view instead of leaving the user
+    // wherever they scrolled up to read history.
+    const isNearBottomRef = useRef(true)
 
     const handleTimeFilter = (minutes: number) => {
         setActiveMinutes(minutes)
-        //2026-06-20T00:15
         const now = new Date()
         const start = new Date(now.getTime() - minutes * 60 * 1000)
-        // const startStr = start.toISOString().split('T')[0] + 'T' + start.toTimeString().slice(0, 5)
         const startStr = start.toISOString().slice(0, 16)
         const endStr = now.toISOString().slice(0, 16)
         setFilter("timestamp_from", startStr)
         setFilter("timestamp_to", endStr)
-        load()
     }
 
     const toggleJsonField = (field: string) => {
@@ -217,25 +225,20 @@ export function LogsPage() {
         return [...fields].sort()
     }, [rows])
 
-    const columns = [
-        ...buildColumnsFromConfig<LogEntry>('LogEntity', {
-            fullLog: {
-                render: (row) => (
-                    <ExpandableLog
-                        text={row.fullLog}
-                        forceExpanded={expandAll ? true : undefined}
-                        hiddenFields={hiddenJsonFields}
-                    />
-                ),
-                width: '480px',
-            },
-        })
-    ]
+    const columns: Column<LogEntry>[] = buildColumnsFromConfig<LogEntry>('LogEntity', {
+        fullLog: {
+            render: (row) => (
+                <ExpandableLog
+                    text={row.fullLog}
+                    forceExpanded={expandAll ? true : undefined}
+                    hiddenFields={hiddenJsonFields}
+                />
+            ),
+            width: '480px',
+        },
+    })
 
     useEffect(() => {
-        // Set default time filter to last 1 hour
-        handleTimeFilter(60)
-
         logsApi.getAppNames().then((res) => {
             const names = Array.isArray(res.data) ? res.data : Array.from(res.data as Set<string>)
             setAppNames(names)
@@ -244,44 +247,22 @@ export function LogsPage() {
     }, []);
 
     useEffect(() => {
-        if (liveMode) return
-        let cancelled = false
-        setLoading(true)
+        handleTimeFilter(60)
+    }, [])
 
-        logsApi
-            .getAll({
-                page: table.page,
-                size: table.pageSize,
-                sort: table.sortBy,
-                direction: table.sortDir,
-                ...filters,
-            })
-            .then((res) => {
-                if (cancelled) return
-                const p = toPage(res.data)
-                setRows(p.content)
-                setTotal(p.totalElements)
-            })
-            .finally(() => {
-                if (!cancelled) setLoading(false)
-            })
-        return () => {
-            cancelled = true
-        }
-    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, JSON.stringify(filters), liveMode])
-
-    const load = () => setRefreshKey(k => k + 1)
-
-    // Live tail: first tick snapshots the newest `pageSize` entries; every tick
-    // after that only asks for what's newer than the last-seen timestamp, so we
-    // append rather than re-fetch the whole window. Ids are deduped via a ref
-    // since the same boundary row can come back depending on backend inclusivity.
-    const fetchLiveLogs = useCallback(async () => {
+    // Loads the newest LOGS_BATCH_SIZE entries and replaces the view — run on
+    // mount and whenever appName/filters change, regardless of live mode.
+    const resetView = useCallback(async () => {
         if (!appName) return
-        const generation = liveGenerationRef.current
-        const since = lastSeenTimestampRef.current
-
-        if (!since) {
+        viewGenerationRef.current += 1
+        const generation = viewGenerationRef.current
+        knownLogIdsRef.current = new Set()
+        lastSeenTimestampRef.current = null
+        setSelectedIds(new Set())
+        setHasMoreOlder(true)
+        setRows([])
+        setInitialLoading(true)
+        try {
             const res = await logsApi.getAll({
                 appName,
                 ...filters,
@@ -289,19 +270,70 @@ export function LogsPage() {
                 sort: 'timestamp',
                 direction: 'desc',
                 page: 0,
-                size: table.pageSize,
+                size: LOGS_BATCH_SIZE,
             })
-            if (liveGenerationRef.current !== generation) return // superseded by a newer reset
+            if (viewGenerationRef.current !== generation) return
             const p = toPage(res.data)
             const initial = [...p.content].reverse()
             knownLogIdsRef.current = new Set(initial.map(r => r.id))
+            isNearBottomRef.current = true
             setRows(initial)
             setTotal(p.totalElements)
+            setHasMoreOlder(p.content.length === LOGS_BATCH_SIZE)
             lastSeenTimestampRef.current = initial.length
                 ? initial[initial.length - 1].timestamp
                 : new Date().toISOString()
-            return
+        } finally {
+            if (viewGenerationRef.current === generation) setInitialLoading(false)
         }
+    }, [appName, filters])
+
+    useEffect(() => {
+        void resetView()
+    }, [appName, JSON.stringify(filters), resetView])
+
+    // Scrolling near the top pulls in the next-older batch and prepends it.
+    const loadOlder = useCallback(async () => {
+        if (loadingOlder || !hasMoreOlder || rows.length === 0 || !appName) return
+        const generation = viewGenerationRef.current
+        const oldestTimestamp = rows[0].timestamp
+        setLoadingOlder(true)
+        try {
+            const res = await logsApi.getAll({
+                appName,
+                ...filters,
+                timestamp_to: oldestTimestamp,
+                sort: 'timestamp',
+                direction: 'desc',
+                page: 0,
+                size: LOGS_BATCH_SIZE,
+            })
+            if (viewGenerationRef.current !== generation) return
+            const p = toPage(res.data)
+            const older = [...p.content].reverse().filter(entry => !knownLogIdsRef.current.has(entry.id))
+            if (older.length > 0) {
+                older.forEach(entry => knownLogIdsRef.current.add(entry.id))
+                if (scrollRef.current) {
+                    prependAnchorRef.current = {
+                        scrollHeight: scrollRef.current.scrollHeight,
+                        scrollTop: scrollRef.current.scrollTop,
+                    }
+                }
+                setRows(prev => [...older, ...prev])
+            }
+            if (p.content.length < LOGS_BATCH_SIZE) setHasMoreOlder(false)
+        } finally {
+            if (viewGenerationRef.current === generation) setLoadingOlder(false)
+        }
+    }, [loadingOlder, hasMoreOlder, rows, appName, filters])
+
+    // Live tail: only appends what's newer than the last-seen timestamp set by
+    // resetView — the initial snapshot is always resetView's job now.
+    const fetchLiveLogs = useCallback(async () => {
+        if (!appName) return
+        const since = lastSeenTimestampRef.current
+        if (!since) return
+        const generation = viewGenerationRef.current
 
         const res = await logsApi.getAll({
             appName,
@@ -313,7 +345,7 @@ export function LogsPage() {
             page: 0,
             size: LIVE_FETCH_SIZE,
         })
-        if (liveGenerationRef.current !== generation) return // superseded by a newer reset
+        if (viewGenerationRef.current !== generation) return
         const p = toPage(res.data)
         if (p.content.length === 0) return
 
@@ -322,37 +354,68 @@ export function LogsPage() {
         if (freshEntries.length === 0) return
 
         freshEntries.forEach(entry => knownLogIdsRef.current.add(entry.id))
-        setRows(prev => {
-            const merged = [...prev, ...freshEntries]
-            const overflow = merged.length - table.pageSize
-            return overflow > 0 ? merged.slice(overflow) : merged
-        })
+        setRows(prev => [...prev, ...freshEntries])
         setTotal(t => t + freshEntries.length)
-    }, [appName, filters, table.pageSize])
+    }, [appName, filters])
 
-    const {lastUpdated, refresh: refreshLive} = useAutoRefresh(fetchLiveLogs, {
+    const {lastUpdated} = useAutoRefresh(fetchLiveLogs, {
         intervalMs: liveIntervalMs,
         enabled: liveMode,
     })
 
-    // Filters/appName/pageSize changing mid-stream restarts the tail from a
-    // fresh snapshot instead of mixing rows from two different filter sets.
-    useEffect(() => {
-        if (!liveMode) return
-        lastSeenTimestampRef.current = null
-        knownLogIdsRef.current = new Set()
-        setRows([])
-        void refreshLive()
-    }, [appName, JSON.stringify(filters), table.pageSize, liveMode, refreshLive])
+    // Keep the viewport anchored: restore scroll position after a prepend, or
+    // follow to the bottom on append if the user was already parked there.
+    useLayoutEffect(() => {
+        const el = scrollRef.current
+        if (!el) return
+        if (prependAnchorRef.current) {
+            const {scrollHeight: oldHeight, scrollTop: oldTop} = prependAnchorRef.current
+            el.scrollTop = oldTop + (el.scrollHeight - oldHeight)
+            prependAnchorRef.current = null
+        } else if (isNearBottomRef.current) {
+            el.scrollTop = el.scrollHeight
+        }
+    }, [rows])
 
-    const actions = useTableActions<LogEntry>({
-        onRefresh: load,
-        onCopy: (selected) => selected.map(r => r.fullLog || r.message).join('\n\n'),
-    })
+    const handleScroll = () => {
+        const el = scrollRef.current
+        if (!el) return
+        if (el.scrollTop < 150) void loadOlder()
+        const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+        isNearBottomRef.current = distanceFromBottom < 100
+    }
 
-    const displayedRows = table.search
-        ? rows.filter(r => r.fullLog?.toLowerCase().includes(table.search.toLowerCase()))
+    const displayedRows = search
+        ? rows.filter(r => r.fullLog?.toLowerCase().includes(search.toLowerCase()))
         : rows
+
+    const toggleSelect = (id: number) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev)
+            next.has(id) ? next.delete(id) : next.add(id)
+            return next
+        })
+    }
+
+    const toggleSelectAll = () => {
+        setSelectedIds(prev =>
+            prev.size === displayedRows.length && displayedRows.length > 0
+                ? new Set()
+                : new Set(displayedRows.map(r => r.id))
+        )
+    }
+
+    const handleCopySelected = async () => {
+        const selected = displayedRows.filter(r => selectedIds.has(r.id))
+        if (selected.length === 0) return
+        try {
+            await navigator.clipboard.writeText(selected.map(r => r.fullLog || r.message).join('\n\n'))
+            showSuccess(`Copied ${selected.length} row(s)`)
+            setSelectedIds(new Set())
+        } catch {
+            showError('Failed to copy to clipboard')
+        }
+    }
 
     return (
         <div className={styles.page}>
@@ -361,10 +424,7 @@ export function LogsPage() {
                     <CustomSelect
                         options={appNames.map((n) => ({value: n, label: n}))}
                         value={appName}
-                        onChange={(v) => {
-                            setAppName(String(v));
-                            load()
-                        }}
+                        onChange={(v) => setAppName(String(v))}
                         size="sm"
                     />
                     <Button
@@ -388,6 +448,12 @@ export function LogsPage() {
                         {expandAll ? 'Collapse All' : 'Expand All'}
                     </Button>
                     <JsonFieldsMenu fields={knownJsonFields} hidden={hiddenJsonFields} onToggle={toggleJsonField}/>
+                    {selectedIds.size > 0 && (
+                        <Button variant="secondary" size="sm" onClick={handleCopySelected}>
+                            Copy ({selectedIds.size})
+                        </Button>
+                    )}
+                    <span className={styles.stats}>{total} total</span>
                 </div>
                 <div className={styles.timeFilters}>
                     {TIME_FILTERS.map((tf) => (
@@ -415,23 +481,78 @@ export function LogsPage() {
                 onFiltersChange={setFilter}
                 onClear={clearFilters}
             />
-            <DataTable
-                columns={columns}
-                rows={displayedRows}
-                rowKey={(r) => r.id.toString()}
-                loading={loading}
-                page={liveMode ? 0 : table.page}
-                pageSize={table.pageSize}
-                totalElements={total}
-                onPageChange={liveMode ? undefined : table.setPage}
-                onPageSizeChange={table.setPageSize}
-                sortBy={table.sortBy}
-                sortDir={table.sortDir}
-                onSort={liveMode ? undefined : table.toggleSort}
-                searchValue={table.search}
-                onSearchChange={table.setSearch}
-                actions={actions}
+
+            <input
+                className={styles.searchInput}
+                placeholder="Search loaded logs…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
             />
+
+            <div className={styles.scrollContainer} ref={scrollRef} onScroll={handleScroll}>
+                <table className={tableStyles.table}>
+                    <thead>
+                        <tr>
+                            <th className={tableStyles.checkCell}>
+                                <input
+                                    type="checkbox"
+                                    checked={displayedRows.length > 0 && selectedIds.size === displayedRows.length}
+                                    onChange={toggleSelectAll}
+                                />
+                            </th>
+                            {columns.map((col) => (
+                                <th key={col.key} style={{width: col.width}}>{col.header}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loadingOlder && (
+                            <tr>
+                                <td colSpan={columns.length + 1} className={styles.loadingRow}>Loading earlier
+                                    logs…
+                                </td>
+                            </tr>
+                        )}
+                        {!hasMoreOlder && rows.length > 0 && (
+                            <tr>
+                                <td colSpan={columns.length + 1} className={styles.beginningRow}>— Beginning of
+                                    results —
+                                </td>
+                            </tr>
+                        )}
+                        {displayedRows.length === 0 ? (
+                            <tr>
+                                <td colSpan={columns.length + 1} className={tableStyles.empty}>
+                                    {initialLoading ? 'Loading…' : 'No data'}
+                                </td>
+                            </tr>
+                        ) : (
+                            displayedRows.map((row) => (
+                                <tr
+                                    key={row.id}
+                                    className={`${tableStyles.row} ${selectedIds.has(row.id) ? tableStyles.selectedRow : ''}`}
+                                >
+                                    <td className={tableStyles.checkCell} onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.has(row.id)}
+                                            onChange={() => toggleSelect(row.id)}
+                                        />
+                                    </td>
+                                    {columns.map((col) => (
+                                        <td
+                                            key={col.key}
+                                            style={col.width ? {width: col.width, maxWidth: col.width} : undefined}
+                                        >
+                                            {col.render ? col.render(row) : String((row as unknown as Record<string, unknown>)[col.key] ?? '')}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
         </div>
     )
 }

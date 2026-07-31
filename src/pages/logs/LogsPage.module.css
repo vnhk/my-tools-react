@@ -54,112 +54,6 @@
   color: var(--color-text-tertiary);
 }
 
-.tableWrapper {
-  flex: 1;
-  overflow: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-}
-
-.table th {
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  text-align: left;
-  border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.row {
-  border-bottom: 1px solid var(--color-border);
-  transition: background var(--transition);
-}
-
-.row:hover {
-  background: var(--color-surface-hover);
-}
-
-.row td {
-  padding: var(--space-xs) var(--space-sm);
-  vertical-align: top;
-}
-
-.colTimestamp {
-  white-space: nowrap;
-  min-width: 160px;
-}
-
-.colLevel {
-  min-width: 70px;
-}
-
-.colApp {
-  min-width: 100px;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.colProcess {
-  min-width: 100px;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-text-secondary);
-}
-
-.colModule {
-  min-width: 80px;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--color-text-secondary);
-}
-
-.colLog {
-  min-width: 300px;
-}
-
-.levelBadge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: var(--radius-pill);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-}
-
-.levelError {
-  background: var(--color-danger-subtle);
-  color: var(--color-danger);
-}
-
-.levelWarn {
-  background: var(--color-warning-subtle);
-  color: var(--color-warning);
-}
-
-.levelInfo {
-  background: var(--color-info-subtle);
-  color: var(--color-info);
-}
-
-.levelDebug {
-  background: var(--color-surface);
-  color: var(--color-text-tertiary);
-}
-
 .logCell {
   display: flex;
   flex-direction: column;
@@ -201,12 +95,6 @@
 
 .expandBtn:hover {
   background: var(--color-primary-subtle);
-}
-
-.empty {
-  text-align: center;
-  color: var(--color-text-tertiary);
-  padding: var(--space-xl);
 }
 
 .fieldsMenu {
@@ -259,15 +147,42 @@
   color: var(--color-text-tertiary);
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  justify-content: center;
+.searchInput {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  padding: 9px 14px;
+  outline: none;
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
 }
 
-.pageInfo {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  padding: 0 var(--space-sm);
+.searchInput:focus {
+  border-color: var(--color-primary-dark);
+  background-color: rgba(165, 180, 252, 0.05);
+  box-shadow: 0 0 0 3px rgba(165, 180, 252, 0.12);
+}
+
+.searchInput::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* CloudWatch-style infinite scroll viewport: fixed height, scroll up for history. */
+.scrollContainer {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: 70vh;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.018);
+}
+
+.loadingRow, .beginningRow {
+  text-align: center;
+  color: var(--color-text-tertiary);
+  padding: var(--space-sm) !important;
+  font-size: var(--font-size-xs);
 }
