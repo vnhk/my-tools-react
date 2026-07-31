@@ -209,6 +209,56 @@
   padding: var(--space-xl);
 }
 
+.fieldsMenu {
+  position: relative;
+}
+
+.fieldsDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 200;
+  min-width: 180px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: rgba(10, 12, 22, 0.97);
+  border: 1px solid rgba(165, 180, 252, 0.18);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fieldsOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fieldsOption:hover {
+  background: rgba(165, 180, 252, 0.08);
+  color: var(--color-text-primary);
+}
+
+.fieldsOption input {
+  accent-color: var(--color-primary-dark);
+  cursor: pointer;
+}
+
+.fieldsEmpty {
+  padding: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
 .pagination {
   display: flex;
   align-items: center;

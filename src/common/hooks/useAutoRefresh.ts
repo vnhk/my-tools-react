@@ -28,8 +28,14 @@ export function useAutoRefresh<T>(
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const fetcherRef = useRef(fetcher)
   fetcherRef.current = fetcher
+  // Guards against a slow fetcher() still being in flight when the next tick
+  // (interval or manual refresh()) fires — without this, overlapping calls can
+  // resolve out of order and let a stale one clobber a fresher result.
+  const isFetchingRef = useRef(false)
 
   const tick = useCallback(async () => {
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
     setLoading(true)
     try {
       const result = await fetcherRef.current()
@@ -40,6 +46,7 @@ export function useAutoRefresh<T>(
       setError(err)
     } finally {
       setLoading(false)
+      isFetchingRef.current = false
     }
   }, [])
 

@@ -152,6 +152,11 @@
   flex-shrink: 0;
 }
 
+.pageJumpSelect {
+  width: 90px;
+  flex-shrink: 0;
+}
+
 /* ══ Floating selection toolbar ═══════════════════════════════════════════════ */
 .floatingToolbar {
   position: fixed;

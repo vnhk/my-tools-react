@@ -1,4 +1,4 @@
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import {type LogEntry, logsApi} from '../../api/logs'
 import {DataTable} from '../../components/table/DataTable'
 import {EntityFilters} from '../../components/ui/EntityFilters'
@@ -40,18 +40,48 @@ const LIVE_INTERVALS = [
 // pageSize right after anyway, this just bounds a single request's payload.
 const LIVE_FETCH_SIZE = 200
 
-function ExpandableLog({text, forceExpanded}: { text: string; forceExpanded?: boolean }) {
+// Which JSON log fields to hide is a display preference, not data — kept
+// entirely client-side and persisted so it survives reloads.
+const HIDDEN_JSON_FIELDS_KEY = 'logs.hiddenJsonFields'
+
+function loadHiddenJsonFields(): Set<string> {
+    try {
+        const raw = localStorage.getItem(HIDDEN_JSON_FIELDS_KEY)
+        return raw ? new Set(JSON.parse(raw)) : new Set()
+    } catch {
+        return new Set()
+    }
+}
+
+function saveHiddenJsonFields(fields: Set<string>) {
+    try {
+        localStorage.setItem(HIDDEN_JSON_FIELDS_KEY, JSON.stringify([...fields]))
+    } catch {
+        // ignore quota errors
+    }
+}
+
+function ExpandableLog({text, forceExpanded, hiddenFields}: {
+    text: string
+    forceExpanded?: boolean
+    hiddenFields?: Set<string>
+}) {
     const [localExpanded, setLocalExpanded] = useState(false)
     const expanded = forceExpanded ?? localExpanded
     const isLong = text && text.length > 300
     const display = expanded || !isLong ? text : text.slice(0, 300) + '…'
 
     let isJson = false
-    let parsed: unknown = null
+    let parsed: Record<string, unknown> | null = null
     try {
         if (text && text.trimStart().startsWith('{')) {
-            parsed = JSON.parse(text)
-            isJson = true
+            const raw = JSON.parse(text)
+            if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+                parsed = hiddenFields && hiddenFields.size > 0
+                    ? Object.fromEntries(Object.entries(raw).filter(([k]) => !hiddenFields.has(k)))
+                    : raw
+                isJson = true
+            }
         }
     } catch { /* not json */
     }
@@ -73,9 +103,58 @@ function ExpandableLog({text, forceExpanded}: { text: string; forceExpanded?: bo
     )
 }
 
+function JsonFieldsMenu({fields, hidden, onToggle}: {
+    fields: string[]
+    hidden: Set<string>
+    onToggle: (field: string) => void
+}) {
+    const [open, setOpen] = useState(false)
+    const wrapperRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        const handleClick = (e: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setOpen(false)
+        }
+        document.addEventListener('mousedown', handleClick)
+        return () => document.removeEventListener('mousedown', handleClick)
+    }, [open])
+
+    const visibleCount = fields.length - hidden.size
+
+    return (
+        <div className={styles.fieldsMenu} ref={wrapperRef}>
+            <Button variant="secondary" size="sm" onClick={() => setOpen(v => !v)}>
+                Fields {fields.length > 0 ? `(${visibleCount}/${fields.length})` : ''}
+            </Button>
+            {open && (
+                <div className={styles.fieldsDropdown}>
+                    {fields.length === 0 ? (
+                        <div className={styles.fieldsEmpty}>No JSON fields seen yet</div>
+                    ) : (
+                        fields.map(f => (
+                            <label key={f} className={styles.fieldsOption}>
+                                <input
+                                    type="checkbox"
+                                    checked={!hidden.has(f)}
+                                    onChange={() => onToggle(f)}
+                                />
+                                {f}
+                            </label>
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    )
+}
+
 export function LogsPage() {
     const {showError} = useNotification()
-    const table = useTableState({sortBy: 'name', sortDir: 'asc'}, 'interview-questions-list')
+    // Sorted newest-first by default so page 1 is always the most recent slice —
+    // for other entities defaulting to page 1 is fine, but for an ever-growing
+    // log table "page 1, oldest first" would bury the newest entries on later pages.
+    const table = useTableState({sortBy: 'timestamp', sortDir: 'desc'}, 'logs-list')
     const [appNames, setAppNames] = useState<string[]>([])
     const [appName, setAppName] = useState('')
     const [activeMinutes, setActiveMinutes] = useState(0)
@@ -87,11 +166,17 @@ export function LogsPage() {
     const [expandAll, setExpandAll] = useState(false)
     const [liveMode, setLiveMode] = useState(false)
     const [liveIntervalMs, setLiveIntervalMs] = useState(5000)
+    const [hiddenJsonFields, setHiddenJsonFields] = useState<Set<string>>(loadHiddenJsonFields)
 
     // Cursor + dedupe set for the live tail — refs so updating them doesn't
     // itself trigger a render; they only matter to the next poll tick.
     const lastSeenTimestampRef = useRef<string | null>(null)
     const knownLogIdsRef = useRef<Set<number>>(new Set())
+    // Bumped on every reset (filters/appName/pageSize change, or enabling live).
+    // A fetch started under an older generation discards its response instead
+    // of applying it, so a slow request from before a filter change can't
+    // land after — and overwrite — the fresher one.
+    const liveGenerationRef = useRef(0)
 
     const handleTimeFilter = (minutes: number) => {
         setActiveMinutes(minutes)
@@ -106,10 +191,42 @@ export function LogsPage() {
         load()
     }
 
+    const toggleJsonField = (field: string) => {
+        setHiddenJsonFields(prev => {
+            const next = new Set(prev)
+            next.has(field) ? next.delete(field) : next.add(field)
+            saveHiddenJsonFields(next)
+            return next
+        })
+    }
+
+    // Union of JSON keys seen across whatever rows are currently loaded — grows
+    // as new/rarer fields (e.g. moduleName) show up, including while live.
+    const knownJsonFields = useMemo(() => {
+        const fields = new Set<string>()
+        for (const row of rows) {
+            if (!row.fullLog?.trimStart().startsWith('{')) continue
+            try {
+                const parsed = JSON.parse(row.fullLog)
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    Object.keys(parsed).forEach(k => fields.add(k))
+                }
+            } catch { /* not json */
+            }
+        }
+        return [...fields].sort()
+    }, [rows])
+
     const columns = [
         ...buildColumnsFromConfig<LogEntry>('LogEntity', {
             fullLog: {
-                render: (row) => <ExpandableLog text={row.fullLog} forceExpanded={expandAll ? true : undefined}/>,
+                render: (row) => (
+                    <ExpandableLog
+                        text={row.fullLog}
+                        forceExpanded={expandAll ? true : undefined}
+                        hiddenFields={hiddenJsonFields}
+                    />
+                ),
                 width: '480px',
             },
         })
@@ -161,6 +278,7 @@ export function LogsPage() {
     // since the same boundary row can come back depending on backend inclusivity.
     const fetchLiveLogs = useCallback(async () => {
         if (!appName) return
+        const generation = liveGenerationRef.current
         const since = lastSeenTimestampRef.current
 
         if (!since) {
@@ -173,6 +291,7 @@ export function LogsPage() {
                 page: 0,
                 size: table.pageSize,
             })
+            if (liveGenerationRef.current !== generation) return // superseded by a newer reset
             const p = toPage(res.data)
             const initial = [...p.content].reverse()
             knownLogIdsRef.current = new Set(initial.map(r => r.id))
@@ -194,6 +313,7 @@ export function LogsPage() {
             page: 0,
             size: LIVE_FETCH_SIZE,
         })
+        if (liveGenerationRef.current !== generation) return // superseded by a newer reset
         const p = toPage(res.data)
         if (p.content.length === 0) return
 
@@ -267,6 +387,7 @@ export function LogsPage() {
                     <Button variant="secondary" size="sm" onClick={() => setExpandAll(v => !v)}>
                         {expandAll ? 'Collapse All' : 'Expand All'}
                     </Button>
+                    <JsonFieldsMenu fields={knownJsonFields} hidden={hiddenJsonFields} onToggle={toggleJsonField}/>
                 </div>
                 <div className={styles.timeFilters}>
                     {TIME_FILTERS.map((tf) => (

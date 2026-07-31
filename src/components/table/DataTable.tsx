@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { Button } from '../ui/Button'
 import { CustomSelect } from '../fields/CustomSelect'
 import styles from './DataTable.module.css'
@@ -87,6 +87,16 @@ export function DataTable<T>({
 
   const selectedRows = rows.filter((r) => selected.has(rowKey(r)))
   const totalPages = totalElements != null ? Math.ceil(totalElements / pageSize) : undefined
+
+  // A page that ends up with no rows (new search/filter with fewer matches,
+  // page size increase, etc.) would otherwise strand the user on a blank
+  // "page 2 of 1"-looking view — bounce back to page 1 instead. Applies to
+  // every table using DataTable, not just whichever page triggered it.
+  useEffect(() => {
+    if (!loading && rows.length === 0 && page > 0 && onPageChange) {
+      onPageChange(0)
+    }
+  }, [loading, rows.length, page, onPageChange])
 
   return (
     <div className={styles.wrapper}>
@@ -210,7 +220,21 @@ export function DataTable<T>({
             {onPageChange && totalPages != null && (
               <>
                 <Button size="sm" variant="ghost" disabled={page === 0} onClick={() => onPageChange(page - 1)}>‹</Button>
-                <span className={styles.pageInfo}>{page + 1} / {totalPages}</span>
+                {totalPages > 1 ? (
+                  <CustomSelect
+                    size="sm"
+                    placement="top"
+                    className={styles.pageJumpSelect}
+                    options={Array.from({ length: totalPages }, (_, i) => ({
+                      value: i,
+                      label: `${i + 1} / ${totalPages}`,
+                    }))}
+                    value={page}
+                    onChange={(v) => onPageChange(Number(v))}
+                  />
+                ) : (
+                  <span className={styles.pageInfo}>{page + 1} / {totalPages}</span>
+                )}
                 <Button size="sm" variant="ghost" disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>›</Button>
               </>
             )}
