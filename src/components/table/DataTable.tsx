@@ -173,7 +173,7 @@ export function DataTable<T>({
                       <input type="checkbox" checked={selected.has(id)} onChange={() => toggleRow(id)} />
                     </td>
                     {columns.map((col) => (
-                      <td key={col.key}>
+                      <td key={col.key} style={col.width ? { width: col.width, maxWidth: col.width } : undefined}>
                         {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                       </td>
                     ))}

@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 import {type LogEntry, logsApi} from '../../api/logs'
 import {DataTable} from '../../components/table/DataTable'
 import {EntityFilters} from '../../components/ui/EntityFilters'
@@ -7,10 +7,12 @@ import {buildColumnsFromConfig} from '../../components/table/configColumns'
 import {useTableState} from '../../hooks/useTableState'
 import {useTableActions} from '../../hooks/useTableActions'
 import {useEntityFilters} from '../../hooks/useEntityFilters'
+import {useAutoRefresh} from '../../common/hooks/useAutoRefresh'
 import {toPage} from '../../api/crud'
 import styles from './LogsPage.module.css'
 import {CustomSelect} from "../../components/fields/CustomSelect.tsx";
 import {useNotification} from "../../components/ui/Notification.tsx";
+import {Button} from "../../components/ui/Button.tsx";
 
 const TIME_FILTERS = [
     {label: 'Last 5m', minutes: 5},
@@ -24,8 +26,23 @@ const TIME_FILTERS = [
     {label: 'Last 7d', minutes: 10080},
 ]
 
-function ExpandableLog({text}: { text: string }) {
-    const [expanded, setExpanded] = useState(false)
+const LIVE_INTERVALS = [
+    {label: '1s', ms: 1000},
+    {label: '2s', ms: 2000},
+    {label: '5s', ms: 5000},
+    {label: '10s', ms: 10000},
+    {label: '30s', ms: 30000},
+    {label: '1m', ms: 60000},
+    {label: '5m', ms: 300000},
+]
+
+// Cap on how many new rows we pull per tick — the tail buffer trims down to
+// pageSize right after anyway, this just bounds a single request's payload.
+const LIVE_FETCH_SIZE = 200
+
+function ExpandableLog({text, forceExpanded}: { text: string; forceExpanded?: boolean }) {
+    const [localExpanded, setLocalExpanded] = useState(false)
+    const expanded = forceExpanded ?? localExpanded
     const isLong = text && text.length > 300
     const display = expanded || !isLong ? text : text.slice(0, 300) + '…'
 
@@ -47,8 +64,8 @@ function ExpandableLog({text}: { text: string }) {
             ) : (
                 <span className={styles.logText}>{display}</span>
             )}
-            {isLong && (
-                <button className={styles.expandBtn} onClick={() => setExpanded(!expanded)}>
+            {isLong && forceExpanded === undefined && (
+                <button className={styles.expandBtn} onClick={() => setLocalExpanded(!localExpanded)}>
                     {expanded ? 'Collapse' : 'Expand'}
                 </button>
             )}
@@ -67,6 +84,14 @@ export function LogsPage() {
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [refreshKey, setRefreshKey] = useState(0)
+    const [expandAll, setExpandAll] = useState(false)
+    const [liveMode, setLiveMode] = useState(false)
+    const [liveIntervalMs, setLiveIntervalMs] = useState(5000)
+
+    // Cursor + dedupe set for the live tail — refs so updating them doesn't
+    // itself trigger a render; they only matter to the next poll tick.
+    const lastSeenTimestampRef = useRef<string | null>(null)
+    const knownLogIdsRef = useRef<Set<number>>(new Set())
 
     const handleTimeFilter = (minutes: number) => {
         setActiveMinutes(minutes)
@@ -83,7 +108,10 @@ export function LogsPage() {
 
     const columns = [
         ...buildColumnsFromConfig<LogEntry>('LogEntity', {
-            fullLog: {render: (row) => <ExpandableLog text={row.fullLog}/>},
+            fullLog: {
+                render: (row) => <ExpandableLog text={row.fullLog} forceExpanded={expandAll ? true : undefined}/>,
+                width: '480px',
+            },
         })
     ]
 
@@ -99,6 +127,7 @@ export function LogsPage() {
     }, []);
 
     useEffect(() => {
+        if (liveMode) return
         let cancelled = false
         setLoading(true)
 
@@ -122,12 +151,83 @@ export function LogsPage() {
         return () => {
             cancelled = true
         }
-    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, JSON.stringify(filters)])
+    }, [table.page, table.pageSize, table.sortBy, table.sortDir, refreshKey, JSON.stringify(filters), liveMode])
 
     const load = () => setRefreshKey(k => k + 1)
 
+    // Live tail: first tick snapshots the newest `pageSize` entries; every tick
+    // after that only asks for what's newer than the last-seen timestamp, so we
+    // append rather than re-fetch the whole window. Ids are deduped via a ref
+    // since the same boundary row can come back depending on backend inclusivity.
+    const fetchLiveLogs = useCallback(async () => {
+        if (!appName) return
+        const since = lastSeenTimestampRef.current
+
+        if (!since) {
+            const res = await logsApi.getAll({
+                appName,
+                ...filters,
+                timestamp_to: undefined,
+                sort: 'timestamp',
+                direction: 'desc',
+                page: 0,
+                size: table.pageSize,
+            })
+            const p = toPage(res.data)
+            const initial = [...p.content].reverse()
+            knownLogIdsRef.current = new Set(initial.map(r => r.id))
+            setRows(initial)
+            setTotal(p.totalElements)
+            lastSeenTimestampRef.current = initial.length
+                ? initial[initial.length - 1].timestamp
+                : new Date().toISOString()
+            return
+        }
+
+        const res = await logsApi.getAll({
+            appName,
+            ...filters,
+            timestamp_from: since,
+            timestamp_to: undefined,
+            sort: 'timestamp',
+            direction: 'asc',
+            page: 0,
+            size: LIVE_FETCH_SIZE,
+        })
+        const p = toPage(res.data)
+        if (p.content.length === 0) return
+
+        lastSeenTimestampRef.current = p.content[p.content.length - 1].timestamp
+        const freshEntries = p.content.filter(entry => !knownLogIdsRef.current.has(entry.id))
+        if (freshEntries.length === 0) return
+
+        freshEntries.forEach(entry => knownLogIdsRef.current.add(entry.id))
+        setRows(prev => {
+            const merged = [...prev, ...freshEntries]
+            const overflow = merged.length - table.pageSize
+            return overflow > 0 ? merged.slice(overflow) : merged
+        })
+        setTotal(t => t + freshEntries.length)
+    }, [appName, filters, table.pageSize])
+
+    const {lastUpdated, refresh: refreshLive} = useAutoRefresh(fetchLiveLogs, {
+        intervalMs: liveIntervalMs,
+        enabled: liveMode,
+    })
+
+    // Filters/appName/pageSize changing mid-stream restarts the tail from a
+    // fresh snapshot instead of mixing rows from two different filter sets.
+    useEffect(() => {
+        if (!liveMode) return
+        lastSeenTimestampRef.current = null
+        knownLogIdsRef.current = new Set()
+        setRows([])
+        void refreshLive()
+    }, [appName, JSON.stringify(filters), table.pageSize, liveMode, refreshLive])
+
     const actions = useTableActions<LogEntry>({
         onRefresh: load,
+        onCopy: (selected) => selected.map(r => r.fullLog || r.message).join('\n\n'),
     })
 
     const displayedRows = table.search
@@ -147,6 +247,26 @@ export function LogsPage() {
                         }}
                         size="sm"
                     />
+                    <Button
+                        variant={liveMode ? 'success' : 'secondary'}
+                        size="sm"
+                        onClick={() => setLiveMode(v => !v)}
+                    >
+                        {liveMode ? '● Live' : 'Go Live'}
+                    </Button>
+                    <CustomSelect
+                        size="sm"
+                        options={LIVE_INTERVALS.map(i => ({value: i.ms, label: i.label}))}
+                        value={liveIntervalMs}
+                        onChange={(v) => setLiveIntervalMs(Number(v))}
+                        disabled={!liveMode}
+                    />
+                    {liveMode && lastUpdated && (
+                        <span className={styles.stats}>updated {lastUpdated.toLocaleTimeString()}</span>
+                    )}
+                    <Button variant="secondary" size="sm" onClick={() => setExpandAll(v => !v)}>
+                        {expandAll ? 'Collapse All' : 'Expand All'}
+                    </Button>
                 </div>
                 <div className={styles.timeFilters}>
                     {TIME_FILTERS.map((tf) => (
@@ -179,14 +299,14 @@ export function LogsPage() {
                 rows={displayedRows}
                 rowKey={(r) => r.id.toString()}
                 loading={loading}
-                page={table.page}
+                page={liveMode ? 0 : table.page}
                 pageSize={table.pageSize}
                 totalElements={total}
-                onPageChange={table.setPage}
+                onPageChange={liveMode ? undefined : table.setPage}
                 onPageSizeChange={table.setPageSize}
                 sortBy={table.sortBy}
                 sortDir={table.sortDir}
-                onSort={table.toggleSort}
+                onSort={liveMode ? undefined : table.toggleSort}
                 searchValue={table.search}
                 onSearchChange={table.setSearch}
                 actions={actions}
@@ -194,4 +314,3 @@ export function LogsPage() {
         </div>
     )
 }
-

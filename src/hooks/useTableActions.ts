@@ -8,6 +8,7 @@ interface UseTableActionsOptions<T> {
   onDelete?: (items: T[]) => Promise<void>
   onEdit?: (item: T) => void
   onExport?: (items: T[]) => Promise<void>
+  onCopy?: (items: T[]) => string
   onRefresh?: () => void
   exportable?: boolean
 }
@@ -16,6 +17,7 @@ export function useTableActions<T>({
   onDelete,
   onEdit,
   onExport,
+  onCopy,
   onRefresh,
   exportable = false,
 }: UseTableActionsOptions<T>): TableAction<T>[] {
@@ -60,6 +62,19 @@ export function useTableActions<T>({
     [onEdit, showError]
   )
 
+  const handleCopy = useCallback(
+    async (selected: T[]) => {
+      if (!onCopy) return
+      try {
+        await navigator.clipboard.writeText(onCopy(selected))
+        showSuccess(`Copied ${selected.length} row(s)`)
+      } catch {
+        showError('Failed to copy to clipboard')
+      }
+    },
+    [onCopy, showSuccess, showError]
+  )
+
   const actions: TableAction<T>[] = []
 
   if (onEdit) {
@@ -85,6 +100,15 @@ export function useTableActions<T>({
       label: 'Delete',
       variant: 'danger',
       onClick: handleDelete,
+      requiresSelection: true,
+    })
+  }
+
+  if (onCopy) {
+    actions.push({
+      label: 'Copy',
+      variant: 'secondary',
+      onClick: handleCopy,
       requiresSelection: true,
     })
   }
