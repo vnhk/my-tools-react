@@ -36,6 +36,11 @@ export function AppLayout({navItems}: AppLayoutProps) {
 
         checkMobile()
         checkTv()
+
+        if (isTv) {
+            document.body.classList.add('tv-client')
+        }
+
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
     }, [])

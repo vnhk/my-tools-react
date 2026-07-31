@@ -4,6 +4,7 @@ import {Dialog} from '../../components/ui/Dialog'
 import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
 import {EntityFilters} from '../../components/ui/EntityFilters'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
+import {Toolbar} from '../../components/ui/Toolbar'
 import {buildColumnsFromConfig} from '../../components/table/configColumns'
 import {useTableState} from '../../hooks/useTableState'
 import {useTableActions} from '../../hooks/useTableActions'
@@ -96,19 +97,21 @@ export function QuestionListPage() {
     return (
         <div className={styles.page}>
             <h2>Interview Questions</h2>
-            <ImportExportBar
-                exportUrl="/interview/questions/export"
-                importUrl="/interview/questions/import"
-                entityLabel="Questions"
-                onImportSuccess={load}
-                filters={filters}
-            />
-            <EntityFilters
-                entityName="Question"
-                filters={filters}
-                onFiltersChange={setFilter}
-                onClear={clearFilters}
-            />
+            <Toolbar>
+                <ImportExportBar
+                    exportUrl="/interview/questions/export"
+                    importUrl="/interview/questions/import"
+                    entityLabel="Questions"
+                    onImportSuccess={load}
+                    filters={filters}
+                />
+                <EntityFilters
+                    entityName="Question"
+                    filters={filters}
+                    onFiltersChange={setFilter}
+                    onClear={clearFilters}
+                />
+            </Toolbar>
             <DataTable
                 columns={columns}
                 rows={displayedRows}

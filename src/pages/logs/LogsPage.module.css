@@ -1,52 +1,10 @@
 .page {
+    flex: 1;
+    min-height: 0;
     padding: var(--space-md);
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  flex-wrap: wrap;
-}
-
-.toolbarLeft {
-  display: flex;
-  gap: var(--space-sm);
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.timeFilters {
-  display: flex;
-  gap: var(--space-xs);
-  flex-wrap: wrap;
-  flex: 1;
-}
-
-.timeBtn {
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-}
-
-.timeBtn:hover {
-  background: var(--color-surface-hover);
-  color: var(--color-text-primary);
-}
-
-.timeBtnActive {
-  background: var(--color-primary-subtle);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+    gap: var(--space-sm);
 }
 
 .stats {
@@ -169,12 +127,14 @@
   color: var(--color-text-tertiary);
 }
 
-/* CloudWatch-style infinite scroll viewport: fixed height, scroll up for history. */
+/* CloudWatch-style infinite scroll viewport. flex:1 + min-height:0 makes this
+   the ONLY scrollable region — .page above is itself height-constrained by
+   .main (flex:1) rather than growing with content, so the page never scrolls
+   and scroll-chaining to the document can't hijack a second scroll-up. */
 .scrollContainer {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  max-height: 70vh;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.018);

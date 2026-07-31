@@ -4,6 +4,7 @@ import {type Column} from '../../components/table/DataTable'
 import tableStyles from '../../components/table/DataTable.module.css'
 import {EntityFilters} from '../../components/ui/EntityFilters'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
+import {Toolbar} from '../../components/ui/Toolbar'
 import {buildColumnsFromConfig} from '../../components/table/configColumns'
 import {useEntityFilters} from '../../hooks/useEntityFilters'
 import {useAutoRefresh} from '../../common/hooks/useAutoRefresh'
@@ -419,68 +420,59 @@ export function LogsPage() {
 
     return (
         <div className={styles.page}>
-            <div className={styles.toolbar}>
-                <div className={styles.toolbarLeft}>
-                    <CustomSelect
-                        options={appNames.map((n) => ({value: n, label: n}))}
-                        value={appName}
-                        onChange={(v) => setAppName(String(v))}
-                        size="sm"
-                    />
-                    <Button
-                        variant={liveMode ? 'success' : 'secondary'}
-                        size="sm"
-                        onClick={() => setLiveMode(v => !v)}
-                    >
-                        {liveMode ? '● Live' : 'Go Live'}
+            <Toolbar>
+                <ImportExportBar
+                    exportUrl="/logs/export"
+                    importUrl=""
+                    entityLabel="Logs"
+                    filters={filters}
+                />
+                <EntityFilters
+                    entityName="LogEntity"
+                    filters={filters}
+                    onFiltersChange={setFilter}
+                    onClear={clearFilters}
+                />
+                <CustomSelect
+                    size="sm"
+                    options={appNames.map((n) => ({value: n, label: n}))}
+                    value={appName}
+                    onChange={(v) => setAppName(String(v))}
+                />
+                <CustomSelect
+                    size="sm"
+                    options={TIME_FILTERS.map((tf) => ({value: tf.minutes, label: tf.label}))}
+                    value={activeMinutes}
+                    onChange={(v) => handleTimeFilter(Number(v))}
+                />
+                <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => setLiveMode(v => !v)}
+                >
+                    {liveMode ? '● Live' : 'Go Live'}
+                </Button>
+                <CustomSelect
+                    size="sm"
+                    options={LIVE_INTERVALS.map(i => ({value: i.ms, label: i.label}))}
+                    value={liveIntervalMs}
+                    onChange={(v) => setLiveIntervalMs(Number(v))}
+                    disabled={!liveMode}
+                />
+                {liveMode && lastUpdated && (
+                    <span className={styles.stats}>updated {lastUpdated.toLocaleTimeString()}</span>
+                )}
+                <Button variant="secondary" size="sm" onClick={() => setExpandAll(v => !v)}>
+                    {expandAll ? 'Collapse All' : 'Expand All'}
+                </Button>
+                <JsonFieldsMenu fields={knownJsonFields} hidden={hiddenJsonFields} onToggle={toggleJsonField}/>
+                {selectedIds.size > 0 && (
+                    <Button variant="secondary" size="sm" onClick={handleCopySelected}>
+                        Copy ({selectedIds.size})
                     </Button>
-                    <CustomSelect
-                        size="sm"
-                        options={LIVE_INTERVALS.map(i => ({value: i.ms, label: i.label}))}
-                        value={liveIntervalMs}
-                        onChange={(v) => setLiveIntervalMs(Number(v))}
-                        disabled={!liveMode}
-                    />
-                    {liveMode && lastUpdated && (
-                        <span className={styles.stats}>updated {lastUpdated.toLocaleTimeString()}</span>
-                    )}
-                    <Button variant="secondary" size="sm" onClick={() => setExpandAll(v => !v)}>
-                        {expandAll ? 'Collapse All' : 'Expand All'}
-                    </Button>
-                    <JsonFieldsMenu fields={knownJsonFields} hidden={hiddenJsonFields} onToggle={toggleJsonField}/>
-                    {selectedIds.size > 0 && (
-                        <Button variant="secondary" size="sm" onClick={handleCopySelected}>
-                            Copy ({selectedIds.size})
-                        </Button>
-                    )}
-                    <span className={styles.stats}>{total} total</span>
-                </div>
-                <div className={styles.timeFilters}>
-                    {TIME_FILTERS.map((tf) => (
-                        <button
-                            key={tf.minutes}
-                            className={`${styles.timeBtn} ${activeMinutes === tf.minutes ? styles.timeBtnActive : ''}`}
-                            onClick={() => handleTimeFilter(tf.minutes)}>
-                            {tf.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-
-            <h2>Logs</h2>
-            <ImportExportBar
-                exportUrl="/logs/export"
-                importUrl=""
-                entityLabel="Logs"
-                filters={filters}
-            />
-            <EntityFilters
-                entityName="LogEntity"
-                filters={filters}
-                onFiltersChange={setFilter}
-                onClear={clearFilters}
-            />
+                )}
+                <span className={styles.stats}>{total} total</span>
+            </Toolbar>
 
             <input
                 className={styles.searchInput}

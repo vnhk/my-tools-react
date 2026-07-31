@@ -5,6 +5,7 @@ import {Dialog} from '../../components/ui/Dialog'
 import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
 import {EntityFilters} from '../../components/ui/EntityFilters'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
+import {Toolbar} from '../../components/ui/Toolbar'
 import {buildColumnsFromConfig} from '../../components/table/configColumns'
 import {useTableState} from '../../hooks/useTableState'
 import {useTableActions} from '../../hooks/useTableActions'
@@ -99,19 +100,21 @@ export function WordListPage() {
 
     return (
         <div className={styles.page}>
-            <ImportExportBar
-                exportUrl="/language-learning/words/export"
-                importUrl="/language-learning/words/import"
-                entityLabel="Words"
-                onImportSuccess={load}
-                filters={filters}
-            />
-            <EntityFilters
-                entityName="TranslationRecord"
-                filters={filters}
-                onFiltersChange={setFilter}
-                onClear={clearFilters}
-            />
+            <Toolbar>
+                <ImportExportBar
+                    exportUrl="/language-learning/words/export"
+                    importUrl="/language-learning/words/import"
+                    entityLabel="Words"
+                    onImportSuccess={load}
+                    filters={filters}
+                />
+                <EntityFilters
+                    entityName="TranslationRecord"
+                    filters={filters}
+                    onFiltersChange={setFilter}
+                    onClear={clearFilters}
+                />
+            </Toolbar>
             <DataTable
                 columns={columns}
                 rows={displayedRows}

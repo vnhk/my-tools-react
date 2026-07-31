@@ -5,6 +5,7 @@ import styles from './DataIEPage.module.css'
 import {ImportExportBar} from "../../components/ui/ImportExportBar.tsx";
 import {useEntityFilters} from "../../hooks/useEntityFilters.ts";
 import {EntityFilters} from "../../components/ui/EntityFilters.tsx";
+import {Toolbar} from "../../components/ui/Toolbar.tsx";
 
 export function DataIEPage() {
     const {showSuccess, showError} = useNotification()
@@ -61,19 +62,21 @@ export function DataIEPage() {
         <div className={styles.page}>
             <div className={styles.section}>
                 <div className={styles.sectionTitle}>I/E BudgetEntry</div>
-                <ImportExportBar
-                    exportUrl="/invest-track/budget-entries/export"
-                    importUrl="/invest-track/budget-entries/import"
-                    entityLabel="Budget Entries"
-                    onImportSuccess={showNotification}
-                    filters={filters}
-                />
-                <EntityFilters
-                    entityName="BudgetEntry"
-                    filters={filters}
-                    onFiltersChange={setFilter}
-                    onClear={clearFilters}
-                />
+                <Toolbar>
+                    <ImportExportBar
+                        exportUrl="/invest-track/budget-entries/export"
+                        importUrl="/invest-track/budget-entries/import"
+                        entityLabel="Budget Entries"
+                        onImportSuccess={showNotification}
+                        filters={filters}
+                    />
+                    <EntityFilters
+                        entityName="BudgetEntry"
+                        filters={filters}
+                        onFiltersChange={setFilter}
+                        onClear={clearFilters}
+                    />
+                </Toolbar>
             </div>
 
             <div className={styles.section}>

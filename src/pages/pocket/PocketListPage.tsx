@@ -5,6 +5,7 @@ import { Dialog } from '../../components/ui/Dialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { EntityFilters } from '../../components/ui/EntityFilters'
 import { ImportExportBar } from '../../components/ui/ImportExportBar'
+import { Toolbar } from '../../components/ui/Toolbar'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
@@ -75,19 +76,21 @@ export function PocketListPage() {
   return (
     <div className={styles.page}>
       <h2>Pockets</h2>
-      <ImportExportBar
-        exportUrl="/pocket-app/pockets/export"
-        importUrl="/pocket-app/pockets/import"
-        entityLabel="Pockets"
-        onImportSuccess={load}
-        filters={filters}
-      />
-      <EntityFilters
-        entityName="Pocket"
-        filters={filters}
-        onFiltersChange={setFilter}
-        onClear={clearFilters}
-      />
+      <Toolbar>
+        <ImportExportBar
+          exportUrl="/pocket-app/pockets/export"
+          importUrl="/pocket-app/pockets/import"
+          entityLabel="Pockets"
+          onImportSuccess={load}
+          filters={filters}
+        />
+        <EntityFilters
+          entityName="Pocket"
+          filters={filters}
+          onFiltersChange={setFilter}
+          onClear={clearFilters}
+        />
+      </Toolbar>
       <DataTable
         columns={columns}
         rows={rows}

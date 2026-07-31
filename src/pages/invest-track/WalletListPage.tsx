@@ -11,6 +11,7 @@ import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
 import { EntityFilters } from '../../components/ui/EntityFilters'
 import { ImportExportBar } from '../../components/ui/ImportExportBar'
+import { Toolbar } from '../../components/ui/Toolbar'
 import { walletsApi, type Wallet } from '../../api/investments'
 import { toPage } from '../../api/crud'
 import styles from './WalletListPage.module.css'
@@ -104,19 +105,21 @@ export function WalletListPage() {
 
   return (
     <div className={styles.page}>
-      <ImportExportBar
-        exportUrl="/invest-track/wallets/export"
-        importUrl="/invest-track/wallets/import"
-        entityLabel="Wallets"
-        onImportSuccess={load}
-        filters={filters}
-      />
-      <EntityFilters
-        entityName="Wallet"
-        filters={filters}
-        onFiltersChange={setFilter}
-        onClear={clearFilters}
-      />
+      <Toolbar>
+        <ImportExportBar
+          exportUrl="/invest-track/wallets/export"
+          importUrl="/invest-track/wallets/import"
+          entityLabel="Wallets"
+          onImportSuccess={load}
+          filters={filters}
+        />
+        <EntityFilters
+          entityName="Wallet"
+          filters={filters}
+          onFiltersChange={setFilter}
+          onClear={clearFilters}
+        />
+      </Toolbar>
       <DataTable
         columns={columns}
         rows={rows}

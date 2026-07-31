@@ -5,6 +5,7 @@ import { Dialog } from '../../components/ui/Dialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { EntityFilters } from '../../components/ui/EntityFilters'
 import { ImportExportBar } from '../../components/ui/ImportExportBar'
+import { Toolbar } from '../../components/ui/Toolbar'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { Button } from '../../components/ui/Button'
 import { StatusBadge } from '../../components/ui/StatusBadge'
@@ -85,19 +86,21 @@ export function AllTasksPage() {
         <Button variant="ghost" size="sm" onClick={() => navigate('/projects')}>← Projects</Button>
         <h2>All Tasks</h2>
       </div>
-      <ImportExportBar
-        exportUrl="/project-management/tasks/export"
-        importUrl="/project-management/tasks/import"
-        entityLabel="Tasks"
-        onImportSuccess={load}
-        filters={filters}
-      />
-      <EntityFilters
-        entityName="Task"
-        filters={filters}
-        onFiltersChange={setFilter}
-        onClear={clearFilters}
-      />
+      <Toolbar>
+        <ImportExportBar
+          exportUrl="/project-management/tasks/export"
+          importUrl="/project-management/tasks/import"
+          entityLabel="Tasks"
+          onImportSuccess={load}
+          filters={filters}
+        />
+        <EntityFilters
+          entityName="Task"
+          filters={filters}
+          onFiltersChange={setFilter}
+          onClear={clearFilters}
+        />
+      </Toolbar>
       <DataTable
         columns={columns}
         rows={rows}

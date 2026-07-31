@@ -28,7 +28,6 @@ import ProductionListPage from './pages/streaming-platform/ProductionListPage'
 import ProductionDetailsPage from './pages/streaming-platform/ProductionDetailsPage'
 import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
 import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
-import TvPairingPage from './pages/streaming-platform/TvPairingPage'
 import StreamingLayout from './pages/streaming-platform/StreamingLayout'
 import {FilesPage} from './pages/files/FilesPage'
 import {ProjectListPage} from './pages/projects/ProjectListPage'
@@ -319,7 +318,6 @@ export default function App() {
                                     <Route path="production/:name" element={<ProductionDetailsPage/>}/>
                                     <Route path="player/:productionName/:videoFolderId" element={<VideoPlayerPage/>}/>
                                     <Route path="remote" element={<RemoteControlPage/>}/>
-                                    <Route path="tv-pairing" element={<TvPairingPage/>}/>
                                 </Route>
                                 <Route path="/english" element={<LanguageLearningLayout/>}>
                                     <Route index element={<Navigate to="words" replace/>}/>

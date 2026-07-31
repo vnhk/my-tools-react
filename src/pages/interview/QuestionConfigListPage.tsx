@@ -3,6 +3,7 @@ import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
 import { EntityFilters } from '../../components/ui/EntityFilters'
 import { ImportExportBar } from '../../components/ui/ImportExportBar'
+import { Toolbar } from '../../components/ui/Toolbar'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
 import { useEntityFilters } from '../../hooks/useEntityFilters'
@@ -81,14 +82,16 @@ export function QuestionConfigListPage() {
     return (
         <div className={styles.page}>
             <h2>Question Configs</h2>
-            <ImportExportBar
-                exportUrl="/interview/question-configs/export"
-                importUrl="/interview/question-configs/import"
-                entityLabel="Question Configs"
-                onImportSuccess={load}
-                filters={filters}
-            />
-            <EntityFilters entityName="QuestionConfig" filters={filters} onFiltersChange={setFilter} onClear={clearFilters} />
+            <Toolbar>
+                <ImportExportBar
+                    exportUrl="/interview/question-configs/export"
+                    importUrl="/interview/question-configs/import"
+                    entityLabel="Question Configs"
+                    onImportSuccess={load}
+                    filters={filters}
+                />
+                <EntityFilters entityName="QuestionConfig" filters={filters} onFiltersChange={setFilter} onClear={clearFilters} />
+            </Toolbar>
             <DataTable
                 columns={COLUMNS}
                 rows={rows}

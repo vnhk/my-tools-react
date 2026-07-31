@@ -3,6 +3,7 @@ import {DataTable} from '../../components/table/DataTable'
 import {Dialog} from '../../components/ui/Dialog'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
 import {EntityFilters} from '../../components/ui/EntityFilters'
+import {Toolbar} from '../../components/ui/Toolbar'
 import {useTableState} from '../../hooks/useTableState'
 import {useTableActions} from '../../hooks/useTableActions'
 import {useEntityFilters} from '../../hooks/useEntityFilters'
@@ -232,20 +233,21 @@ export function IngredientsPage() {
                 />
             </div>
 
-            <ImportExportBar
-                exportUrl="/cook-book/ingredients/export"
-                importUrl="/cook-book/ingredients/import"
-                entityLabel="Ingredients"
-                onImportSuccess={load}
-                filters={filters}
-            />
-
-            <EntityFilters
-                entityName="Ingredient"
-                filters={filters}
-                onFiltersChange={setFilter}
-                onClear={clearFilters}
-            />
+            <Toolbar>
+                <ImportExportBar
+                    exportUrl="/cook-book/ingredients/export"
+                    importUrl="/cook-book/ingredients/import"
+                    entityLabel="Ingredients"
+                    onImportSuccess={load}
+                    filters={filters}
+                />
+                <EntityFilters
+                    entityName="Ingredient"
+                    filters={filters}
+                    onFiltersChange={setFilter}
+                    onClear={clearFilters}
+                />
+            </Toolbar>
 
             <DataTable
                 columns={COLUMNS}

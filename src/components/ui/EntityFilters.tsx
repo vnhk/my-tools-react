@@ -1,4 +1,4 @@
-import { type KeyboardEvent, useEffect, useState } from 'react'
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react'
 import { getFilterableFields } from '../../api/entityConfig'
 import type { FilterValues } from '../../hooks/useEntityFilters'
 import styles from './EntityFilters.module.css'
@@ -23,6 +23,18 @@ export function EntityFilters({
     const [open, setOpen] = useState(false)
     const [draftFilters, setDraftFilters] = useState<FilterValues>(filters)
     const fields = getFilterableFields(entityName)
+    const rootRef = useRef<HTMLDivElement>(null)
+
+    // Panel floats as a dropdown, so a click outside (not just the toggle) closes it —
+    // same pattern as CustomSelect/JsonFieldsMenu elsewhere in this app.
+    useEffect(() => {
+        if (!open) return
+        const handleClick = (e: MouseEvent) => {
+            if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false)
+        }
+        document.addEventListener('mousedown', handleClick)
+        return () => document.removeEventListener('mousedown', handleClick)
+    }, [open])
 
     useEffect(() => { setDraftFilters(filters) }, [filters])
 
@@ -72,18 +84,16 @@ export function EntityFilters({
     const numberFields = fields.filter(f => f.dataType === 'NUMBER' && !f.strValues?.length && !f.intValues?.length)
 
     return (
-        <div className={styles.root}>
-            <div className={styles.toolbar}>
-                <button className={`${styles.toggleBtn} ${hasActiveFilters ? styles.active : ''}`} onClick={() => setOpen(o => !o)} title="Toggle Filters">
-                    <FaFilter />
-                    {hasActiveFilters && <span className={styles.badge} />}
+        <div className={styles.root} ref={rootRef}>
+            <button className={`${styles.toggleBtn} ${hasActiveFilters ? styles.active : ''}`} onClick={() => setOpen(o => !o)} title="Toggle Filters">
+                <FaFilter />
+                {hasActiveFilters && <span className={styles.badge} />}
+            </button>
+            {hasActiveFilters && (
+                <button className={styles.clearBtn} onClick={onClear} title="Clear all filters">
+                    <FaTimes /> Clear
                 </button>
-                {hasActiveFilters && (
-                    <button className={styles.clearBtn} onClick={onClear} title="Clear all filters">
-                        <FaTimes /> Clear
-                    </button>
-                )}
-            </div>
+            )}
 
             {open && (
                 <div className={styles.panel}>
