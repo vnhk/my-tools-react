@@ -37,6 +37,26 @@ function appendToken(url: string, token: string | null): string {
   return `${url}${separator}token=${encodeURIComponent(token)}`
 }
 
+// Quick MediaSource.isTypeSupported() probe for the codecs HLS manifests commonly
+// declare, so a "manifestIncompatibleCodecsError" can be cross-checked against what
+// this specific browser/device actually supports (e.g. desktop Chromium vs RPi).
+function probeCodecSupport() {
+  if (typeof MediaSource === 'undefined') return 'MediaSource unavailable'
+  const candidates = [
+    ['video/mp4; codecs="avc1.42E01E"', 'H.264 Baseline'],
+    ['video/mp4; codecs="avc1.4D401F"', 'H.264 Main'],
+    ['video/mp4; codecs="avc1.640028"', 'H.264 High'],
+    ['video/mp4; codecs="avc1.640033"', 'H.264 High L5.1'],
+    ['video/mp4; codecs="hvc1.1.6.L93.B0"', 'HEVC/H.265 Main'],
+    ['audio/mp4; codecs="mp4a.40.2"', 'AAC-LC'],
+    ['audio/mp4; codecs="ac-3"', 'AC-3'],
+    ['audio/mp4; codecs="ec-3"', 'E-AC-3'],
+  ] as const
+  return Object.fromEntries(
+    candidates.map(([mime, label]) => [label, MediaSource.isTypeSupported(mime)])
+  )
+}
+
 function fmt(secs: number) {
   if (!isFinite(secs) || secs < 0) return '0:00'
   const h = Math.floor(secs / 3600)
@@ -123,6 +143,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
         src,
         hlsSupported,
         hlsVersion: Hls.version,
+        codecSupport: probeCodecSupport(),
       })
 
       if (hlsSupported) {
@@ -167,6 +188,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
             fatal: data.fatal,
             responseCode: data.response?.code,
             url: data.url,
+            // For manifestIncompatibleCodecsError this names the exact
+            // CODECS attribute(s) the manifest declared that got rejected.
+            reason: (data as {reason?: string}).reason,
+            errorMessage: data.error?.message,
           })
 
           if (!data.fatal) return
