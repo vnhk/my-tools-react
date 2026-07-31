@@ -104,33 +104,125 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     hlsRef.current = null
     video.removeAttribute('src')
 
-    if (format === 'HLS' && Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        xhrSetup: (xhr) => {
-          const currentToken = localStorage.getItem('token')
-          if (currentToken) {
-            xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`)
+    // Native <video> errors (unsupported codec/container, decode failure, etc.)
+    // otherwise fail completely silently — nothing shows up in the console.
+    const onNativeError = () => {
+      const err = video.error
+      console.error('[VideoPlayer] native <video> error', {
+        code: err?.code,
+        message: err?.message,
+        currentSrc: video.currentSrc,
+        format,
+      })
+    }
+    video.addEventListener('error', onNativeError)
+
+    if (format === 'HLS') {
+      const hlsSupported = Hls.isSupported()
+      console.log('[VideoPlayer][HLS] starting', {
+        src,
+        hlsSupported,
+        hlsVersion: Hls.version,
+      })
+
+      if (hlsSupported) {
+        const hls = new Hls({
+          enableWorker: true,
+          xhrSetup: (xhr) => {
+            const currentToken = localStorage.getItem('token')
+            if (currentToken) {
+              xhr.setRequestHeader('Authorization', `Bearer ${currentToken}`)
+            }
           }
+        })
+        hlsRef.current = hls
+
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+          console.log('[VideoPlayer][HLS] media attached')
+        })
+        hls.on(Hls.Events.MANIFEST_LOADING, () => {
+          console.log('[VideoPlayer][HLS] loading master manifest', src)
+        })
+        hls.on(Hls.Events.MANIFEST_PARSED, (_evt, data) => {
+          console.log('[VideoPlayer][HLS] master manifest parsed', {
+            levels: data.levels?.length,
+            firstLevel: data.firstLevel,
+          })
+          if (startTime > 5) video.currentTime = startTime
+        })
+        hls.on(Hls.Events.LEVEL_LOADED, (_evt, data) => {
+          console.log('[VideoPlayer][HLS] level loaded', {
+            level: data.level,
+            live: data.details?.live,
+            fragments: data.details?.fragments?.length,
+          })
+        })
+        hls.on(Hls.Events.FRAG_LOADED, (_evt, data) => {
+          console.log('[VideoPlayer][HLS] fragment loaded', data.frag?.url)
+        })
+        hls.on(Hls.Events.ERROR, (_evt, data) => {
+          console.error('[VideoPlayer][HLS] error', {
+            type: data.type,
+            details: data.details,
+            fatal: data.fatal,
+            responseCode: data.response?.code,
+            url: data.url,
+          })
+
+          if (!data.fatal) return
+
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              console.warn('[VideoPlayer][HLS] fatal network error — retrying load')
+              hls.startLoad()
+              break
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              console.warn('[VideoPlayer][HLS] fatal media error — attempting recovery')
+              hls.recoverMediaError()
+              break
+            default:
+              console.error('[VideoPlayer][HLS] unrecoverable fatal error — destroying instance')
+              hls.destroy()
+              break
+          }
+        })
+
+        // Use plain src; Authorization header is injected via xhrSetup for all HLS requests
+        hls.loadSource(src)
+        hls.attachMedia(video)
+      } else {
+        console.warn(
+          '[VideoPlayer][HLS] Hls.isSupported() returned false — this browser lacks the ' +
+          'MediaSource support HLS.js needs. Falling back to native <video src>, which only ' +
+          'plays HLS natively in Safari; on Chromium-based browsers (incl. RPi) this silently ' +
+          'fails after a single manifest request.'
+        )
+        const token = localStorage.getItem('token')
+        const srcWithToken = appendToken(src, token)
+        video.src = srcWithToken
+        if (startTime > 5) {
+          video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
         }
-      })
-      hlsRef.current = hls
-      // Use plain src; Authorization header is injected via xhrSetup for all HLS requests
-      hls.loadSource(src)
-      hls.attachMedia(video)
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (startTime > 5) video.currentTime = startTime
-      })
-      return () => { hlsRef.current?.destroy(); hlsRef.current = null }
+      }
+
+      return () => {
+        hlsRef.current?.destroy()
+        hlsRef.current = null
+        video.removeEventListener('error', onNativeError)
+      }
     } else {
-      // Native fallback (e.g., Safari): append token via query parameter since headers can't be sent
+      // MP4 — plain native playback; append token via query parameter since headers can't be sent
       const token = localStorage.getItem('token')
       const srcWithToken = appendToken(src, token)
       video.src = srcWithToken
       if (startTime > 5) {
         video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
       }
+      return () => {
+        video.removeEventListener('error', onNativeError)
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, format])
 
   useEffect(() => {
