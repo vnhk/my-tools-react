@@ -3,6 +3,7 @@ import {useNavigate, useParams} from 'react-router-dom'
 import {qrConfirm} from '../api/auth'
 import {Button} from '../components/ui/Button'
 import {useNotification} from '../components/ui/Notification'
+import {REMOTE_LAST_ROOM_ID_KEY} from './streaming-platform/hooks/useRemoteControl'
 import styles from './login.module.css'
 
 export function AcceptLoginPage() {
@@ -14,6 +15,7 @@ export function AcceptLoginPage() {
     const [loading, setLoading] = useState(false)
     const [done, setDone] = useState(false)
     const [error, setError] = useState('')
+    const [pairedForRemote, setPairedForRemote] = useState(false)
 
     const submit = async (e: FormEvent) => {
         e.preventDefault()
@@ -21,10 +23,21 @@ export function AcceptLoginPage() {
         setError('')
         setLoading(true)
         try {
-            await qrConfirm(parseInt(uuid), parseInt(number))
+            const res = await qrConfirm(parseInt(uuid), parseInt(number))
             setDone(true)
-            showNotification('Login confirmed! You can close this page.', 'success')
-            setTimeout(() => navigate('/'), 2000)
+
+            const roomId = res.data?.roomId
+            if (roomId) {
+                // The QR was shown by a TV — auto-pair this phone's remote
+                // control to it instead of just confirming the login.
+                localStorage.setItem(REMOTE_LAST_ROOM_ID_KEY, roomId)
+                setPairedForRemote(true)
+                showNotification('TV login confirmed! Opening remote…', 'success')
+                setTimeout(() => navigate('/streaming/remote'), 1200)
+            } else {
+                showNotification('Login confirmed! You can close this page.', 'success')
+                setTimeout(() => navigate('/'), 2000)
+            }
         } catch (err: any) {
             const status = err?.response?.status
             if (status === 410) {
@@ -47,7 +60,11 @@ export function AcceptLoginPage() {
                     <div className={styles.qrSection}>
                         <div style={{fontSize: '3rem'}}>✅</div>
                         <h1 className={styles.title}>Login confirmed!</h1>
-                        <p className={styles.qrHint}>You can close this page. The other device is now logged in.</p>
+                        <p className={styles.qrHint}>
+                            {pairedForRemote
+                                ? 'The TV is now logged in. Opening the remote control…'
+                                : 'You can close this page. The other device is now logged in.'}
+                        </p>
                     </div>
                 ) : (
                     <>

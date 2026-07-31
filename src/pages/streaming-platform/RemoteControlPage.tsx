@@ -1,13 +1,11 @@
 import {useEffect, useMemo, useState} from 'react'
 import {Link} from 'react-router-dom'
-import {useRemoteControlSender} from './hooks/useRemoteControl'
+import {REMOTE_LAST_ROOM_ID_KEY, useRemoteControlSender} from './hooks/useRemoteControl'
 import {TextField} from '../../components/fields/TextField'
 import {Button} from '../../components/ui/Button'
 import {fetchProductionDetails, fetchProductions} from './api'
 import type {ProductionDetails, ProductionSummary} from './types'
 import styles from './RemoteControlPage.module.css'
-
-const LAST_ROOM_ID_KEY = 'remoteControl.lastRoomId'
 
 function fmtTime(secs: number) {
     if (!isFinite(secs) || secs < 0) return '0:00'
@@ -19,7 +17,7 @@ function fmtTime(secs: number) {
 export default function RemoteControlPage() {
     const [roomIdInput, setRoomIdInput] = useState('')
     const [connectedRoomId, setConnectedRoomId] = useState<string | null>(
-        () => localStorage.getItem(LAST_ROOM_ID_KEY)
+        () => localStorage.getItem(REMOTE_LAST_ROOM_ID_KEY)
     )
     const {connected, send, status} = useRemoteControlSender(connectedRoomId)
     const [scrubTime, setScrubTime] = useState<number | null>(null)
@@ -125,13 +123,13 @@ export default function RemoteControlPage() {
     const connect = () => {
         const id = roomIdInput.trim()
         if (id) {
-            localStorage.setItem(LAST_ROOM_ID_KEY, id)
+            localStorage.setItem(REMOTE_LAST_ROOM_ID_KEY, id)
             setConnectedRoomId(id)
         }
     }
 
     const disconnect = () => {
-        localStorage.removeItem(LAST_ROOM_ID_KEY)
+        localStorage.removeItem(REMOTE_LAST_ROOM_ID_KEY)
         setConnectedRoomId(null)
     }
 

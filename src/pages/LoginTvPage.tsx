@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router-dom'
 import {qrGenerate, QrGenerateResponse, qrPoll} from '../api/auth'
 import {useAuth} from '../auth/AuthContext'
 import {Button} from '../components/ui/Button'
+import {getOrCreateRoomId} from './streaming-platform/hooks/useRemoteControl'
 import styles from './login.module.css'
 
 type Mode = 'qr'
@@ -31,7 +32,8 @@ export function LoginTvPage() {
         setQrData(null)
         setQrLoading(true)
         try {
-            const res = await qrGenerate()
+            const isTv = localStorage.getItem('isTv') === 'true'
+            const res = await qrGenerate(isTv ? getOrCreateRoomId() : undefined)
             setQrData(res.data)
             const startedAt = Date.now()
 

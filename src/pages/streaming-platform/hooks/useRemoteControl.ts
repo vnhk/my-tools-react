@@ -21,6 +21,23 @@ export interface RemoteStatus {
   title?: string
 }
 
+// Room ID a "TV" (this app's own streaming pages) is/would be reachable at.
+// Generated once per tab and reused across the login and streaming pages so
+// a QR login can pre-announce it to the server before the receiver mounts.
+const TV_ROOM_ID_KEY = 'streaming.roomId'
+
+export function getOrCreateRoomId(): string {
+  const stored = sessionStorage.getItem(TV_ROOM_ID_KEY)
+  if (stored) return stored
+  const id = String(Math.floor(10_000 + Math.random() * 90_000))
+  sessionStorage.setItem(TV_ROOM_ID_KEY, id)
+  return id
+}
+
+// Room ID the remote (pilot) page last connected to — persisted so it can
+// auto-reconnect after the browser is closed/reopened or paired via QR login.
+export const REMOTE_LAST_ROOM_ID_KEY = 'remoteControl.lastRoomId'
+
 async function fetchWsKey(roomId: string): Promise<string | null> {
   // Attempt to get a one-time WS key from the backend. The backend endpoint
   // is expected to verify the current session (via Authorization header or cookie)
@@ -42,14 +59,7 @@ function wsUrl(roomId: string, deviceType: 'TV' | 'REMOTE', keyOrToken?: string)
 }
 
 export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void) {
-  const [roomId] = useState(() => {
-    // Reuse the same room across streaming pages in the same tab
-    const stored = sessionStorage.getItem('streaming.roomId')
-    if (stored) return stored
-    const id = String(Math.floor(10_000 + Math.random() * 90_000))
-    sessionStorage.setItem('streaming.roomId', id)
-    return id
-  })
+  const [roomId] = useState(getOrCreateRoomId)
   const wsRef = useRef<WebSocket | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout>>()
   const onCommandRef = useRef(onCommand)

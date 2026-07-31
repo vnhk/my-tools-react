@@ -38,14 +38,21 @@ export interface QrPollResponse {
   role?: string
 }
 
-export const qrGenerate = () =>
-  client.post<QrGenerateResponse>('/auth/qr/generate')
+export const qrGenerate = (roomId?: string) =>
+  client.post<QrGenerateResponse>('/auth/qr/generate', roomId ? { roomId } : {})
 
 export const qrPoll = (pollToken: string) =>
   client.get<QrPollResponse>('/auth/qr/poll', { params: { pollToken } })
 
+export interface QrConfirmResponse {
+  message: string
+  // Present when the QR was shown by a TV — the room its remote control page
+  // should auto-pair with.
+  roomId?: string
+}
+
 export const qrConfirm = (uuid: number, number: number) =>
-  client.post('/auth/qr/confirm', null, { params: { uuid, number } })
+  client.post<QrConfirmResponse>('/auth/qr/confirm', null, { params: { uuid, number } })
 
 export interface UserSettings {
   hasCipher: boolean
