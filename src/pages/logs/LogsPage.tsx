@@ -484,64 +484,64 @@ export function LogsPage() {
             <div className={styles.scrollContainer} ref={scrollRef} onScroll={handleScroll}>
                 <table className={tableStyles.table}>
                     <thead>
-                        <tr>
-                            <th className={tableStyles.checkCell}>
-                                <input
-                                    type="checkbox"
-                                    checked={displayedRows.length > 0 && selectedIds.size === displayedRows.length}
-                                    onChange={toggleSelectAll}
-                                />
-                            </th>
-                            {columns.map((col) => (
-                                <th key={col.key} style={{width: col.width}}>{col.header}</th>
-                            ))}
-                        </tr>
+                    <tr>
+                        <th className={tableStyles.checkCell}>
+                            <input
+                                type="checkbox"
+                                checked={displayedRows.length > 0 && selectedIds.size === displayedRows.length}
+                                onChange={toggleSelectAll}
+                            />
+                        </th>
+                        {columns.map((col) => (
+                            <th key={col.key} style={{width: col.width}}>{col.header}</th>
+                        ))}
+                    </tr>
                     </thead>
                     <tbody>
-                        {loadingOlder && (
-                            <tr>
-                                <td colSpan={columns.length + 1} className={styles.loadingRow}>Loading earlier
-                                    logs…
+                    {loadingOlder && (
+                        <tr>
+                            <td colSpan={columns.length + 1} className={styles.loadingRow}>Loading earlier
+                                logs…
+                            </td>
+                        </tr>
+                    )}
+                    {!hasMoreOlder && rows.length > 0 && (
+                        <tr>
+                            <td colSpan={columns.length + 1} className={styles.beginningRow}>— Beginning of
+                                results —
+                            </td>
+                        </tr>
+                    )}
+                    {displayedRows.length === 0 ? (
+                        <tr>
+                            <td colSpan={columns.length + 1} className={tableStyles.empty}>
+                                {initialLoading ? 'Loading…' : 'No data'}
+                            </td>
+                        </tr>
+                    ) : (
+                        displayedRows.map((row) => (
+                            <tr
+                                key={row.id}
+                                className={`${tableStyles.row} ${selectedIds.has(row.id) ? tableStyles.selectedRow : ''}`}
+                            >
+                                <td className={tableStyles.checkCell} onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedIds.has(row.id)}
+                                        onChange={() => toggleSelect(row.id)}
+                                    />
                                 </td>
-                            </tr>
-                        )}
-                        {!hasMoreOlder && rows.length > 0 && (
-                            <tr>
-                                <td colSpan={columns.length + 1} className={styles.beginningRow}>— Beginning of
-                                    results —
-                                </td>
-                            </tr>
-                        )}
-                        {displayedRows.length === 0 ? (
-                            <tr>
-                                <td colSpan={columns.length + 1} className={tableStyles.empty}>
-                                    {initialLoading ? 'Loading…' : 'No data'}
-                                </td>
-                            </tr>
-                        ) : (
-                            displayedRows.map((row) => (
-                                <tr
-                                    key={row.id}
-                                    className={`${tableStyles.row} ${selectedIds.has(row.id) ? tableStyles.selectedRow : ''}`}
-                                >
-                                    <td className={tableStyles.checkCell} onClick={(e) => e.stopPropagation()}>
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.has(row.id)}
-                                            onChange={() => toggleSelect(row.id)}
-                                        />
+                                {columns.map((col) => (
+                                    <td
+                                        key={col.key}
+                                        style={col.width ? {width: col.width, maxWidth: col.width} : undefined}
+                                    >
+                                        {col.render ? col.render(row) : String((row as unknown as Record<string, unknown>)[col.key] ?? '')}
                                     </td>
-                                    {columns.map((col) => (
-                                        <td
-                                            key={col.key}
-                                            style={col.width ? {width: col.width, maxWidth: col.width} : undefined}
-                                        >
-                                            {col.render ? col.render(row) : String((row as unknown as Record<string, unknown>)[col.key] ?? '')}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))
-                        )}
+                                ))}
+                            </tr>
+                        ))
+                    )}
                     </tbody>
                 </table>
             </div>
