@@ -99,7 +99,7 @@ export function CustomSelect({
     return (
         <div
             ref={wrapperRef}
-            className={`${size === 'sm' ? styles.sm : ''} ${className}`}
+            className={`${styles.wrapper} ${size === 'sm' ? styles.sm : ''} ${className}`}
         >
             <button
                 id={id}

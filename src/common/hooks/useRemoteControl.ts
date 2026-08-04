@@ -123,6 +123,10 @@ export function useRemoteControlReceiver(onCommand: (cmd: RemoteCommand) => void
             }
             ws.onclose = () => {
                 if (!mounted) return
+                // The WS key is single-use with a short TTL — whatever we had
+                // (consumed or expired) is invalid for the next attempt, so a
+                // fresh one must be fetched or every reconnect fails forever.
+                keyRef.current = null
                 retriesRef.current++
                 const delay = Math.min(30_000, 3_000 * Math.pow(2, retriesRef.current - 1))
                 timerRef.current = setTimeout(connect, delay)
@@ -207,6 +211,10 @@ export function useRemoteControlSender(roomId: string | null, onMessage?: (cmd: 
                 setConnected(false)
                 setStatus(null)
                 wsRef.current = null
+                // Same one-time, short-TTL key issue as the TV side — must be
+                // cleared so the next attempt fetches a fresh one instead of
+                // retrying forever with an already-invalid key.
+                keyRef.current = null
                 retriesRef.current++
                 const delay = Math.min(30_000, 3_000 * Math.pow(2, retriesRef.current - 1))
                 reconnectTimerRef.current = setTimeout(connect, delay)

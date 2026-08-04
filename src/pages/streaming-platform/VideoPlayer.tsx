@@ -116,7 +116,18 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
       return
     }
     if (!document.fullscreenElement) {
-      c.requestFullscreen().catch(() => setCssFullscreen(true))
+      // Some Chromium builds (e.g. on embedded/kiosk devices) either lack the
+      // API, disable it via permissions policy, or throw synchronously instead
+      // of rejecting a promise — guard all three so the CSS fallback always runs.
+      if (!document.fullscreenEnabled || !c.requestFullscreen) {
+        setCssFullscreen(true)
+        return
+      }
+      try {
+        c.requestFullscreen().catch(() => setCssFullscreen(true))
+      } catch {
+        setCssFullscreen(true)
+      }
     } else {
       document.exitFullscreen().catch(() => {})
     }
