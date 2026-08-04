@@ -2,8 +2,8 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 import {Link, useNavigate, useParams} from 'react-router-dom'
 import {fetchVideoInfo} from './api'
 import VideoPlayer, {type VideoPlayerHandle} from './VideoPlayer'
-import {type RemoteCommand} from './hooks/useRemoteControl'
-import {useRemoteControlContext} from './RemoteControlProvider'
+import {type RemoteCommand} from '../../common/hooks/useRemoteControl'
+import {useRemoteControlContext} from '../../components/layout/RemoteControlProvider'
 import {useWatchProgress} from './hooks/useWatchProgress'
 import type {VideoInfo} from './types'
 import styles from './VideoPlayerPage.module.css'
@@ -67,12 +67,14 @@ export default function VideoPlayerPage() {
                 case 'FULLSCREEN_PROMPT':
                     player.toggleFullscreen();
                     break
-                case 'NAVIGATE': {
-                    console.log('Navigating to:', cmd.url)
-
-                    if (cmd.url) navigate(cmd.url);
-                }
+                case 'AUDIO_TRACK':
+                    if (typeof cmd.index === 'number') player.setAudioTrack(cmd.index);
                     break
+                case 'SUBTITLE_TRACK':
+                    player.setSubtitle(cmd.lang ?? null);
+                    break
+                // NAVIGATE is handled globally by NavigationListener (mounted in
+                // AppLayout) so it works regardless of which page is subscribed here.
                 case 'NEXT_EPISODE':
                     goNext();
                     break
@@ -98,14 +100,19 @@ export default function VideoPlayerPage() {
         // to render a "now playing" seek bar without flooding the socket
         // on every native timeupdate tick.
         const interval = setInterval(() => {
-            const v = playerRef.current?.getVideoElement()
+            const player = playerRef.current
+            const v = player?.getVideoElement()
             const info = videoInfoRef.current
-            if (!v || !info) return
+            if (!v || !info || !player) return
             sendStatus({
                 title: info.videoName,
                 playing: !v.paused,
                 currentTime: v.currentTime,
                 duration: isFinite(v.duration) ? v.duration : 0,
+                audioTracks: player.getAudioTracks(),
+                activeAudioTrack: player.getActiveAudioTrack(),
+                subtitleLangs: player.getSubtitleLangs(),
+                activeSubtitle: player.getActiveSubtitle(),
             })
         }, 1000)
         return () => clearInterval(interval)

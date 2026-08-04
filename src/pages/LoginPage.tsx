@@ -3,6 +3,7 @@ import {useNavigate} from 'react-router-dom'
 import {login, loginWithOtp, qrGenerate, QrGenerateResponse, qrPoll} from '../api/auth'
 import {useAuth} from '../auth/AuthContext'
 import {Button} from '../components/ui/Button'
+import {setIsTv} from '../common/hooks/useIsTv'
 import styles from './login.module.css'
 
 type Mode = 'password' | 'otp' | 'qr'
@@ -71,7 +72,7 @@ export function LoginPage() {
     }
 
     useEffect(() => {
-        localStorage.setItem('isTv', "false");
+        setIsTv(false)
 
         if (mode === 'qr') startQr()
         else stopPolling()

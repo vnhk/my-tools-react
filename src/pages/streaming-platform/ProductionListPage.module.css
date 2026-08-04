@@ -196,6 +196,10 @@
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
+.gridTv {
+  grid-template-columns: repeat(5, 1fr);
+  gap: 28px;
+}
 
 /* ── Production card ── */
 .card {
@@ -216,6 +220,16 @@
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 .cardWide { width: 140px; }
+
+/* ── TV (10-foot UI): far fewer, much bigger cards for readability/pointing ── */
+.cardTv {
+  width: 260px;
+  border-radius: 14px;
+}
+.gridTv .cardTv,
+.gridTv .cardWide {
+  width: auto;
+}
 
 .poster {
   width: 100%;
@@ -263,6 +277,11 @@
   font-size: 9px;
   font-weight: 600;
 }
+
+.cardTv .cardInfo { padding: 14px 16px; gap: 6px; }
+.cardTv .cardTitle { font-size: 20px; -webkit-line-clamp: 2; }
+.cardTv .cardMeta { font-size: 15px; gap: 10px; }
+.cardTv .cardType { font-size: 13px; padding: 3px 9px; border-radius: 5px; }
 
 .loading, .empty {
   padding: 40px 20px;

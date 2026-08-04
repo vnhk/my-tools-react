@@ -10,6 +10,8 @@ import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
 import { SelectField } from '../../components/fields/SelectField'
 import { TextArea } from '../../components/fields/TextArea'
+import { LazyImage } from '../../components/ui/LazyImage'
+import { useIsTv } from '../../common/hooks/useIsTv'
 import styles from './ProductionListPage.module.css'
 
 // ---- Filter state ----
@@ -39,16 +41,17 @@ function toggleSet<T>(prev: Set<T>, val: T): Set<T> {
 }
 
 // ---- Card component ----
-function ProductionCard({ p, wide }: { p: ProductionSummary; wide?: boolean }) {
+function ProductionCard({ p, wide, isTv }: { p: ProductionSummary; wide?: boolean; isTv: boolean }) {
   return (
     <Link
       to={`/streaming/production/${encodeURIComponent(p.productionName)}`}
-      className={`${styles.card} ${wide ? styles.cardWide : ''}`}
+      className={`${styles.card} ${wide ? styles.cardWide : ''} ${isTv ? styles.cardTv : ''}`}
     >
       <div className={styles.poster}>
-        <img
+        <LazyImage
           src={p.posterUrl}
           alt={p.title ?? p.productionName}
+          rootMargin={isTv ? '600px' : '300px'}
           onError={(e) => { e.currentTarget.style.display = 'none' }}
         />
       </div>
@@ -150,6 +153,7 @@ export default function ProductionListPage() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'ROLE_USER'
   const { showNotification } = useNotification()
+  const isTv = useIsTv()
 
   const [productions, setProductions] = useState<ProductionSummary[]>([])
   const [loading, setLoading] = useState(true)
@@ -278,7 +282,7 @@ export default function ProductionListPage() {
           >
             ⚙ Filters{isActive && !showFilters ? ' •' : ''}
           </button>
-          <Link to="/streaming/remote" className={styles.iconBtn}>📱 Remote</Link>
+          <Link to="/remote" className={styles.iconBtn}>📱 Remote</Link>
           <Link to="/streaming/tv-pairing" className={styles.iconBtn}>📺 TV Pair</Link>
         </div>
       </div>
@@ -431,8 +435,8 @@ export default function ProductionListPage() {
             filteredSections.map(({ title, items }) => (
               <div key={title} className={styles.section}>
                 <div className={styles.sectionTitle}>{title}</div>
-                <div className={styles.grid}>
-                  {items.map((p) => <ProductionCard key={p.productionName} p={p} wide />)}
+                <div className={`${styles.grid} ${isTv ? styles.gridTv : ''}`}>
+                  {items.map((p) => <ProductionCard key={p.productionName} p={p} wide isTv={isTv} />)}
                 </div>
               </div>
             ))
@@ -446,7 +450,7 @@ export default function ProductionListPage() {
                 <span className={styles.categoryCount}>{items.length}</span>
               </div>
               <div className={styles.carousel}>
-                {items.map((p) => <ProductionCard key={p.productionName} p={p} />)}
+                {items.map((p) => <ProductionCard key={p.productionName} p={p} isTv={isTv} />)}
               </div>
             </div>
           ))

@@ -2,6 +2,8 @@ import {ReactNode, useEffect, useState} from 'react'
 import {NavLink, Outlet, useNavigate} from 'react-router-dom'
 import {useAuth} from '../../auth/AuthContext'
 import {PocketSidePanel} from './PocketSidePanel'
+import {useIsTv} from '../../common/hooks/useIsTv'
+import RemoteControlProvider, {NavigationListener, RoomBadge} from './RemoteControlProvider'
 import styles from './AppLayout.module.css'
 
 export interface NavItem {
@@ -19,7 +21,7 @@ export function AppLayout({navItems}: AppLayoutProps) {
     const navigate = useNavigate()
     const [collapsed, setCollapsed] = useState(false)
     const [isMobile, setIsMobile] = useState(false)
-    const [isTv, setIsTv] = useState(false)
+    const isTv = useIsTv()
 
     useEffect(() => {
         const checkMobile = () => {
@@ -28,22 +30,19 @@ export function AppLayout({navItems}: AppLayoutProps) {
             if (mobile) setCollapsed(true)
         }
 
-        const checkTv = () => {
-            const tv = localStorage.getItem('isTv') === 'true'
-            setIsTv(tv)
-            if (tv) setCollapsed(true)
-        }
-
         checkMobile()
-        checkTv()
-
-        if (isTv) {
-            document.body.classList.add('tv-client')
-        }
-
         window.addEventListener('resize', checkMobile)
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
+
+    useEffect(() => {
+        if (isTv) {
+            setCollapsed(true)
+            document.body.classList.add('tv-client')
+        } else {
+            document.body.classList.remove('tv-client')
+        }
+    }, [isTv])
 
     const handleLogout = async () => {
         await logout()
@@ -90,7 +89,11 @@ export function AppLayout({navItems}: AppLayoutProps) {
             </aside>
 
             <main className={styles.main}>
-                <Outlet/>
+                <RemoteControlProvider>
+                    <Outlet/>
+                    <RoomBadge/>
+                    <NavigationListener/>
+                </RemoteControlProvider>
             </main>
 
             <PocketSidePanel/>

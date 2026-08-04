@@ -27,9 +27,10 @@ import {DietDashboardPage} from './pages/cook-book/DietDashboardPage'
 import ProductionListPage from './pages/streaming-platform/ProductionListPage'
 import ProductionDetailsPage from './pages/streaming-platform/ProductionDetailsPage'
 import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
-import RemoteControlPage from './pages/streaming-platform/RemoteControlPage'
+import RemoteControlPage from './pages/remote/RemoteControlPage'
 import StreamingLayout from './pages/streaming-platform/StreamingLayout'
 import {FilesPage} from './pages/files/FilesPage'
+import TvFileDisplay from './pages/files/TvFileDisplay'
 import {ProjectListPage} from './pages/projects/ProjectListPage'
 import {ProjectDetailsPage} from './pages/projects/ProjectDetailsPage'
 import {AllTasksPage} from './pages/projects/AllTasksPage'
@@ -108,9 +109,9 @@ const mobileCards: HomePageCard[] = [
     },
     {
         title: "TV Remote Control",
-        description: "Control your TV remotely.",
+        description: "Control your TV remotely — streaming, invest-track and files.",
         icon: <FaDesktop/>,
-        route: "/streaming/remote"
+        route: "/remote"
     },
     {
         title: "Files",
@@ -313,11 +314,12 @@ export default function App() {
                                     <Route path="start" element={<StartInterviewPage/>}/>
                                     <Route path="plan" element={<InterviewPlanPage/>}/>
                                 </Route>
+                                <Route path="/remote" element={<RemoteControlPage/>}/>
                                 <Route path="/streaming" element={<StreamingLayout/>}>
                                     <Route index element={<ProductionListPage/>}/>
                                     <Route path="production/:name" element={<ProductionDetailsPage/>}/>
                                     <Route path="player/:productionName/:videoFolderId" element={<VideoPlayerPage/>}/>
-                                    <Route path="remote" element={<RemoteControlPage/>}/>
+                                    <Route path="remote" element={<Navigate to="/remote" replace/>}/>
                                 </Route>
                                 <Route path="/english" element={<LanguageLearningLayout/>}>
                                     <Route index element={<Navigate to="words" replace/>}/>
@@ -347,6 +349,7 @@ export default function App() {
                                 <Route path="/spreadsheet" element={<SpreadsheetListPage/>}/>
                                 <Route path="/spreadsheet/:id" element={<SpreadsheetEditorPage/>}/>
                                 <Route path="/files" element={<FilesPage/>}/>
+                                <Route path="/files/tv-view" element={<TvFileDisplay/>}/>
                                 <Route path="/projects" element={<ProjectListPage/>}/>
                                 <Route path="/projects/all-tasks" element={<AllTasksPage/>}/>
                                 <Route path="/projects/:projectId" element={<ProjectDetailsPage/>}/>

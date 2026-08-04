@@ -1,0 +1,516 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow-y: auto;
+    padding: 12px;
+    max-width: 420px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.backBtn {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color var(--transition), background var(--transition);
+}
+
+.backBtn:hover {
+    color: var(--color-text-primary);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.header h1 {
+    font-size: var(--font-size-md);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0;
+    flex: 1;
+}
+
+.connDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.connDot.on {
+    background: var(--color-success);
+    box-shadow: 0 0 4px var(--color-success);
+}
+
+.connDot.off {
+    background: var(--color-border);
+}
+
+/* Connect form */
+.connectSection {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.connectSection p {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    margin: 0;
+}
+
+/* roomInput overrides the shared TextField to use large centered numeric style */
+.roomInput {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.12em;
+    text-align: center;
+}
+
+/* Remote controls */
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.status strong {
+    color: var(--color-text-primary);
+}
+
+.statusDot {
+    font-size: 11px;
+}
+
+.statusDot.green {
+    color: var(--color-success);
+}
+
+.statusDot.red {
+    color: var(--color-danger);
+}
+
+/* Search UI */
+.searchSection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.searchHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.searchLabel {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+.filterToggle,
+.filterToggleActive {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.filterToggleActive {
+    background: rgba(165, 180, 252, 0.14);
+    border-color: rgba(165, 180, 252, 0.4);
+    color: var(--color-text-primary);
+}
+
+.filterPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.filterRow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filterLabel {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+}
+
+.filterChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.chip,
+.chipActive {
+    padding: 4px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+}
+
+.chipActive {
+    background: rgba(165, 180, 252, 0.18);
+    border-color: rgba(165, 180, 252, 0.5);
+    color: var(--color-text-primary);
+}
+
+.filterClearBtn {
+    align-self: flex-start;
+    padding: 4px 0;
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    outline: none;
+}
+
+.results {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow: auto;
+}
+
+.noResults {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    padding: 6px 2px;
+}
+
+.resultItem {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.resultRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.resultInfo {
+    min-width: 0;
+    flex: 1;
+}
+
+.resultTitle {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resultMeta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.resultActions {
+    display: flex;
+    gap: 6px;
+}
+
+.resultBtn {
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.resultBtn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.resultBtnActive {
+    composes: resultBtn;
+    background: rgba(165, 180, 252, 0.18);
+    border-color: rgba(165, 180, 252, 0.5);
+    color: var(--color-text-primary);
+}
+
+.playBtn {
+    background: rgba(22, 163, 74, 0.18);
+    border-color: rgba(22, 163, 74, 0.4);
+}
+
+/* Season / episode picker */
+.episodesPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--color-border);
+}
+
+.epLoading {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.seasonTabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.seasonTab,
+.seasonTabActive {
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.seasonTabActive {
+    background: rgba(165, 180, 252, 0.18);
+    border-color: rgba(165, 180, 252, 0.5);
+    color: var(--color-text-primary);
+}
+
+.episodeList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 180px;
+    overflow: auto;
+}
+
+.episodeItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xs);
+    cursor: pointer;
+    text-align: left;
+}
+
+.episodeItem:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.epName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Now playing / seek bar */
+.nowPlaying {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.nowPlayingTitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.nowPlayingName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.seekBar {
+    width: 100%;
+    accent-color: #a5b4fc;
+    cursor: pointer;
+}
+
+.seekBar:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.seekTimes {
+    display: flex;
+    justify-content: space-between;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.section {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 10px;
+}
+
+.row {
+    display: flex;
+    gap: 6px;
+}
+
+.remoteBtn {
+    flex: 1;
+    padding: 10px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background var(--transition), border-color var(--transition);
+    text-align: center;
+}
+
+.remoteBtn:hover:not(:disabled) {
+    background: rgba(165, 180, 252, 0.08);
+    border-color: rgba(165, 180, 252, 0.3);
+}
+
+.remoteBtn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.remoteBtnLg {
+    composes: remoteBtn;
+    font-size: 18px;
+    padding: 14px 8px;
+}
+
+@media (max-width: 420px) {
+    .page {
+        padding: 10px;
+    }
+
+    .remoteBtn {
+        padding: 9px 6px;
+    }
+
+    .remoteBtnLg {
+        font-size: 17px;
+        padding: 12px 6px;
+    }
+}
+
+/* App switcher — lets one paired connection drive Streaming, Invest-Track or
+   Files-Storage without reconnecting/re-pairing. */
+.tabBar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.tabBtn {
+    flex: 1;
+    padding: 8px 6px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.tabBtn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text-primary);
+}
+
+.tabBtnActive {
+    composes: tabBtn;
+    background: rgba(165, 180, 252, 0.16);
+    border-color: rgba(165, 180, 252, 0.5);
+    color: var(--color-text-primary);
+}
+
+.placeholder {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    text-align: center;
+    padding: 40px 12px;
+}

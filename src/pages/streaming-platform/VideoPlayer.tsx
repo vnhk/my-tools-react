@@ -8,6 +8,12 @@ export interface SubtitleTrack {
   url: string
 }
 
+export interface AudioTrackInfo {
+  index: number
+  name: string
+  lang?: string
+}
+
 export interface VideoPlayerHandle {
   play(): void
   pause(): void
@@ -16,6 +22,12 @@ export interface VideoPlayerHandle {
   setVolume(delta: number): void
   toggleFullscreen(): void
   getVideoElement(): HTMLVideoElement | null
+  setSubtitle(lang: string | null): void
+  getActiveSubtitle(): string | null
+  getSubtitleLangs(): string[]
+  setAudioTrack(index: number): void
+  getAudioTracks(): AudioTrackInfo[]
+  getActiveAudioTrack(): number
 }
 
 interface Props {
@@ -90,13 +102,25 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const [activeSub, setActiveSub] = useState<string | null>(null)
   const [showSubMenu, setShowSubMenu] = useState(false)
   const [resolvedSubtitles, setResolvedSubtitles] = useState<SubtitleTrack[]>([])
+  // Native Fullscreen API requires a real user gesture (transient activation) —
+  // a command arriving async over the remote-control WebSocket never has one,
+  // so requestFullscreen() silently rejects for it. This CSS-only fallback needs
+  // no browser permission at all, so it works from a remote command every time.
+  const [cssFullscreen, setCssFullscreen] = useState(false)
 
   const handleToggleFullscreen = useCallback(() => {
     const c = containerRef.current
     if (!c) return
-    if (!document.fullscreenElement) c.requestFullscreen().catch(() => {})
-    else document.exitFullscreen().catch(() => {})
-  }, [])
+    if (cssFullscreen) {
+      setCssFullscreen(false)
+      return
+    }
+    if (!document.fullscreenElement) {
+      c.requestFullscreen().catch(() => setCssFullscreen(true))
+    } else {
+      document.exitFullscreen().catch(() => {})
+    }
+  }, [cssFullscreen])
 
   useImperativeHandle(ref, () => ({
     play: () => { videoRef.current?.play()?.catch(() => {}) },
@@ -115,6 +139,18 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     },
     toggleFullscreen: handleToggleFullscreen,
     getVideoElement: () => videoRef.current,
+    setSubtitle: (lang) => setActiveSub(lang),
+    getActiveSubtitle: () => activeSub,
+    getSubtitleLangs: () => resolvedSubtitles.map((s) => s.lang),
+    setAudioTrack: (index) => {
+      if (hlsRef.current) hlsRef.current.audioTrack = index
+    },
+    getAudioTracks: () => (hlsRef.current?.audioTracks ?? []).map((t, index) => ({
+      index,
+      name: t.name || t.lang || `Track ${index + 1}`,
+      lang: t.lang,
+    })),
+    getActiveAudioTrack: () => hlsRef.current?.audioTrack ?? -1,
   }))
 
   useEffect(() => {
@@ -374,7 +410,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   return (
     <div
       ref={containerRef}
-      className={styles.container}
+      className={`${styles.container} ${cssFullscreen ? styles.pseudoFullscreen : ''}`}
       onMouseMove={showControlsTemporarily}
       onMouseLeave={() => playing && setShowControls(false)}
     >
@@ -444,7 +480,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
             />
 
             <button className={styles.ctrlBtn} onClick={handleToggleFullscreen} title="Fullscreen (F)">
-              {isFullscreen ? '⊡' : '⊞'}
+              {isFullscreen || cssFullscreen ? '⊡' : '⊞'}
             </button>
           </div>
         </div>

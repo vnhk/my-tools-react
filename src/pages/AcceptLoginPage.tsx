@@ -3,7 +3,7 @@ import {useNavigate, useParams} from 'react-router-dom'
 import {qrConfirm} from '../api/auth'
 import {Button} from '../components/ui/Button'
 import {useNotification} from '../components/ui/Notification'
-import {REMOTE_LAST_ROOM_ID_KEY} from './streaming-platform/hooks/useRemoteControl'
+import {REMOTE_LAST_ROOM_ID_KEY} from '../common/hooks/useRemoteControl'
 import styles from './login.module.css'
 
 export function AcceptLoginPage() {
@@ -33,7 +33,7 @@ export function AcceptLoginPage() {
                 localStorage.setItem(REMOTE_LAST_ROOM_ID_KEY, roomId)
                 setPairedForRemote(true)
                 showNotification('TV login confirmed! Opening remote…', 'success')
-                setTimeout(() => navigate('/streaming/remote'), 1200)
+                setTimeout(() => navigate('/remote'), 1200)
             } else {
                 showNotification('Login confirmed! You can close this page.', 'success')
                 setTimeout(() => navigate('/'), 2000)

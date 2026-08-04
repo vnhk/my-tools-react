@@ -2,6 +2,7 @@ import {useEffect, useState} from 'react'
 import {Button} from '../../components/ui/Button'
 import {useNotification} from '../../components/ui/Notification'
 import {type BudgetCategoryDto, type BudgetMonthDto, budgetTreeApi} from '../../api/investments'
+import {useRemoteControlContext} from '../../components/layout/RemoteControlProvider'
 import styles from './BudgetTreePage.module.css'
 
 function today() {
@@ -62,6 +63,36 @@ export function BudgetTreePage() {
         setExpanded(new Set());
         setExpandedCats(new Set())
     }
+
+    // Read-only remote control: the phone can toggle a month open/closed or
+    // expand/collapse everything, mirroring the same TabNav/toolbar actions
+    // available on the TV itself. Never wired to anything that mutates data.
+    const {subscribe, send} = useRemoteControlContext()
+
+    useEffect(() => {
+        return subscribe((cmd) => {
+            switch (cmd.action) {
+                case 'INVEST_TOGGLE_MONTH':
+                    if (cmd.key) toggleMonth(cmd.key)
+                    break
+                case 'INVEST_EXPAND_ALL':
+                    expandAll()
+                    break
+                case 'INVEST_COLLAPSE_ALL':
+                    collapseAll()
+                    break
+            }
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [subscribe, months])
+
+    useEffect(() => {
+        send('INVEST_MONTHS', {
+            months: months.map((m) => ({key: m.key, label: m.label})),
+            expandedKeys: [...expanded],
+        })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [send, months, expanded])
 
     const totalBalance = months.reduce((sum, m) =>
         sum + (m.entryType === 'Income' ? m.totalPln : -m.totalPln), 0)

@@ -3,7 +3,8 @@ import {useNavigate} from 'react-router-dom'
 import {qrGenerate, QrGenerateResponse, qrPoll} from '../api/auth'
 import {useAuth} from '../auth/AuthContext'
 import {Button} from '../components/ui/Button'
-import {getOrCreateRoomId} from './streaming-platform/hooks/useRemoteControl'
+import {getOrCreateRoomId} from '../common/hooks/useRemoteControl'
+import {setIsTv} from '../common/hooks/useIsTv'
 import styles from './login.module.css'
 
 type Mode = 'qr'
@@ -68,7 +69,7 @@ export function LoginTvPage() {
     }
 
     useEffect(() => {
-        localStorage.setItem('isTv', "true");
+        setIsTv(true)
 
         if (mode === 'qr') startQr()
         else stopPolling()
@@ -76,7 +77,7 @@ export function LoginTvPage() {
     }, [mode])
 
     return (
-        <div className={styles.page}>
+        <div className={`${styles.page} ${styles.tvPage}`}>
             <div className={styles.card}>
                 <h1 className={styles.title}>Welcome back</h1>
                 <p className={styles.subtitle}>Sign in to My Tools</p>
