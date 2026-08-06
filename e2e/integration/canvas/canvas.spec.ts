@@ -53,14 +53,52 @@ test.describe('Canvas — integration', () => {
     await expect(page.getByText(/Name is required/i)).toBeVisible()
   })
 
+  // ── Create, list, rename, delete via UI ─────────────────────────────────
+  // Regression coverage for a bug where the sidebar list stayed empty (backend
+  // returns a Page object, not a bare array) and inline saves (rename, content
+  // autosave, re-category) all 400'd because the PUT endpoint validated partial
+  // payloads as if they were full-object replacements.
+
+  test('creates a page via the dialog, sees it in the sidebar, renames it, then deletes it', async ({ page }) => {
+    await page.goto('/canvas')
+
+    await page.getByRole('button', { name: /New Page/i }).click()
+    await page.getByPlaceholder(/My Notes/i).fill('E2E Canvas Page')
+    await page.getByPlaceholder(/e.g. Work, Personal/i).fill('E2E Section')
+    await page.getByRole('button', { name: /^Create$/i }).click()
+
+    // New page opens in the editor and its section auto-expands in the sidebar
+    await expect(page.locator('input[placeholder="Untitled"]')).toHaveValue('E2E Canvas Page')
+    await expect(page.getByText('E2E Section').first()).toBeVisible()
+    await expect(page.getByText('E2E Canvas Page', { exact: true })).toBeVisible()
+
+    // Rename via the title field (blur triggers a partial save)
+    const titleInput = page.locator('input[placeholder="Untitled"]')
+    await titleInput.fill('E2E Canvas Page Renamed')
+    await titleInput.blur()
+    await expect(page.getByText('E2E Canvas Page Renamed', { exact: true })).toBeVisible()
+
+    // Reload to confirm the rename actually persisted server-side.
+    // Sidebar sections start collapsed on a fresh load, so expand it first.
+    await page.reload()
+    await page.getByText('E2E Section').click()
+    await expect(page.getByText('E2E Canvas Page Renamed', { exact: true })).toBeVisible()
+
+    // Cleanup
+    await page.getByText('E2E Canvas Page Renamed', { exact: true }).click()
+    page.once('dialog', (d) => d.accept())
+    await page.getByTitle('Delete page').click()
+    await expect(page.getByText('E2E Canvas Page Renamed', { exact: true })).not.toBeVisible()
+  })
+
   // ── REST API ─────────────────────────────────────────────────────────────
 
-  test('GET /api/canvas returns 200 and array', async ({ page, request }) => {
+  test('GET /api/canvas returns 200 and a page of items', async ({ page, request }) => {
     const token = await loginViaApi(page)
     const res = await apiRequest(request, 'GET', '/api/canvas', token)
     expect(res.status()).toBe(200)
     const body = await res.json()
-    expect(Array.isArray(body)).toBe(true)
+    expect(Array.isArray(body.content)).toBe(true)
   })
 
   test('GET /api/canvas/categories returns 200 and array', async ({ page, request }) => {
@@ -100,6 +138,6 @@ test.describe('Canvas — integration', () => {
     // Confirm gone
     const listRes = await apiRequest(request, 'GET', '/api/canvas', token)
     const list = await listRes.json()
-    expect(list.find((c: { id: string }) => c.id === created.id)).toBeUndefined()
+    expect(list.content.find((c: { id: string }) => c.id === created.id)).toBeUndefined()
   })
 })

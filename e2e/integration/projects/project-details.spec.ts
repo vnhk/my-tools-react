@@ -193,8 +193,8 @@ test.describe('Project details', () => {
     )
 
     await page.goto('/projects/p1')
-    await expect(page.getByText('3')).toBeVisible()
-    await expect(page.getByText('Overdue')).toBeVisible()
+    const overdueStat = page.getByText('Overdue').locator('..')
+    await expect(overdueStat.getByText('3', { exact: true })).toBeVisible()
   })
 
   test('shows task form validation error when name is missing', async ({ page }) => {

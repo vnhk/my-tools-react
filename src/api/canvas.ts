@@ -1,4 +1,5 @@
 import client from './client'
+import { type Page } from './crud'
 
 export interface CanvasItem {
   id: string
@@ -13,7 +14,7 @@ export interface CanvasDetail extends CanvasItem {
 }
 
 export const canvasApi = {
-  list: () => client.get<CanvasItem[]>('/canvas'),
+  list: () => client.get<Page<CanvasItem>>('/canvas', { params: { size: 1000 } }),
   getCategories: () => client.get<string[]>('/canvas/categories'),
   get: (id: string) => client.get<CanvasDetail>(`/canvas/${id}`),
   create: (name: string, category?: string) =>

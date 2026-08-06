@@ -18,10 +18,18 @@ test.describe('Invest Track — Budget Entries integration', () => {
         const saveResponse = page.waitForResponse(
             r => r.url().includes('/invest-track/budget-entries') && r.request().method() === 'POST',
         )
+        // Saving triggers an async reload of the entry list; the tree (and what
+        // "Expand All" expands) is built from that list, so wait for the reload's
+        // GET to land too — otherwise "Expand All" can fire against the stale,
+        // pre-save tree and leave the new category collapsed.
+        const reloadResponse = page.waitForResponse(
+            r => r.url().includes('/invest-track/budget-entries') && r.request().method() === 'GET',
+        )
         await page.getByRole('button', {name: 'Save'}).click()
         const resp = await saveResponse
         const respBody = await resp.text()
         expect(resp.status(), `POST /invest-track/budget-entries failed [${resp.status()}]: ${respBody}`).toBeLessThan(300)
+        await reloadResponse
 
         await expect(page.getByRole('dialog')).not.toBeVisible()
 

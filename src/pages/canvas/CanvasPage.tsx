@@ -36,7 +36,7 @@ export function CanvasPage() {
 
   const loadList = useCallback(() => {
     canvasApi.list().then((r) => {
-      setItems(Array.isArray(r.data) ? r.data : [])
+      setItems(r.data.content ?? [])
     })
   }, [])
 
