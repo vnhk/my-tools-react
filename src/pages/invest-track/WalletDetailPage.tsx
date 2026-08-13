@@ -102,7 +102,7 @@ export function WalletDetailPage() {
   }
 
   const tabs = [
-    { path: '/invest-track/wallets', label: '← Wallets' },
+    { path: '/invest-track/assets?tab=wallets', label: '← Wallets' },
     { path: `/invest-track/wallets/${walletId}`, label: wallet?.name ?? 'Wallet' },
   ]
 

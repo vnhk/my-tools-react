@@ -232,8 +232,9 @@ export function PocketSidePanel() {
                     className={styles.toggleBtn}
                     onClick={() => setOpen((o) => !o)}
                     title="Pocket"
+                    style={{ color: "white" }}
                 >
-                    📌
+                    ◧
                 </button>
             )}
             {open && (

@@ -55,12 +55,12 @@ test.describe('Invest Track — Wallets integration', () => {
 
     // ── Click row to open detail ──
     await page.getByRole('cell', { name: 'E2EWalletNav' }).click()
-    await expect(page).toHaveURL(/\/invest-track\/wallets\/.+/)
+    await expect(page).toHaveURL(/\/invest-track\/assets?tab=wallets\/.+/)
     await expect(page.getByText('← Wallets')).toBeVisible()
 
     // ── Navigate back ──
     await page.getByText('← Wallets').click()
-    await expect(page).toHaveURL('/invest-track/wallets')
+    await expect(page).toHaveURL('/invest-track/assets?tab=wallets')
 
     // ── Cleanup ──
     await page.getByRole('row', { name: /E2EWalletNav/ }).getByRole('checkbox').check()

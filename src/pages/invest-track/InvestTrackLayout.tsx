@@ -4,17 +4,18 @@ import { TabNav } from '../../components/layout/TabNav'
 import {
     FaChartLine,
     FaWallet,
+    FaCubes,
     FaMoneyBillWave,
     FaTree,
     FaBell,
     FaFlag,
     FaScroll,
     FaDatabase
-} from 'react-icons/fa'
+} from "react-icons/fa";
 
 const TABS = [
     { path: '/invest-track/dashboard', label: 'Dashboard', icon: FaChartLine },
-    { path: '/invest-track/wallets', label: 'Wallets', icon: FaWallet },
+    { path: '/invest-track/assets', label: 'Assets', icon: FaCubes },
     { path: '/invest-track/budget', label: 'Budget', icon: FaMoneyBillWave },
     { path: '/invest-track/budget-tree', label: 'Budget Tree', icon: FaTree },
     { path: '/invest-track/alerts', label: 'Stock Alerts', icon: FaBell },
