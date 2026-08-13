@@ -3,7 +3,6 @@ import { TabNav } from '../../components/layout/TabNav'
 
 import {
     FaChartLine,
-    FaWallet,
     FaCubes,
     FaMoneyBillWave,
     FaTree,

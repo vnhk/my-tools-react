@@ -10,7 +10,7 @@ import { useNotification } from "../../components/ui/Notification";
 import { EntityFilters } from "../../components/ui/EntityFilters";
 import { ImportExportBar } from "../../components/ui/ImportExportBar";
 import { Toolbar } from "../../components/ui/Toolbar";
-import { RealEstate, realEstateApi, Vehicle, vehicleApi } from "../../api/investments";
+import { Vehicle, vehicleApi } from "../../api/investments";
 import { toPage } from "../../api/crud";
 import styles from "./AssetsPage.module.css";
 
