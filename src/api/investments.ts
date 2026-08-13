@@ -15,7 +15,6 @@ export interface RealEstate {
   realEstateType: string;
 }
 
-
 export interface Valuable {
   id: string;
   description: string | null;
@@ -84,6 +83,13 @@ export interface BudgetEntry {
   tags: string | null;
   isRecurring: boolean | null;
   modificationDate: string | null;
+}
+
+export interface MoneyFlow {
+  bankFlow: number;
+  cashFlow: number;
+  fromDate: string;
+  toDate: string;
 }
 
 export interface AlertConfig {
@@ -165,6 +171,11 @@ export const budgetEntriesApi = {
   getCategories: () =>
     client.get<string[]>("/invest-track/budget-entries/categories"),
 
+  getMoneyFlow: (params?: Record<string, unknown>) =>
+    client.get<MoneyFlow>("/invest-track/budget-entries/money-flow", {
+      params,
+    }),
+
   create: (data: Partial<BudgetEntry>) =>
     client.post<BudgetEntry>("/invest-track/budget-entries", data),
 
@@ -193,7 +204,6 @@ export const realEstateApi = {
   delete: (id: string) => client.delete(`/invest-track/real-estate/${id}`),
 };
 
-
 export const vehicleApi = {
   getAll: (params?: Record<string, unknown>) =>
     client.get<Page<Vehicle>>("/invest-track/vehicle", { params }),
@@ -219,7 +229,6 @@ export const valuableApi = {
 
   delete: (id: string) => client.delete(`/invest-track/valuable/${id}`),
 };
-
 
 export const stockAlertsApi = {
   getAll: (params?: Record<string, unknown>) =>

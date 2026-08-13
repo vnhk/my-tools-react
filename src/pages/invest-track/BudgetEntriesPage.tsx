@@ -1,11 +1,12 @@
 import {useEffect, useState} from 'react'
 
-import {budgetEntriesApi, type BudgetEntry} from '../../api/investments'
+import {budgetEntriesApi, MoneyFlow, type BudgetEntry} from '../../api/investments'
 import styles from './BudgetEntriesPage.module.css'
 import {BudgetTreeTab} from "./BudgetTreeTab.tsx";
 import {EntityFilters} from "../../components/ui/EntityFilters.tsx";
 import {useEntityFilters} from "../../hooks/useEntityFilters.ts";
 import {BudgetAnalyticsTab} from "./BudgetAnalyticsTab.tsx";
+import { MoneyFlowTab } from './MoneyFlowTab.tsx';
 
 
 export function getCategoryIcon(name: string): string {
@@ -37,11 +38,13 @@ export function fmt(amount: number, currency = 'PLN'): string {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-type BudgetTab = 'Budget Tree' | 'Charts'
-const TABS: BudgetTab[] = ['Budget Tree', 'Charts']
+type BudgetTab = 'Budget Tree' | 'Charts' | 'Money Flow'
+const TABS: BudgetTab[] = ['Budget Tree', 'Charts', 'Money Flow']
 
 export function BudgetEntriesPage() {
     const [entries, setEntries] = useState<BudgetEntry[]>([])
+    const [firstLoading, setFirstLoading] = useState(true)
+    const [moneyFlowData, setMoneyFlowData] = useState<MoneyFlow>()
     const [categories, setCategories] = useState<string[]>([])
     const [activeTab, setActiveTab] = useState<BudgetTab>('Budget Tree')
     const {filters, setFilter, clearFilters} = useEntityFilters()
@@ -52,9 +55,21 @@ export function BudgetEntriesPage() {
     const load = () => {
         setLoading(true)
 
+        const now = new Date()
+        const defaultFrom = new Date(now.getFullYear(), now.getMonth() - 11, 1).toISOString().slice(0, 10);
+        const defaultTo = now.toISOString().slice(0, 10);
+
+        if (firstLoading) {
+            setFilter("entryDate_from", defaultFrom);
+            setFilter("entryDate_to", defaultTo);
+            setFirstLoading(false);
+        }
+
         budgetEntriesApi
             .getAll({page: 0, size: 100000, ...filters})
             .then(res => setEntries((res.data as any).content ?? []))
+            .then( _ => budgetEntriesApi.getMoneyFlow(filters)
+                .then(res => setMoneyFlowData(res.data)))
             .finally(() => {
                 setLoading(false)
                 setInitialLoading(false)
@@ -106,6 +121,10 @@ export function BudgetEntriesPage() {
 
                     {activeTab === 'Charts' && (
                         <BudgetAnalyticsTab entries={entries}/>
+                    )}
+
+                    {activeTab === 'Money Flow' && (
+                        <MoneyFlowTab data={moneyFlowData}/>
                     )}
                 </>
             )}
