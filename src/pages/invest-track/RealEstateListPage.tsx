@@ -12,14 +12,11 @@ import { Button } from "../../components/ui/Button";
 export function RealEstateListPage() {
   const { showSuccess, showError } = useNotification();
   const [rows, setRows] = useState<RealEstate[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Partial<RealEstate>>(empty());
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const load = () => {
-    setLoading(true);
     realEstateApi
       .getAll({
         page: 0,
@@ -30,9 +27,7 @@ export function RealEstateListPage() {
       .then((res) => {
         const p = toPage(res.data);
         setRows(p.content);
-        setTotal(p.totalElements);
       })
-      .finally(() => setLoading(false));
   };
 
   useEffect(load, []);

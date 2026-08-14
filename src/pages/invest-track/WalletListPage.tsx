@@ -7,7 +7,7 @@ import { walletsApi, type Wallet } from '../../api/investments'
 import { toPage } from '../../api/crud'
 import styles from './AssetsPage.module.css'
 import { AssetCard } from './AssetCard.tsx'
-import { FaChartLine, FaMoneyBill, FaPiggyBank, FaPlus, FaWallet } from 'react-icons/fa'
+import { FaChartLine, FaMoneyBill, FaPiggyBank, FaPlus } from 'react-icons/fa'
 import { FcDataEncryption } from 'react-icons/fc'
 
 
