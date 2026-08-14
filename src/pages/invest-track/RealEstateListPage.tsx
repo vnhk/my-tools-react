@@ -1,26 +1,15 @@
 import { useEffect, useState } from "react";
-import { DataTable } from "../../components/table/DataTable";
 import { Dialog } from "../../components/ui/Dialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
-import { buildColumnsFromConfig } from "../../components/table/configColumns";
-import { useTableState } from "../../hooks/useTableState";
-import { useTableActions } from "../../hooks/useTableActions";
-import { useEntityFilters } from "../../hooks/useEntityFilters";
 import { useNotification } from "../../components/ui/Notification";
-import { EntityFilters } from "../../components/ui/EntityFilters";
-import { ImportExportBar } from "../../components/ui/ImportExportBar";
-import { Toolbar } from "../../components/ui/Toolbar";
 import { RealEstate, realEstateApi } from "../../api/investments";
 import { toPage } from "../../api/crud";
 import styles from "./AssetsPage.module.css";
+import { AssetCard } from "./AssetCard";
+import { FaBuilding, FaHome, FaPlus, FaWarehouse } from "react-icons/fa";
 
 export function RealEstateListPage() {
   const { showSuccess, showError } = useNotification();
-  const table = useTableState(
-    { sortBy: "name", sortDir: "asc" },
-    "real-estate-list"
-  );
-  const { filters, setFilter, clearFilters } = useEntityFilters();
   const [rows, setRows] = useState<RealEstate[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -32,11 +21,10 @@ export function RealEstateListPage() {
     setLoading(true);
     realEstateApi
       .getAll({
-        page: table.page,
-        size: table.pageSize,
-        sort: table.sortBy,
-        direction: table.sortDir,
-        ...filters,
+        page: 0,
+        size: 100,
+        sort: "name",
+        direction: "ASC",
       })
       .then((res) => {
         const p = toPage(res.data);
@@ -46,29 +34,7 @@ export function RealEstateListPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(load, [
-    table.page,
-    table.pageSize,
-    table.sortBy,
-    table.sortDir,
-    JSON.stringify(filters),
-  ]);
-
-  const openEdit = (item: Partial<RealEstate>) => {
-    setEditItem(item);
-    setFormErrors({});
-    setDialogOpen(true);
-  };
-
-  const columns = [...buildColumnsFromConfig<RealEstate>("RealEstate")];
-
-  const actions = useTableActions<RealEstate>({
-    onDelete: async (selected) => {
-      for (const r of selected) await realEstateApi.delete(r.id);
-    },
-    onEdit: openEdit,
-    onRefresh: load,
-  });
+  useEffect(load, []);
 
   function empty(): Partial<RealEstate> {
     return { name: "" };
@@ -97,47 +63,61 @@ export function RealEstateListPage() {
     }
   };
 
+  const renderIcon = (item: RealEstate) => {
+    switch (item.realEstateType) {
+      case "Apartment":
+        return <FaBuilding />;
+      case "House":
+        return <FaHome />;
+      case "Garage":
+        return <FaWarehouse />;
+      default:
+        return <FaBuilding />;
+    }
+  };
+
+  const renderSubtitle = (item: RealEstate) => {
+    return (
+      <span>
+        {item.address}
+        {item.address && item.description && <br />}
+        {item.description}
+      </span>
+    );
+  };
+
+  const calculateTrend = (item: RealEstate) => {
+    let totalCost =
+      (item.purchaseCosts ? item.purchaseCosts : 0) + item.purchasePrice;
+    return ((item.currentValue - totalCost) / totalCost) * 100;
+  };
+
   return (
     <div className={styles.page}>
-      <Toolbar>
-        <ImportExportBar
-          exportUrl="/invest-track/real-estate/export"
-          importUrl="/invest-track/real-estate/import"
-          entityLabel="RealEstate"
-          onImportSuccess={load}
-          filters={filters}
+      <div className={styles.cardContainer}>
+        {rows.map((key) => (
+          <AssetCard
+            key={key.id}
+            icon={renderIcon(key)}
+            title={key.name}
+            subtitle={renderSubtitle(key)}
+            value={key.currentValue ? key.currentValue + "zł" : "0"}
+            trend={calculateTrend(key)}
+            onClick={() => {
+              setEditItem(key);
+              setDialogOpen(true);
+            }}
+          />
+        ))}
+        <AssetCard
+          icon={<FaPlus />}
+          title=""
+          onClick={() => {
+            setEditItem(empty());
+            setDialogOpen(true);
+          }}
         />
-        <EntityFilters
-          entityName="RealEstate"
-          filters={filters}
-          onFiltersChange={setFilter}
-          onClear={clearFilters}
-        />
-      </Toolbar>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        loading={loading}
-        page={table.page}
-        pageSize={table.pageSize}
-        totalElements={total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-        sortBy={table.sortBy}
-        sortDir={table.sortDir}
-        onSort={table.toggleSort}
-        actions={actions}
-        onRowClick={(item) => {
-          setEditItem(item);
-          setDialogOpen(true);
-        }}
-        onAdd={() => {
-          setEditItem(empty());
-          setDialogOpen(true);
-        }}
-        addLabel="New Real Estate"
-      />
+      </div>
 
       <Dialog
         open={dialogOpen}

@@ -1,45 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DataTable } from '../../components/table/DataTable'
 import { Dialog } from '../../components/ui/Dialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
-import { buildColumnsFromConfig } from '../../components/table/configColumns'
-import { Checkbox } from '../../components/fields/Checkbox'
-import { useTableState } from '../../hooks/useTableState'
-import { useTableActions } from '../../hooks/useTableActions'
-import { useEntityFilters } from '../../hooks/useEntityFilters'
 import { useNotification } from '../../components/ui/Notification'
-import { EntityFilters } from '../../components/ui/EntityFilters'
-import { ImportExportBar } from '../../components/ui/ImportExportBar'
-import { Toolbar } from '../../components/ui/Toolbar'
 import { walletsApi, type Wallet } from '../../api/investments'
 import { toPage } from '../../api/crud'
-import styles from './WalletListPage.module.css'
+import styles from './AssetsPage.module.css'
+import { AssetCard } from './AssetCard.tsx'
+import { FaChartLine, FaMoneyBill, FaPiggyBank, FaPlus, FaWallet } from 'react-icons/fa'
+import { FcDataEncryption } from 'react-icons/fc'
 
-const EXTRA_COLUMNS = [
-  {
-    key: 'currentValue',
-    header: 'Current Value',
-    sortable: true,
-    render: (row: Wallet) => (
-      <span className={styles.value}>{row.currentValue?.toFixed(2)} {row.currency}</span>
-    ),
-  },
-  {
-    key: 'returnRate',
-    header: 'Return %',
-    sortable: true,
-    render: (row: Wallet) => {
-      const pct = row.returnRate ? (row.returnRate as number) : 0
-      return (
-        <span className={pct >= 0 ? styles.positive : styles.negative}>
-          {pct >= 0 ? '+' : ''}{pct.toFixed(2)}%
-        </span>
-      )
-    },
-  },
-  { key: 'modificationDate', header: 'Modified', sortable: true },
-]
 
 const EMPTY_WALLET: Partial<Wallet> = {
   name: '', description: '', currency: 'PLN', riskLevel: 'Medium Risk', walletType: 'INVESTMENT', compareWithSP500: true,
@@ -48,43 +18,55 @@ const EMPTY_WALLET: Partial<Wallet> = {
 export function WalletListPage() {
   const navigate = useNavigate()
   const { showSuccess, showError } = useNotification()
-  const table = useTableState({ sortBy: 'name', sortDir: 'asc' }, 'wallet-list')
-  const { filters, setFilter, clearFilters } = useEntityFilters()
   const [rows, setRows] = useState<Wallet[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editItem, setEditItem] = useState<Partial<Wallet>>(EMPTY_WALLET)
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
 
-  const columns = [
-    ...buildColumnsFromConfig<Wallet>('Wallet', {
-      name: { render: (row) => <span className={styles.nameLink}>{row.name}</span> },
-    }),
-    ...EXTRA_COLUMNS,
-  ]
-
   const load = () => {
-    setLoading(true)
     walletsApi
-      .getAll({ page: table.page, size: table.pageSize, sort: table.sortBy, direction: table.sortDir, ...filters })
-      .then((res) => { const p = toPage(res.data); setRows(p.content); setTotal(p.totalElements) })
-      .finally(() => setLoading(false))
+      .getAll({ page: 0, size: 100, sort: 'name', direction: 'ASC'})
+      .then((res) => { const p = toPage(res.data); setRows(p.content);})
   }
 
-  useEffect(load, [table.page, table.pageSize, table.sortBy, table.sortDir, JSON.stringify(filters)])
+  //"INVESTMENT", "SAVINGS", "BONDS", "CRYPTO", "CASH" 
+    const renderIcon = (item: Wallet) => {
+      console.log(item.walletType)
+      switch(item.walletType) {
+        case "INVESTMENT": {
+          return <FaChartLine/>
+        }
+        case "BONDS":
+        case "SAVINGS": {
+          return <FaPiggyBank/>
+        }
+        case "CASH" : {
+           return <FaMoneyBill/>
+        }
+        case "CRYPTO": {
+            return <FcDataEncryption/>
+        }
+      }
+    };
+  
+    const renderSubtitle = (item: Wallet) => {
+      return (
+        <span>
+          {item.riskLevel}
+          {<br />}
+          {item.walletType}
+          {<br />}
+          {item.description}
+          <br/>
+        </span>
+      );
+    };
+  
+    const calculateTrend = (item: Wallet) => {
+      return item.returnRate;
+    };
 
-  const openEdit = (item: Partial<Wallet>) => {
-    setEditItem(item)
-    setFormErrors({})
-    setDialogOpen(true)
-  }
-
-  const actions = useTableActions<Wallet>({
-    onDelete: async (selected) => { for (const r of selected) await walletsApi.delete(r.id) },
-    onEdit: openEdit,
-    onRefresh: load,
-  })
+  useEffect(load, []);
 
   const handleSave = async () => {
     const errors = validateFields('Wallet', editItem as Record<string, unknown>)
@@ -105,39 +87,29 @@ export function WalletListPage() {
 
   return (
     <div className={styles.page}>
-      <Toolbar>
-        <ImportExportBar
-          exportUrl="/invest-track/wallets/export"
-          importUrl="/invest-track/wallets/import"
-          entityLabel="Wallets"
-          onImportSuccess={load}
-          filters={filters}
+      <div className={styles.cardContainer}>
+        {rows.map((key) => (
+          <AssetCard
+            key={key.id}
+            icon={renderIcon(key)}
+            title={key.name}
+            subtitle={renderSubtitle(key)}
+            value={key.currentValue ? key.currentValue + "zł" : "0"}
+            trend={calculateTrend(key)}
+            onClick={() => {
+              navigate(`/invest-track/wallets/${key.id}`)
+            }}
+          />
+        ))}
+        <AssetCard
+          icon={<FaPlus />}
+          title=""
+          onClick={() => {
+            setEditItem(EMPTY_WALLET);
+            setDialogOpen(true);
+          }}
         />
-        <EntityFilters
-          entityName="Wallet"
-          filters={filters}
-          onFiltersChange={setFilter}
-          onClear={clearFilters}
-        />
-      </Toolbar>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        loading={loading}
-        page={table.page}
-        pageSize={table.pageSize}
-        totalElements={total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-        sortBy={table.sortBy}
-        sortDir={table.sortDir}
-        onSort={table.toggleSort}
-        actions={actions}
-        onRowClick={(row) => navigate(`/invest-track/wallets/${row.id}`)}
-        onAdd={() => openEdit(EMPTY_WALLET)}
-        addLabel="New Wallet"
-      />
+      </div>
 
       <Dialog
         open={dialogOpen}
@@ -152,11 +124,6 @@ export function WalletListPage() {
           values={editItem as Record<string, unknown>}
           onChange={(field, value) => setEditItem((s) => ({ ...s, [field]: value }))}
           errors={formErrors}
-        />
-        <Checkbox
-          label="Compare with S&P 500"
-          checked={editItem.compareWithSP500 ?? true}
-          onChange={(e) => setEditItem((s) => ({ ...s, compareWithSP500: e.target.checked }))}
         />
       </Dialog>
     </div>

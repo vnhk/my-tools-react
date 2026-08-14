@@ -1,77 +1,44 @@
 import { useEffect, useState } from "react";
-import { DataTable } from "../../components/table/DataTable";
 import { Dialog } from "../../components/ui/Dialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
-import { buildColumnsFromConfig } from "../../components/table/configColumns";
-import { useTableState } from "../../hooks/useTableState";
-import { useTableActions } from "../../hooks/useTableActions";
-import { useEntityFilters } from "../../hooks/useEntityFilters";
 import { useNotification } from "../../components/ui/Notification";
-import { EntityFilters } from "../../components/ui/EntityFilters";
-import { ImportExportBar } from "../../components/ui/ImportExportBar";
-import { Toolbar } from "../../components/ui/Toolbar";
 import { Vehicle, vehicleApi } from "../../api/investments";
 import { toPage } from "../../api/crud";
 import styles from "./AssetsPage.module.css";
+import { AssetCard } from "./AssetCard";
+import {
+  FaBiking,
+  FaCar,
+  FaCarAlt,
+  FaMotorcycle,
+  FaPlus,
+} from "react-icons/fa";
 
 export function VehicleListPage() {
   const { showSuccess, showError } = useNotification();
-  const table = useTableState(
-    { sortBy: "model", sortDir: "asc" },
-    "vehicle-list"
-  );
-  const { filters, setFilter, clearFilters } = useEntityFilters();
   const [rows, setRows] = useState<Vehicle[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editItem, setEditItem] = useState<Partial<Vehicle>>(empty());
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const load = () => {
-    setLoading(true);
     vehicleApi
       .getAll({
-        page: table.page,
-        size: table.pageSize,
-        sort: table.sortBy,
-        direction: table.sortDir,
-        ...filters,
+        page: 0,
+        size: 100,
+        sort: "brand",
+        direction: "ASC",
       })
       .then((res) => {
         const p = toPage(res.data);
         setRows(p.content);
-        setTotal(p.totalElements);
       })
-      .finally(() => setLoading(false));
   };
 
-  useEffect(load, [
-    table.page,
-    table.pageSize,
-    table.sortBy,
-    table.sortDir,
-    JSON.stringify(filters),
-  ]);
-
-  const openEdit = (item: Partial<Vehicle>) => {
-    setEditItem(item);
-    setFormErrors({});
-    setDialogOpen(true);
-  };
-
-  const columns = [...buildColumnsFromConfig<Vehicle>("Vehicle")];
-
-  const actions = useTableActions<Vehicle>({
-    onDelete: async (selected) => {
-      for (const r of selected) await vehicleApi.delete(r.id);
-    },
-    onEdit: openEdit,
-    onRefresh: load,
-  });
+  useEffect(load, []);
 
   function empty(): Partial<Vehicle> {
-    return { };
+    return {};
   }
 
   const handleSave = async () => {
@@ -97,47 +64,61 @@ export function VehicleListPage() {
     }
   };
 
+  const renderIcon = (item: Vehicle) => {
+    switch (item.vehicleType) {
+      case "Car":
+        return <FaCar />;
+      case "Bike":
+        return <FaBiking />;
+      case "Motocycle":
+        return <FaMotorcycle />;
+      default:
+        return <FaCarAlt />;
+    }
+  };
+
+  const renderSubtitle = (item: Vehicle) => {
+    return (
+      <span>
+        {item.productionYear}
+        {<br />}
+        {item.description}
+      </span>
+    );
+  };
+
+  const calculateTrend = (item: Vehicle) => {
+    let totalCost =
+      (item.purchaseCosts ? item.purchaseCosts : 0) + item.purchasePrice;
+    return ((item.currentValue - totalCost) / totalCost) * 100;
+  };
+
   return (
     <div className={styles.page}>
-      <Toolbar>
-        <ImportExportBar
-          exportUrl="/invest-track/vehicle/export"
-          importUrl="/invest-track/vehicle/import"
-          entityLabel="RealEstate"
-          onImportSuccess={load}
-          filters={filters}
+      <div className={styles.cardContainer}>
+        {rows.map((key) => (
+          <AssetCard
+            key={key.id}
+            icon={renderIcon(key)}
+            title={key.brand + " " + key.model}
+            subtitle={renderSubtitle(key)}
+            value={key.currentValue ? key.currentValue + "zł" : "0"}
+            trend={calculateTrend(key)}
+            onClick={() => {
+              setEditItem(key);
+              setDialogOpen(true);
+            }}
+          />
+        ))}
+        <AssetCard
+          icon={<FaPlus />}
+          title=""
+          onClick={() => {
+            setEditItem(empty());
+            setDialogOpen(true);
+          }}
         />
-        <EntityFilters
-          entityName="Vehicle"
-          filters={filters}
-          onFiltersChange={setFilter}
-          onClear={clearFilters}
-        />
-      </Toolbar>
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(r) => r.id}
-        loading={loading}
-        page={table.page}
-        pageSize={table.pageSize}
-        totalElements={total}
-        onPageChange={table.setPage}
-        onPageSizeChange={table.setPageSize}
-        sortBy={table.sortBy}
-        sortDir={table.sortDir}
-        onSort={table.toggleSort}
-        actions={actions}
-        onRowClick={(item) => {
-          setEditItem(item);
-          setDialogOpen(true);
-        }}
-        onAdd={() => {
-          setEditItem(empty());
-          setDialogOpen(true);
-        }}
-        addLabel="New Vehicle"
-      />
+      </div>
 
       <Dialog
         open={dialogOpen}

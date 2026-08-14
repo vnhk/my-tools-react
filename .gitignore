@@ -31,3 +31,4 @@ test-results/
 *.sw?
 /playwright-report-integration/index.html
 /playwright-report-integration/data/*
+.claude/launch.json
