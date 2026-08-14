@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react'
 import {DataTable} from '../../components/table/DataTable'
-import {Dialog} from '../../components/ui/Dialog'
+import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog.tsx'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
 import {EntityFilters} from '../../components/ui/EntityFilters'
 import {Toolbar} from '../../components/ui/Toolbar'
@@ -278,7 +278,7 @@ export function IngredientsPage() {
 
             {/* ── Normal dialog ───────────────────────────────────────────── */}
 
-            <Dialog
+            <DynamicFormDialog
                 open={dialogOpen}
                 title={editItem.id ? 'Edit Ingredient' : 'New Ingredient'}
                 onClose={() => setDialogOpen(false)}
@@ -296,11 +296,11 @@ export function IngredientsPage() {
                     }
                     errors={formErrors}
                 />
-            </Dialog>
+            </DynamicFormDialog>
 
             {/* ── Scan dialog ─────────────────────────────────────────────── */}
 
-            <Dialog
+            <DynamicFormDialog
                 open={scanOpen}
                 title="Scanned Ingredient"
                 onClose={() => {
@@ -338,7 +338,7 @@ export function IngredientsPage() {
                         errors={scanErrors}
                     />
                 )}
-            </Dialog>
+            </DynamicFormDialog>
         </div>
     )
 }

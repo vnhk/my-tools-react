@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../../components/ui/Button'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { useNotification } from '../../components/ui/Notification'
 import { shoppingApi, type ProductConfigDto, type ShopConfigDto } from '../../api/shopping'
 import styles from './shopping.module.css'
@@ -120,7 +120,7 @@ export function ProductConfigPage() {
         </table>
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={form.id ? 'Edit Config' : 'New Config'}
         onClose={() => setDialogOpen(false)}
@@ -167,7 +167,7 @@ export function ProductConfigPage() {
             />
           </div>
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

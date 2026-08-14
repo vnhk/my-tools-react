@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
 import { useNotification } from '../../components/ui/Notification'
@@ -100,7 +100,7 @@ export function CodingTaskListPage() {
                 addLabel="New Coding Task"
             />
 
-            <Dialog
+            <DynamicFormDialog
                 open={dialogOpen}
                 title={editItem.id ? 'Edit Coding Task' : 'New Coding Task'}
                 onClose={() => setDialogOpen(false)}
@@ -114,7 +114,7 @@ export function CodingTaskListPage() {
                     <TextArea label="Example Code Details" value={editItem.exampleCodeDetails ?? ''} onChange={set('exampleCodeDetails')} />
                     <TextArea label="Questions" value={editItem.questions ?? ''} onChange={set('questions')} />
                 </div>
-            </Dialog>
+            </DynamicFormDialog>
         </div>
     )
 }

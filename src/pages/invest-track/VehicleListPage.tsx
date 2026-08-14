@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dialog } from "../../components/ui/Dialog";
+import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
 import { useNotification } from "../../components/ui/Notification";
 import { Vehicle, vehicleApi } from "../../api/investments";
@@ -13,6 +13,7 @@ import {
   FaMotorcycle,
   FaPlus,
 } from "react-icons/fa";
+import { Button } from "../../components/ui/Button";
 
 export function VehicleListPage() {
   const { showSuccess, showError } = useNotification();
@@ -32,7 +33,7 @@ export function VehicleListPage() {
       .then((res) => {
         const p = toPage(res.data);
         setRows(p.content);
-      })
+      });
   };
 
   useEffect(load, []);
@@ -120,10 +121,33 @@ export function VehicleListPage() {
         />
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={editItem.id ? "Edit Vehicle" : "New Vehicle"}
         onClose={() => setDialogOpen(false)}
+        leftAdditionalButton={
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (
+                editItem.id &&
+                confirm("Are you sure you want to delete this vehicle?")
+              ) {
+                try {
+                  await vehicleApi.delete(editItem.id);
+
+                  showSuccess("Vehicle has been deleted!");
+                  setDialogOpen(false);
+                  load();
+                } catch {
+                  showError("Failed to delete vehicle");
+                }
+              }
+            }}
+          >
+            Delete Vehicle
+          </Button>
+        }
         onConfirm={handleSave}
         width="min(90vw, 720px)"
       >
@@ -136,7 +160,7 @@ export function VehicleListPage() {
           }
           errors={formErrors}
         />
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Button } from '../ui/Button'
-import { Dialog } from '../ui/Dialog'
+import { DynamicFormDialog } from '../ui/DynamicFormDialog'
 import styles from './DataIEPanel.module.css'
 
 export interface FieldDef {
@@ -68,7 +68,7 @@ export function DataIEPanel({ fields, onImport, onExport }: DataIEPanelProps) {
         </Button>
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={exportOpen}
         title="Select columns to export"
         onClose={() => setExportOpen(false)}
@@ -107,7 +107,7 @@ export function DataIEPanel({ fields, onImport, onExport }: DataIEPanelProps) {
             JSON (.json)
           </label>
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

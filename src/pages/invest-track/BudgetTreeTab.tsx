@@ -3,7 +3,7 @@ import {useEffect, useMemo, useState} from "react";
 import {budgetEntriesApi, BudgetEntry} from "../../api/investments.ts";
 import {validateFields} from "../../api/entityConfig.ts";
 import styles from "./BudgetEntriesPage.module.css";
-import {Dialog} from '../../components/ui/Dialog'
+import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog.tsx'
 import {DynamicForm} from '../../components/ui/DynamicForm'
 import {fmt, getCategoryIcon, toPln} from "./BudgetEntriesPage.tsx";
 import {ScanReceipt} from "./ScanReceipt";
@@ -437,7 +437,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
             </div>
 
             {/* Dialogs */}
-            <Dialog open={editOpen} title={editItem.id ? 'Edit Entry' : 'New Entry'}
+            <DynamicFormDialog open={editOpen} title={editItem.id ? 'Edit Entry' : 'New Entry'}
                     onClose={() => setEditOpen(false)} onConfirm={handleSave} width="min(90vw, 720px)">
                 <div className={styles.dialogField}>
                     <label className={styles.dialogLabel} htmlFor="entry-category">Category</label>
@@ -459,9 +459,9 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                              values={editItem as Record<string, unknown>}
                              onChange={(field, value) => setEditItem(s => ({...s, [field]: value}))}
                              errors={formErrors} dynamicOptions={{category: categories}}/>
-            </Dialog>
+            </DynamicFormDialog>
 
-            <Dialog open={bulkEditOpen} title={'Bulk Update'}
+            <DynamicFormDialog open={bulkEditOpen} title={'Bulk Update'}
                     onClose={() => setBulkEditOpen(false)} onConfirm={handleBulkSave} width="min(90vw, 720px)">
                 <div className={styles.dialogField}>
                     <label className={styles.dialogLabel} htmlFor="entry-category">Field</label>
@@ -491,17 +491,17 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                         </div>
                     }
                 </div>
-            </Dialog>
+            </DynamicFormDialog>
 
-            <Dialog open={copyOpen} title="Copy to date" onClose={() => setCopyOpen(false)} onConfirm={handleCopy}>
+            <DynamicFormDialog open={copyOpen} title="Copy to date" onClose={() => setCopyOpen(false)} onConfirm={handleCopy}>
                 <div className={styles.dialogField}>
                     <label className={styles.dialogLabel}>New date</label>
                     <input type="date" className={styles.dialogInput} value={copyDate}
                            onChange={e => setCopyDate(e.target.value)}/>
                 </div>
-            </Dialog>
+            </DynamicFormDialog>
 
-            <Dialog open={moveOpen} title="Move entries" onClose={() => setMoveOpen(false)} onConfirm={handleMove}>
+            <DynamicFormDialog open={moveOpen} title="Move entries" onClose={() => setMoveOpen(false)} onConfirm={handleMove}>
                 <div className={styles.dialogField}>
                     <label className={styles.dialogLabel}>New date (leave empty to keep)</label>
                     <input type="date" className={styles.dialogInput} value={moveDate}
@@ -513,7 +513,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                            onChange={e => setMoveCategory(e.target.value)}/>
                     <datalist id="move-cats">{categories.map(c => <option key={c} value={c}/>)}</datalist>
                 </div>
-            </Dialog>
+            </DynamicFormDialog>
         </div>
     )
 }

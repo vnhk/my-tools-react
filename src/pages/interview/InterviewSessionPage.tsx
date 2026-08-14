@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useNotification } from '../../components/ui/Notification'
 import { Button } from '../../components/ui/Button'
 import { Badge } from '../../components/ui/Badge'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { TextArea } from '../../components/fields/TextArea'
 import { interviewSessionsApi, InterviewSessionDetail, SessionQuestionDto, SessionCodingTaskDto } from '../../api/interview'
 import styles from './InterviewSessionPage.module.css'
@@ -376,7 +376,7 @@ export function InterviewSessionPage() {
                 </>
             )}
 
-            <Dialog
+            <DynamicFormDialog
                 open={aiDialogOpen}
                 title="AI Evaluation Prompt"
                 onClose={() => setAiDialogOpen(false)}
@@ -388,7 +388,7 @@ export function InterviewSessionPage() {
                     readOnly
                     value={buildAiPrompt()}
                 />
-            </Dialog>
+            </DynamicFormDialog>
         </div>
     )
 }

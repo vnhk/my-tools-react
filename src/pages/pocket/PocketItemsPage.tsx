@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { DataTable, type TableAction } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { NumberField } from '../../components/fields/NumberField'
@@ -235,7 +235,7 @@ export function PocketItemsPage() {
         addLabel="New Item"
       />
 
-      <Dialog
+      <DynamicFormDialog
         open={editOpen}
         title={editItem.id ? 'Edit Item' : 'New Item'}
         onClose={() => setEditOpen(false)}
@@ -274,9 +274,9 @@ export function PocketItemsPage() {
             />
           </div>
         )}
-      </Dialog>
+      </DynamicFormDialog>
 
-      <Dialog
+      <DynamicFormDialog
         open={decryptOpen}
         title={`Decrypt: ${decryptItem?.summary ?? ''}`}
         onClose={() => { setDecryptOpen(false); setDecryptedContent(null) }}
@@ -298,9 +298,9 @@ export function PocketItemsPage() {
             placeholder="Enter decryption password"
           />
         )}
-      </Dialog>
+      </DynamicFormDialog>
 
-      <Dialog
+      <DynamicFormDialog
         open={moveToPocketOpen}
         title="Move Selected Items to Another Pocket"
         onClose={() => { setMoveToPocketOpen(false); setSelectedItemsToMove([]) }}
@@ -319,7 +319,7 @@ export function PocketItemsPage() {
             required
           />
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

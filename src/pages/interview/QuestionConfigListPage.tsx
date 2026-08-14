@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { EntityFilters } from '../../components/ui/EntityFilters'
 import { ImportExportBar } from '../../components/ui/ImportExportBar'
 import { Toolbar } from '../../components/ui/Toolbar'
@@ -113,7 +113,7 @@ export function QuestionConfigListPage() {
                 addLabel="New Config"
             />
 
-            <Dialog
+            <DynamicFormDialog
                 open={dialogOpen}
                 title={editItem.id ? 'Edit Config' : 'New Config'}
                 onClose={() => setDialogOpen(false)}
@@ -143,7 +143,7 @@ export function QuestionConfigListPage() {
                         Percentages must sum to 100%
                     </span>
                 </div>
-            </Dialog>
+            </DynamicFormDialog>
         </div>
     )
 }

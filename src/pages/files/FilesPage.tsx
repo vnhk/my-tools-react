@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fa'
 import client from '../../api/client'
 import {Button} from '../../components/ui/Button'
-import {Dialog} from '../../components/ui/Dialog'
+import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog'
 import {TextField} from '../../components/fields/TextField'
 import {TextArea} from '../../components/fields/TextArea'
 import {Checkbox} from '../../components/fields/Checkbox'
@@ -201,7 +201,7 @@ function UploadDialog({currentPath, onClose, onUploaded}: {
 
     return (
 
-        <Dialog open title="Upload" onClose={onClose} width="min(95vw, 520px)"
+        <DynamicFormDialog open title="Upload" onClose={onClose} width="min(95vw, 520px)"
                 footer={
                     <>
                         <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -290,7 +290,7 @@ function UploadDialog({currentPath, onClose, onUploaded}: {
                     rows={2}
                 />
             </div>
-        </Dialog>
+        </DynamicFormDialog>
     )
 }
 
@@ -338,7 +338,7 @@ function MoveDialog({
     const moveParts = pathParts(browsePath)
 
     return (
-        <Dialog open title={`Move "${items.length} files"`} onClose={onClose} width="min(90vw,420px)"
+        <DynamicFormDialog open title={`Move "${items.length} files"`} onClose={onClose} width="min(90vw,420px)"
                 footer={
                     <>
                         <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -370,7 +370,7 @@ function MoveDialog({
                     </button>
                 ))}
             </div>
-        </Dialog>
+        </DynamicFormDialog>
     )
 }
 
@@ -455,7 +455,7 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
     }, [item.id, vtype])
 
     return (
-        <Dialog open title={item.filename} onClose={onClose} width="min(95vw, 900px)"
+        <DynamicFormDialog open title={item.filename} onClose={onClose} width="min(95vw, 900px)"
                 footer={
                     <>
                         <div>
@@ -514,7 +514,7 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
                     )
                 )}
             </div>
-        </Dialog>
+        </DynamicFormDialog>
     )
 }
 
@@ -548,7 +548,7 @@ function UnlockDialog({item, onClose, onUnlocked}: {
     }
 
     return (
-        <Dialog open title={`Unlock "${item.filename}"`} onClose={onClose} width="min(90vw,380px)"
+        <DynamicFormDialog open title={`Unlock "${item.filename}"`} onClose={onClose} width="min(90vw,380px)"
                 footer={
                     <>
                         <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -567,7 +567,7 @@ function UnlockDialog({item, onClose, onUnlocked}: {
                 onKeyDown={(e) => e.key === 'Enter' && doUnlock()}
                 autoFocus
             />
-        </Dialog>
+        </DynamicFormDialog>
     )
 }
 
@@ -1043,7 +1043,7 @@ export function FilesPage() {
 
             {/* New Folder dialog */}
             {newFolderDialog && (
-                <Dialog open title="New Folder" onClose={() => setNewFolderDialog(false)} width="min(90vw,360px)"
+                <DynamicFormDialog open title="New Folder" onClose={() => setNewFolderDialog(false)} width="min(90vw,360px)"
                         footer={
                             <>
                                 <Button variant="ghost" onClick={() => setNewFolderDialog(false)}>Cancel</Button>
@@ -1058,12 +1058,12 @@ export function FilesPage() {
                         onKeyDown={(e) => e.key === 'Enter' && createFolder()}
                         autoFocus
                     />
-                </Dialog>
+                </DynamicFormDialog>
             )}
 
             {/* Delete confirm dialog */}
             {deleteTarget && (
-                <Dialog open title="Delete" onClose={() => setDeleteTarget(null)} width="min(90vw,360px)"
+                <DynamicFormDialog open title="Delete" onClose={() => setDeleteTarget(null)} width="min(90vw,360px)"
                         footer={
                             <>
                                 <Button variant="ghost" onClick={() => setDeleteTarget(null)}>Cancel</Button>
@@ -1075,7 +1075,7 @@ export function FilesPage() {
             Delete <strong style={{color: 'var(--color-text-primary)'}}>{deleteTarget.filename}</strong>?
               {deleteTarget.directory && ' This will delete all contents.'}
           </span>
-                </Dialog>
+                </DynamicFormDialog>
             )}
 
             {/* Upload dialog */}

@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react'
 import {type PocketItem, pocketItemsApi, pocketsApi} from '../../api/pockets'
 import {toPage} from '../../api/crud'
-import {Dialog} from '../ui/Dialog'
+import {DynamicFormDialog} from '../ui/DynamicFormDialog'
 import {RichTextEditor} from '../ui/RichTextEditor'
 import {TextField} from '../fields/TextField'
 import {Button} from '../ui/Button'
@@ -61,7 +61,7 @@ function ItemDialog({item, onClose, onSaved, onDeleted}: ItemDialogProps) {
     }
 
     return (
-        <Dialog
+        <DynamicFormDialog
             open
             title={item.summary}
             onClose={onClose}
@@ -98,7 +98,7 @@ function ItemDialog({item, onClose, onSaved, onDeleted}: ItemDialogProps) {
                     {error && <p style={{color: 'var(--color-danger)', fontSize: '13px', margin: '4px 0'}}>{error}</p>}
                 </>
             )}
-        </Dialog>
+        </DynamicFormDialog>
     )
 }
 

@@ -2,7 +2,7 @@ import {useNotification} from "../../components/ui/Notification.tsx";
 import {useRef, useState} from "react";
 import {budgetEntriesApi, BudgetEntry} from "../../api/investments.ts";
 import {validateFields} from "../../api/entityConfig.ts";
-import {Dialog} from "../../components/ui/Dialog";
+import {DynamicFormDialog} from "../../components/ui/DynamicFormDialog.tsx";
 import {DynamicForm} from "../../components/ui/DynamicForm";
 import styles from "./BudgetEntriesPage.module.css";
 
@@ -196,7 +196,7 @@ export function ScanReceipt({categories, onReload}: ScanReceiptProps) {
 
 
             {/* Scan result dialog */}
-            <Dialog
+            <DynamicFormDialog
                 open={scanOpen && !!scanCurrent}
                 title={`Scanned entry ${scanIndex + 1} / ${scanResult?.length ?? 0}`}
                 onClose={() => {
@@ -246,7 +246,7 @@ export function ScanReceipt({categories, onReload}: ScanReceiptProps) {
                         <div>No items scanned</div>
                     )}
                 </div>
-            </Dialog>
+            </DynamicFormDialog>
 
         </div>
     )

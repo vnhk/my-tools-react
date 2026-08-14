@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DataTable } from '../components/table/DataTable'
-import { Dialog } from '../components/ui/Dialog'
+import { DynamicFormDialog } from '../components/ui/DynamicFormDialog'
 import { TextField } from '../components/fields/TextField'
 import { useTableState } from '../hooks/useTableState'
 import { useTableActions } from '../hooks/useTableActions'
@@ -132,7 +132,7 @@ export function LowCodeGeneratorPage() {
       />
 
       {/* Edit / Create dialog */}
-      <Dialog
+      <DynamicFormDialog
         open={editOpen}
         title={editItem.id ? 'Edit Class' : 'New Class'}
         onClose={() => setEditOpen(false)}
@@ -161,10 +161,10 @@ export function LowCodeGeneratorPage() {
             </div>
           )}
         </div>
-      </Dialog>
+      </DynamicFormDialog>
 
       {/* Run generator confirm dialog */}
-      <Dialog
+      <DynamicFormDialog
         open={!!generateTarget}
         title="Confirm Code Generation"
         onClose={() => setGenerateTarget(null)}
@@ -172,7 +172,7 @@ export function LowCodeGeneratorPage() {
         confirmLabel={generating ? 'Generating…' : 'Generate'}
       >
         <p>Generate code for <strong>{generateTarget?.className}</strong>?</p>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import { getSettings, verifyCipher, saveCipher, UserSettings } from '../api/auth'
 import { Button } from '../components/ui/Button'
 import { useNotification } from '../components/ui/Notification'
-import { Dialog } from '../components/ui/Dialog'
+import { DynamicFormDialog } from '../components/ui/DynamicFormDialog'
 import styles from './settings.module.css'
 
 const THEMES = ['default', 'cyberpunk', 'bloodmoon', 'ocean', 'sunset', 'darkula', 'intellij', 'earth', 'frost', 'blossom']
@@ -105,7 +105,7 @@ export function SettingsPage() {
         </div>
       </section>
 
-      <Dialog
+      <DynamicFormDialog
         open={showConfirm}
         onClose={() => setShowConfirm(false)}
         title="Warning"
@@ -122,7 +122,7 @@ export function SettingsPage() {
           Setting a new cipher may result in data loss. Data encrypted with the previous password
           will not be decryptable.
         </p>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

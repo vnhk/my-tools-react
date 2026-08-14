@@ -1,5 +1,5 @@
 import { ReactNode, FormEvent } from 'react'
-import { Dialog } from '../ui/Dialog'
+import { DynamicFormDialog } from '../ui/DynamicFormDialog'
 import styles from './EntityForm.module.css'
 
 export interface FormField {
@@ -38,7 +38,7 @@ export function EntityForm<T extends Record<string, unknown>>({
   }
 
   return (
-    <Dialog
+    <DynamicFormDialog
       open={open}
       title={title}
       onClose={onClose}
@@ -52,6 +52,6 @@ export function EntityForm<T extends Record<string, unknown>>({
           </div>
         ))}
       </form>
-    </Dialog>
+    </DynamicFormDialog>
   )
 }

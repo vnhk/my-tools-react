@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { spreadsheetApi, type SpreadsheetItem } from '../../api/spreadsheet'
 import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { TextField } from '../../components/fields/TextField'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
@@ -79,7 +79,7 @@ export function SpreadsheetListPage() {
         onRowClick={(r) => navigate(`/spreadsheet/${r.id}`)}
       />
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title="New Spreadsheet"
         onClose={() => setDialogOpen(false)}
@@ -99,7 +99,7 @@ export function SpreadsheetListPage() {
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

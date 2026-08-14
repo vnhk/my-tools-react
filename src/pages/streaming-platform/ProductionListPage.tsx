@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { fetchProductions, reloadConfig, createProduction } from './api'
 import type { ProductionSummary } from './types'
 import { useAuth } from '../../auth/AuthContext'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { Button } from '../../components/ui/Button'
 import { useNotification } from '../../components/ui/Notification'
 import { TextField } from '../../components/fields/TextField'
@@ -111,7 +111,7 @@ function AddProductionDialog({ onClose, onCreated }: { onClose: () => void; onCr
   }
 
   return (
-    <Dialog open title="Add Production" onClose={onClose} width="min(90vw, 640px)"
+    <DynamicFormDialog open title="Add Production" onClose={onClose} width="min(90vw, 640px)"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -144,7 +144,7 @@ function AddProductionDialog({ onClose, onCreated }: { onClose: () => void; onCr
         <label className={styles.addLabel}>Poster (image)</label>
         <input ref={posterRef} className={styles.addFileInput} type="file" accept="image/*" />
       </div>
-    </Dialog>
+    </DynamicFormDialog>
   )
 }
 

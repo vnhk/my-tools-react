@@ -9,7 +9,7 @@ import {
     ingredientsApi
 } from '../../api/cookBook'
 import {CustomSelect} from '../../components/fields/CustomSelect'
-import {Dialog} from '../../components/ui/Dialog'
+import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog'
 import {Button} from '../../components/ui/Button'
 import styles from './DietPage.module.css'
 
@@ -362,7 +362,7 @@ function AutoMealsFormDialog({day, onSaved, onClose}: {
         </div>
     )
     return (
-        <Dialog open title={`Automatically calculate macro/kcal — ${day.date}`} onClose={onClose}
+        <DynamicFormDialog open title={`Automatically calculate macro/kcal — ${day.date}`} onClose={onClose}
                 onConfirm={handleSave}
                 confirmLabel={'Save Meals - It will overwrite your existing meals'}
                 width="min(95vw, 580px)">
@@ -433,7 +433,7 @@ function AutoMealsFormDialog({day, onSaved, onClose}: {
                     {numField(fiberPercentage, setFiberPercentage, 'Estimated Daily Fiber Intake (%)', '5')}
                 </div>
             </div>
-        </Dialog>
+        </DynamicFormDialog>
     )
 }
 
@@ -529,7 +529,7 @@ function SetDataDialog({day, onSaved, onClose}: {
     )
 
     return (
-        <Dialog open title={`Daily Data — ${day.date}`} onClose={onClose} onConfirm={handleSave}
+        <DynamicFormDialog open title={`Daily Data — ${day.date}`} onClose={onClose} onConfirm={handleSave}
                 width="min(95vw, 580px)">
 
             {/* ── 1. Targets ─────────────────────────────────────────── */}
@@ -630,7 +630,7 @@ function SetDataDialog({day, onSaved, onClose}: {
                 <textarea className={styles.sdInput} rows={3} value={f.notes}
                           onChange={e => setF(prev => ({...prev, notes: e.target.value}))}/>
             </div>
-        </Dialog>
+        </DynamicFormDialog>
     )
 }
 

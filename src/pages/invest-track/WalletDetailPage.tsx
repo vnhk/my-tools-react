@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DataTable } from "../../components/table/DataTable";
-import { Dialog } from "../../components/ui/Dialog";
+import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { NumberField } from "../../components/fields/NumberField";
 import { TextField } from "../../components/fields/TextField";
 import { TabNav } from "../../components/layout/TabNav";
@@ -328,7 +328,7 @@ export function WalletDetailPage() {
         addLabel="Add Snapshot"
       />
 
-      <Dialog
+      <DynamicFormDialog
         open={snapshotsDialogOpen}
         title={editWalletItem?.id ? "Edit Snapshot" : "New Snapshot"}
         onClose={() => setWalletDialogOpen(false)}
@@ -395,8 +395,8 @@ export function WalletDetailPage() {
             }
           />
         </div>
-      </Dialog>
-      <Dialog
+      </DynamicFormDialog>
+      <DynamicFormDialog
         open={walletDialogOpen}
         title={"Edit Wallet"}
         onClose={() => setWalletDialogOpen(false)}
@@ -412,7 +412,7 @@ export function WalletDetailPage() {
           }
           errors={formErrors}
         />
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   );
 }

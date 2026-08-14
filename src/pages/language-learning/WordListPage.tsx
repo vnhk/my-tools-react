@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react'
 import {useLocation} from 'react-router-dom'
 import {DataTable} from '../../components/table/DataTable'
-import {Dialog} from '../../components/ui/Dialog'
+import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog'
 import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
 import {EntityFilters} from '../../components/ui/EntityFilters'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
@@ -144,7 +144,7 @@ export function WordListPage() {
                 addLabel="Add Word"
             />
 
-            <Dialog
+            <DynamicFormDialog
                 open={dialogOpen}
                 title={editItem.id ? 'Edit Word' : 'Add Word'}
                 onClose={() => setDialogOpen(false)}
@@ -158,7 +158,7 @@ export function WordListPage() {
                     onChange={(field, value) => setEditItem((s) => ({...s, [field]: value}))}
                     errors={formErrors}
                 />
-            </Dialog>
+            </DynamicFormDialog>
         </div>
     )
 }

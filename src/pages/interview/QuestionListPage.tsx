@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react'
 import {DataTable} from '../../components/table/DataTable'
-import {Dialog} from '../../components/ui/Dialog'
+import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog.tsx'
 import {DynamicForm, validateFields} from '../../components/ui/DynamicForm'
 import {EntityFilters} from '../../components/ui/EntityFilters'
 import {ImportExportBar} from '../../components/ui/ImportExportBar'
@@ -137,7 +137,7 @@ export function QuestionListPage() {
                 addLabel="New Question"
             />
 
-            <Dialog
+            <DynamicFormDialog
                 open={dialogOpen}
                 title={editItem.id ? 'Edit Question' : 'New Question'}
                 onClose={() => setDialogOpen(false)}
@@ -151,7 +151,7 @@ export function QuestionListPage() {
                     onChange={(field, value) => setEditItem((s) => ({...s, [field]: value}))}
                     errors={formErrors}
                 />
-            </Dialog>
+            </DynamicFormDialog>
         </div>
     )
 }

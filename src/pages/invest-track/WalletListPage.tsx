@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog.tsx'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { useNotification } from '../../components/ui/Notification'
 import { walletsApi, type Wallet } from '../../api/investments'
@@ -111,7 +111,7 @@ export function WalletListPage() {
         />
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={editItem.id ? 'Edit Wallet' : 'New Wallet'}
         onClose={() => setDialogOpen(false)}
@@ -125,7 +125,7 @@ export function WalletListPage() {
           onChange={(field, value) => setEditItem((s) => ({ ...s, [field]: value }))}
           errors={formErrors}
         />
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

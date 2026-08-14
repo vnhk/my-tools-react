@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
 import { SelectField } from '../../components/fields/SelectField'
@@ -148,7 +148,7 @@ export function StockAlertsPage() {
         addLabel="New Alert"
       />
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={editItem.id ? 'Edit Alert' : 'New Alert'}
         onClose={() => setDialogOpen(false)}
@@ -183,7 +183,7 @@ export function StockAlertsPage() {
             <NumberField label="Notify again each % change" value={editItem.anotherNotificationEachPercentage ?? 10} onChange={(v) => set('anotherNotificationEachPercentage', v === '' ? 10 : v)} />
           </div>
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { FaPlus, FaChevronRight, FaTrash, FaBook } from 'react-icons/fa'
 import { canvasApi, type CanvasDetail, type CanvasItem } from '../../api/canvas'
 import { RichTextEditor } from '../../components/ui/RichTextEditor'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { useNotification } from '../../components/ui/Notification'
 import styles from './CanvasPage.module.css'
 
@@ -256,7 +256,7 @@ export function CanvasPage() {
       </main>
 
       {/* New page dialog */}
-      <Dialog
+      <DynamicFormDialog
         open={newDialogOpen}
         title="New Page"
         onClose={() => setNewDialogOpen(false)}
@@ -286,10 +286,10 @@ export function CanvasPage() {
             />
           </div>
         </div>
-      </Dialog>
+      </DynamicFormDialog>
 
       {/* Category edit dialog */}
-      <Dialog
+      <DynamicFormDialog
         open={categoryEditOpen}
         title="Change Section"
         onClose={() => setCategoryEditOpen(false)}
@@ -307,7 +307,7 @@ export function CanvasPage() {
             onKeyDown={(e) => e.key === 'Enter' && handleCategoryConfirm()}
           />
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

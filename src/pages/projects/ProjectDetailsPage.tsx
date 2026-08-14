@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useNotification } from '../../components/ui/Notification'
 import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { buildColumnsFromConfig } from '../../components/table/configColumns'
 import { InlineEditableField } from '../../components/ui/InlineEditableField'
@@ -217,7 +217,7 @@ export function ProjectDetailsPage() {
         />
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={taskDialog}
         title={(editTask as TaskDto).id ? 'Edit Task' : 'New Task'}
         onClose={() => setTaskDialog(false)}
@@ -231,7 +231,7 @@ export function ProjectDetailsPage() {
           onChange={(field, value) => setEditTask((s) => ({ ...s, [field]: value }))}
           errors={taskErrors}
         />
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

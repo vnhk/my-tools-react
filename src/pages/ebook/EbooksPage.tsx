@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ebookApi, type Ebook } from '../../api/ebook'
 import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { TextField } from '../../components/fields/TextField'
 import { useTableState } from '../../hooks/useTableState'
 import { useTableActions } from '../../hooks/useTableActions'
@@ -73,7 +73,7 @@ export function EbooksPage() {
         addLabel="Add Ebook"
       />
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title="Add Ebook"
         onClose={() => setDialogOpen(false)}
@@ -92,7 +92,7 @@ export function EbooksPage() {
             Supported formats: .epub, .pdf, .vtt, .srt
           </p>
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

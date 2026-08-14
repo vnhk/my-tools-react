@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DataTable } from '../../components/table/DataTable'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { DynamicForm, validateFields } from '../../components/ui/DynamicForm'
 import { EntityFilters } from '../../components/ui/EntityFilters'
 import { ImportExportBar } from '../../components/ui/ImportExportBar'
@@ -112,7 +112,7 @@ export function PocketListPage() {
         addLabel="New Pocket"
       />
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={editItem.id ? 'Edit Pocket' : 'New Pocket'}
         onClose={() => setDialogOpen(false)}
@@ -126,7 +126,7 @@ export function PocketListPage() {
           onChange={(field, value) => setEditItem((s) => ({ ...s, [field]: value }))}
           errors={formErrors}
         />
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

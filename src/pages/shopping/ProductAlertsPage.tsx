@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '../../components/ui/Button'
-import { Dialog } from '../../components/ui/Dialog'
+import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { useNotification } from '../../components/ui/Notification'
 import { shoppingApi, type ProductAlertDto } from '../../api/shopping'
 import styles from './shopping.module.css'
@@ -103,7 +103,7 @@ export function ProductAlertsPage() {
         </table>
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={form.id ? 'Edit Alert' : 'New Alert'}
         onClose={() => setDialogOpen(false)}
@@ -136,7 +136,7 @@ export function ProductAlertsPage() {
             />
           </div>
         </div>
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   )
 }

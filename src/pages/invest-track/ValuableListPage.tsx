@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dialog } from "../../components/ui/Dialog";
+import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
 import { useNotification } from "../../components/ui/Notification";
 import { Valuable, valuableApi } from "../../api/investments";
@@ -8,6 +8,7 @@ import styles from "./AssetsPage.module.css";
 import { FaLaptop, FaPlus } from "react-icons/fa";
 import { FaShield } from "react-icons/fa6";
 import { AssetCard } from "./AssetCard";
+import { Button } from "../../components/ui/Button";
 
 export function ValuableListPage() {
   const { showSuccess, showError } = useNotification();
@@ -108,12 +109,35 @@ export function ValuableListPage() {
         />
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={editItem.id ? "Edit Valuable" : "New Valuable"}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleSave}
         width="min(90vw, 720px)"
+        leftAdditionalButton={
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (
+                editItem.id &&
+                confirm("Are you sure you want to delete this item?")
+              ) {
+                try {
+                  await valuableApi.delete(editItem.id);
+
+                  showSuccess("Item has been deleted!");
+                  setDialogOpen(false);
+                  load();
+                } catch {
+                  showError("Failed to delete item");
+                }
+              }
+            }}
+          >
+            Delete Item
+          </Button>
+        }
       >
         <DynamicForm
           entityName="Valuable"
@@ -124,7 +148,7 @@ export function ValuableListPage() {
           }
           errors={formErrors}
         />
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   );
 }

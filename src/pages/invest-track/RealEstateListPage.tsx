@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Dialog } from "../../components/ui/Dialog";
+import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
 import { useNotification } from "../../components/ui/Notification";
 import { RealEstate, realEstateApi } from "../../api/investments";
@@ -7,6 +7,7 @@ import { toPage } from "../../api/crud";
 import styles from "./AssetsPage.module.css";
 import { AssetCard } from "./AssetCard";
 import { FaBuilding, FaHome, FaPlus, FaWarehouse } from "react-icons/fa";
+import { Button } from "../../components/ui/Button";
 
 export function RealEstateListPage() {
   const { showSuccess, showError } = useNotification();
@@ -119,12 +120,35 @@ export function RealEstateListPage() {
         />
       </div>
 
-      <Dialog
+      <DynamicFormDialog
         open={dialogOpen}
         title={editItem.id ? "Edit Real Estate" : "New Real Estate"}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleSave}
         width="min(90vw, 720px)"
+        leftAdditionalButton={
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (
+                editItem.id &&
+                confirm("Are you sure you want to delete this asset?")
+              ) {
+                try {
+                  await realEstateApi.delete(editItem.id);
+
+                  showSuccess("Asset has been deleted!");
+                  setDialogOpen(false);
+                  load();
+                } catch {
+                  showError("Failed to delete asset");
+                }
+              }
+            }}
+          >
+            Delete Asset
+          </Button>
+        }
       >
         <DynamicForm
           entityName="RealEstate"
@@ -135,7 +159,7 @@ export function RealEstateListPage() {
           }
           errors={formErrors}
         />
-      </Dialog>
+      </DynamicFormDialog>
     </div>
   );
 }
