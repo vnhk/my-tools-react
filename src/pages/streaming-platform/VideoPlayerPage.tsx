@@ -88,7 +88,7 @@ export default function VideoPlayerPage() {
         []
     )
 
-    const {roomId, subscribe, sendStatus} = useRemoteControlContext()
+    const {subscribe, sendStatus} = useRemoteControlContext()
 
     useEffect(() => {
         // Subscribe to remote commands while the player is mounted
