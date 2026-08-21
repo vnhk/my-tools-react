@@ -110,6 +110,7 @@ export function WalletListPage() {
           title="New Wallet"
           subtitle={renderSubtitleBase('Risk', 'Type', 'Description')}
           value='0 zł'
+          variant='add'
           onClick={() => {
             setEditItem(EMPTY_WALLET);
             setDialogOpen(true);
