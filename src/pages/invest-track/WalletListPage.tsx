@@ -50,18 +50,22 @@ export function WalletListPage() {
     };
   
     const renderSubtitle = (item: Wallet) => {
+      return renderSubtitleBase(item.riskLevel, item.walletType, item.description)
+    };
+  
+    const renderSubtitleBase = (riskLevel:string, walletType:string, description:string | null) => {
       return (
         <span>
-          {item.riskLevel}
+          {riskLevel}
           {<br />}
-          {item.walletType}
+          {walletType}
           {<br />}
-          {item.description}
+          {description}
           <br/>
         </span>
       );
     };
-  
+
     const calculateTrend = (item: Wallet) => {
       return item.returnRate;
     };
@@ -94,7 +98,7 @@ export function WalletListPage() {
             icon={renderIcon(key)}
             title={key.name}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + "zł" : "0"}
+            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
             trend={calculateTrend(key)}
             onClick={() => {
               navigate(`/invest-track/wallets/${key.id}`)
@@ -103,7 +107,9 @@ export function WalletListPage() {
         ))}
         <AssetCard
           icon={<FaPlus />}
-          title=""
+          title="New Wallet"
+          subtitle={renderSubtitleBase('Risk', 'Type', 'Description')}
+          value='0 zł'
           onClick={() => {
             setEditItem(EMPTY_WALLET);
             setDialogOpen(true);

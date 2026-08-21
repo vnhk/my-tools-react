@@ -33,6 +33,13 @@ export function ValuableListPage() {
   };
 
   const calculateTrend = (item: Valuable) => {
+    if (
+      (item.purchaseCosts ? item.purchaseCosts : 0) == 0 &&
+      item.purchasePrice == 0
+    ) {
+      return 0;
+    }
+
     let totalCost =
       (item.purchaseCosts ? item.purchaseCosts : 0) + item.purchasePrice;
     return ((item.currentValue - totalCost) / totalCost) * 100;
@@ -91,7 +98,7 @@ export function ValuableListPage() {
             icon={renderIcon(key)}
             title={key.valuableType}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + "zł" : "0"}
+            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
             trend={calculateTrend(key)}
             onClick={() => {
               setEditItem(key);
@@ -101,7 +108,10 @@ export function ValuableListPage() {
         ))}
         <AssetCard
           icon={<FaPlus />}
-          title=""
+          title="New Item"
+          value="0 zł"
+          variant="add"
+          subtitle="Description"
           onClick={() => {
             setEditItem(empty());
             setDialogOpen(true);

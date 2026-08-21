@@ -7,6 +7,7 @@ interface AssetCardProps {
   subtitle?: ReactNode;
   value?: string;
   trend?: number;
+  variant?: "default" | "add";
   onClick?: () => void;
 }
 
@@ -17,12 +18,15 @@ export function AssetCard({
   value,
   trend,
   onClick,
+  variant = 'default',
 }: AssetCardProps) {
   const hasTrend = typeof trend === "number";
 
+  const cardClass = variant === "add" ? `${styles.card} ${styles.addCard}` : styles.card;
+
   return (
     <span
-      className={styles.card}
+      className={cardClass}
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}

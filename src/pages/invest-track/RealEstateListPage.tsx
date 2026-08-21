@@ -27,7 +27,7 @@ export function RealEstateListPage() {
       .then((res) => {
         const p = toPage(res.data);
         setRows(p.content);
-      })
+      });
   };
 
   useEffect(load, []);
@@ -73,11 +73,15 @@ export function RealEstateListPage() {
   };
 
   const renderSubtitle = (item: RealEstate) => {
+    return renderSubtitleBase(item.address, item.description)
+  };
+
+    const renderSubtitleBase = (address: string | null, description: string | null) => {
     return (
       <span>
-        {item.address}
-        {item.address && item.description && <br />}
-        {item.description}
+        {address}
+        {address && description && <br />}
+        {description}
       </span>
     );
   };
@@ -97,7 +101,7 @@ export function RealEstateListPage() {
             icon={renderIcon(key)}
             title={key.name}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + "zł" : "0"}
+            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
             trend={calculateTrend(key)}
             onClick={() => {
               setEditItem(key);
@@ -107,7 +111,10 @@ export function RealEstateListPage() {
         ))}
         <AssetCard
           icon={<FaPlus />}
-          title=""
+          title="New Property"
+          value="0 zł"
+          variant="add"
+          subtitle={renderSubtitleBase("Adress", "Description")}
           onClick={() => {
             setEditItem(empty());
             setDialogOpen(true);
@@ -117,7 +124,7 @@ export function RealEstateListPage() {
 
       <DynamicFormDialog
         open={dialogOpen}
-        title={editItem.id ? "Edit Real Estate" : "New Real Estate"}
+        title={editItem.id ? "Edit Property" : "New Property"}
         onClose={() => setDialogOpen(false)}
         onConfirm={handleSave}
         width="min(90vw, 720px)"
@@ -132,11 +139,11 @@ export function RealEstateListPage() {
                 try {
                   await realEstateApi.delete(editItem.id);
 
-                  showSuccess("Asset has been deleted!");
+                  showSuccess("Property has been deleted!");
                   setDialogOpen(false);
                   load();
                 } catch {
-                  showError("Failed to delete asset");
+                  showError("Failed to delete property");
                 }
               }
             }}

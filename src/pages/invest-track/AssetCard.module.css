@@ -4,11 +4,22 @@
   gap: var(--space-md);
   padding: var(--space-md);
   background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  border: 3px solid var(--card-border);
   border-radius: var(--card-radius);
   box-shadow: var(--card-shadow);
   transition: transform var(--transition), border-color var(--transition),
     background var(--transition);
+  flex: 0 0 258.88px;
+  width: 258.88px;
+  max-width: 258.88px;
+  height: 120px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.addCard {
+  opacity: 0.60;
+  border: 5px dotted var(--card-border);
 }
 
 .card[role="button"] {
@@ -90,6 +101,7 @@
   cursor: pointer;
   font-weight: 500;
 }
+
 .nameLink:hover {
   text-decoration: underline;
 }

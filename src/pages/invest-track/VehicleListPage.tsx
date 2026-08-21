@@ -79,16 +79,26 @@ export function VehicleListPage() {
   };
 
   const renderSubtitle = (item: Vehicle) => {
+    return renderSubtitleBase(item.productionYear + '', item.description);
+  };
+
+  const renderSubtitleBase = (productionYear: string, description: string | null) => {
     return (
       <span>
-        {item.productionYear}
+        {productionYear}
         {<br />}
-        {item.description}
+        {description}
       </span>
     );
   };
 
   const calculateTrend = (item: Vehicle) => {
+    if (
+      (item.purchaseCosts ? item.purchaseCosts : 0) == 0 &&
+      item.purchasePrice == 0
+    ) {
+      return 0;
+    }
     let totalCost =
       (item.purchaseCosts ? item.purchaseCosts : 0) + item.purchasePrice;
     return ((item.currentValue - totalCost) / totalCost) * 100;
@@ -103,7 +113,7 @@ export function VehicleListPage() {
             icon={renderIcon(key)}
             title={key.brand + " " + key.model}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + "zł" : "0"}
+            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
             trend={calculateTrend(key)}
             onClick={() => {
               setEditItem(key);
@@ -113,7 +123,10 @@ export function VehicleListPage() {
         ))}
         <AssetCard
           icon={<FaPlus />}
-          title=""
+          title="New Vehicle"
+          subtitle={renderSubtitleBase("Production Year", "Description")}
+          value="0 zł"
+          variant="add"
           onClick={() => {
             setEditItem(empty());
             setDialogOpen(true);

@@ -28,9 +28,5 @@
 .cardContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-}
-
-.cardContainer span {
-  max-width: 500px;
+  gap: 10px;
 }
