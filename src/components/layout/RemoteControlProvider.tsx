@@ -2,6 +2,7 @@ import {createContext, useCallback, useContext, useEffect, useMemo, useRef, useS
 import {useNavigate} from 'react-router-dom'
 import {type RemoteCommand, type RemoteStatus, useRemoteControlReceiver} from '../../common/hooks/useRemoteControl'
 import styles from './RemoteControlProvider.module.css'
+import {useIsTv} from '../../common/hooks/useIsTv'
 
 type Subscriber = (cmd: RemoteCommand) => void
 
@@ -77,13 +78,18 @@ function useIsMobile() {
 export function RoomBadge() {
     const {roomId} = useRemoteControlContext()
     const isMobile = useIsMobile()
+    const isTv = useIsTv()
 
     if (isMobile) return null
+
+    // We do not need 'Remote connection for non-tvs devices'
+    // If needed, user can use /login-tv
+    if(!isTv) return null
 
     return (
         <div className={styles.overlay} aria-hidden="true">
             <div className={styles.badge} title="Room ID — enter this in the Remote Control page">
-                📱 {roomId}
+                Remote: {roomId}
             </div>
         </div>
     )

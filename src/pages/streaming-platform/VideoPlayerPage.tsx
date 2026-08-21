@@ -149,10 +149,6 @@ export default function VideoPlayerPage() {
                     <span className={styles.productionName}>{productionName}</span>
                     <span className={styles.episodeName}>{videoInfo.videoName}</span>
                 </div>
-
-                <div className={styles.roomBadge} title="Room ID — enter this in the Remote Control page">
-                    📱 {roomId}
-                </div>
             </div>
 
             <div className={styles.playerWrapper}>

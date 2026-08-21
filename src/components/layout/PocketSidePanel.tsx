@@ -39,7 +39,8 @@ function ItemDialog({item, onClose, onSaved, onDeleted}: ItemDialogProps) {
     const handleSave = async () => {
         setSaving(true)
         try {
-            await pocketItemsApi.update(item.id, {content, encrypted})
+            const summary = item.summary;
+            await pocketItemsApi.update(item.id, {summary, content, encrypted})
             onSaved()
             onClose()
         } catch {
