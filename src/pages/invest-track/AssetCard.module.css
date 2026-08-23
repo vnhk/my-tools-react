@@ -9,10 +9,10 @@
   box-shadow: var(--card-shadow);
   transition: transform var(--transition), border-color var(--transition),
     background var(--transition);
-  flex: 0 0 258.88px;
-  width: 258.88px;
-  max-width: 258.88px;
-  height: 120px;
+  flex: 0 0 335px;
+  width: 335px;
+  max-width: 335px;
+  height: 150px;
   box-sizing: border-box;
   overflow: hidden;
 }
