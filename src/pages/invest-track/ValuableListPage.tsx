@@ -9,6 +9,7 @@ import { FaLaptop, FaPlus } from "react-icons/fa";
 import { FaShield } from "react-icons/fa6";
 import { AssetCard } from "./AssetCard";
 import { Button } from "../../components/ui/Button";
+import { calculateValue } from './AssetsPage.tsx'
 
 export function ValuableListPage() {
   const { showSuccess, showError } = useNotification();
@@ -98,7 +99,7 @@ export function ValuableListPage() {
             icon={renderIcon(key)}
             title={key.valuableType}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
+            value={calculateValue(key.currentValue, 'PLN')}
             trend={calculateTrend(key)}
             onClick={() => {
               setEditItem(key);

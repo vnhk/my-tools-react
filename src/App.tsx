@@ -1,386 +1,469 @@
-import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom'
-import {AuthProvider} from './auth/AuthContext'
-import {RequireAuth} from './auth/RequireAuth'
-import {LoginPage} from './pages/LoginPage'
-import {AcceptLoginPage} from './pages/AcceptLoginPage'
-import {AppLayout, NavItem} from './components/layout/AppLayout'
-import {NotificationProvider} from './components/ui/Notification'
-import {PocketListPage} from './pages/pocket/PocketListPage'
-import {PocketItemsPage} from './pages/pocket/PocketItemsPage'
-import {InvestTrackLayout} from './pages/invest-track/InvestTrackLayout'
-import {DashboardPage} from './pages/invest-track/DashboardPage'
-import {WalletDetailPage} from './pages/invest-track/WalletDetailPage'
-import {AssetsPage} from './pages/invest-track/AssetsPage'
-import {BudgetEntriesPage} from './pages/invest-track/BudgetEntriesPage'
-import {StockAlertsPage} from './pages/invest-track/StockAlertsPage'
-import {RecommendationsPage} from './pages/invest-track/RecommendationsPage'
-import {StockReportPage} from './pages/invest-track/StockReportPage'
-import {DataIEPage} from './pages/invest-track/DataIEPage'
-import {CookBookLayout} from './pages/cook-book/CookBookLayout'
-import {RecipeListPage} from './pages/cook-book/RecipeListPage'
-import {RecipeDetailPage} from './pages/cook-book/RecipeDetailPage'
-import {FridgeSearchPage} from './pages/cook-book/FridgeSearchPage'
-import {ShoppingCartPage} from './pages/cook-book/ShoppingCartPage'
-import {IngredientsPage} from './pages/cook-book/IngredientsPage'
-import {DietPage} from './pages/cook-book/DietPage'
-import {DietDashboardPage} from './pages/cook-book/DietDashboardPage'
-import ProductionListPage from './pages/streaming-platform/ProductionListPage'
-import ProductionDetailsPage from './pages/streaming-platform/ProductionDetailsPage'
-import VideoPlayerPage from './pages/streaming-platform/VideoPlayerPage'
-import RemoteControlPage from './pages/remote/RemoteControlPage'
-import StreamingLayout from './pages/streaming-platform/StreamingLayout'
-import {FilesPage} from './pages/files/FilesPage'
-import TvFileDisplay from './pages/files/TvFileDisplay'
-import {ProjectListPage} from './pages/projects/ProjectListPage'
-import {ProjectDetailsPage} from './pages/projects/ProjectDetailsPage'
-import {AllTasksPage} from './pages/projects/AllTasksPage'
-import {TaskDetailsPage} from './pages/projects/TaskDetailsPage'
-import {HomePage, HomePageCard} from "./components/layout/HomePage.tsx";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./auth/AuthContext";
+import { RequireAuth } from "./auth/RequireAuth";
+import { LoginPage } from "./pages/LoginPage";
+import { AcceptLoginPage } from "./pages/AcceptLoginPage";
+import { AppLayout, NavItem } from "./components/layout/AppLayout";
+import { NotificationProvider } from "./components/ui/Notification";
+import { PocketListPage } from "./pages/pocket/PocketListPage";
+import { PocketItemsPage } from "./pages/pocket/PocketItemsPage";
+import { InvestTrackLayout } from "./pages/invest-track/InvestTrackLayout";
+import { DashboardPage } from "./pages/invest-track/DashboardPage";
+import { WalletDetailPage } from "./pages/invest-track/WalletDetailPage";
+import { AssetsPage } from "./pages/invest-track/AssetsPage";
+import { BudgetEntriesPage } from "./pages/invest-track/BudgetEntriesPage";
+import { StockAlertsPage } from "./pages/invest-track/StockAlertsPage";
+import { RecommendationsPage } from "./pages/invest-track/RecommendationsPage";
+import { StockReportPage } from "./pages/invest-track/StockReportPage";
+import { DataIEPage } from "./pages/invest-track/DataIEPage";
+import { CookBookLayout } from "./pages/cook-book/CookBookLayout";
+import { RecipeListPage } from "./pages/cook-book/RecipeListPage";
+import { RecipeDetailPage } from "./pages/cook-book/RecipeDetailPage";
+import { FridgeSearchPage } from "./pages/cook-book/FridgeSearchPage";
+import { ShoppingCartPage } from "./pages/cook-book/ShoppingCartPage";
+import { IngredientsPage } from "./pages/cook-book/IngredientsPage";
+import { DietPage } from "./pages/cook-book/DietPage";
+import { DietDashboardPage } from "./pages/cook-book/DietDashboardPage";
+import ProductionListPage from "./pages/streaming-platform/ProductionListPage";
+import ProductionDetailsPage from "./pages/streaming-platform/ProductionDetailsPage";
+import VideoPlayerPage from "./pages/streaming-platform/VideoPlayerPage";
+import RemoteControlPage from "./pages/remote/RemoteControlPage";
+import StreamingLayout from "./pages/streaming-platform/StreamingLayout";
+import { FilesPage } from "./pages/files/FilesPage";
+import TvFileDisplay from "./pages/files/TvFileDisplay";
+import { ProjectListPage } from "./pages/projects/ProjectListPage";
+import { ProjectDetailsPage } from "./pages/projects/ProjectDetailsPage";
+import { AllTasksPage } from "./pages/projects/AllTasksPage";
+import { TaskDetailsPage } from "./pages/projects/TaskDetailsPage";
+import { HomePage, HomePageCard } from "./components/layout/HomePage.tsx";
 import {
-    FaBarcode,
-    FaBook,
-    FaBookOpen,
-    FaChartLine,
-    FaCloudUploadAlt,
-    FaCog,
-    FaDatabase,
-    FaDesktop,
-    FaEdit,
-    FaFilm,
-    FaFlag,
-    FaFolder,
-    FaHome,
-    FaMicrophone,
-    FaMoneyBill,
-    FaPaintBrush,
-    FaPlane,
-    FaShoppingCart,
-    FaTable,
-    FaTasks,
-    FaUserTie
+  FaBarcode,
+  FaBook,
+  FaBookOpen,
+  FaChartLine,
+  FaCloudUploadAlt,
+  FaCog,
+  FaDatabase,
+  FaDesktop,
+  FaEdit,
+  FaFilm,
+  FaFlag,
+  FaFolder,
+  FaHome,
+  FaMicrophone,
+  FaMoneyBill,
+  FaPaintBrush,
+  FaPlane,
+  FaShoppingCart,
+  FaTable,
+  FaTasks,
+  FaUserTie,
 } from "react-icons/fa";
 
-import {MdOutlineAddBox} from "react-icons/md";
-import {QuestionListPage} from "./pages/interview/QuestionListPage.tsx";
-import {InterviewLayout} from "./pages/interview/InterviewLayout.tsx";
-import {CodingTaskListPage} from "./pages/interview/CodingTaskListPage.tsx";
-import {QuestionConfigListPage} from "./pages/interview/QuestionConfigListPage.tsx";
-import {InterviewSessionListPage} from "./pages/interview/InterviewSessionListPage.tsx";
-import {InterviewSessionPage} from "./pages/interview/InterviewSessionPage.tsx";
-import {StartInterviewPage} from "./pages/interview/StartInterviewPage.tsx";
-import {InterviewPlanPage} from "./pages/interview/InterviewPlanPage.tsx";
-import {LanguageLearningLayout} from "./pages/language-learning/LanguageLearningLayout.tsx";
-import {WordListPage} from "./pages/language-learning/WordListPage.tsx";
-import {FlashcardsPage} from "./pages/language-learning/FlashcardsPage.tsx";
-import {QuizPage} from "./pages/language-learning/QuizPage.tsx";
-import {CrosswordPage} from "./pages/language-learning/CrosswordPage.tsx";
-import {LogsLayout} from "./pages/logs/LogsLayout.tsx";
-import {LogsPage} from "./pages/logs/LogsPage.tsx";
-import {TrackersPage} from "./pages/logs/TrackersPage.tsx";
-import {EbookLayout} from "./pages/ebook/EbookLayout.tsx";
-import {EbooksPage} from "./pages/ebook/EbooksPage.tsx";
-import {NotLearnedWordsPage} from "./pages/ebook/NotLearnedWordsPage.tsx";
-import {CanvasPage} from "./pages/canvas/CanvasPage.tsx";
-import {SpreadsheetListPage} from "./pages/spreadsheet/SpreadsheetListPage.tsx";
-import {SpreadsheetEditorPage} from "./pages/spreadsheet/SpreadsheetEditorPage.tsx";
-import {AsyncTaskListPage} from "./pages/AsyncTaskListPage.tsx";
-import {AsyncTaskDetailsPage} from "./pages/AsyncTaskDetailsPage.tsx";
-import {ShoppingLayout} from "./pages/shopping/ShoppingLayout.tsx";
-import {ProductsSearchPage} from "./pages/shopping/ProductsSearchPage.tsx";
-import {ProductDetailPage} from "./pages/shopping/ProductDetailPage.tsx";
-import {BestOffersPage} from "./pages/shopping/BestOffersPage.tsx";
-import {ProductAlertsPage} from "./pages/shopping/ProductAlertsPage.tsx";
-import {ShopConfigPage} from "./pages/shopping/ShopConfigPage.tsx";
-import {ProductConfigPage} from "./pages/shopping/ProductConfigPage.tsx";
-import {ScrapAuditPage} from "./pages/shopping/ScrapAuditPage.tsx";
-import {BudgetTreePage} from "./pages/invest-track/BudgetTreePage.tsx";
-import {SettingsPage} from "./pages/SettingsPage.tsx";
-import {OtpGeneratePage} from "./pages/OtpGeneratePage.tsx";
-import {useEffect, useState} from "react";
-import {BudgetMobileScanPage} from "./pages/invest-track/BudgetMobileScanPage.tsx";
-import {LoginTvPage} from "./pages/LoginTvPage.tsx";
+import { MdOutlineAddBox } from "react-icons/md";
+import { QuestionListPage } from "./pages/interview/QuestionListPage.tsx";
+import { InterviewLayout } from "./pages/interview/InterviewLayout.tsx";
+import { CodingTaskListPage } from "./pages/interview/CodingTaskListPage.tsx";
+import { QuestionConfigListPage } from "./pages/interview/QuestionConfigListPage.tsx";
+import { InterviewSessionListPage } from "./pages/interview/InterviewSessionListPage.tsx";
+import { InterviewSessionPage } from "./pages/interview/InterviewSessionPage.tsx";
+import { StartInterviewPage } from "./pages/interview/StartInterviewPage.tsx";
+import { InterviewPlanPage } from "./pages/interview/InterviewPlanPage.tsx";
+import { LanguageLearningLayout } from "./pages/language-learning/LanguageLearningLayout.tsx";
+import { WordListPage } from "./pages/language-learning/WordListPage.tsx";
+import { FlashcardsPage } from "./pages/language-learning/FlashcardsPage.tsx";
+import { QuizPage } from "./pages/language-learning/QuizPage.tsx";
+import { CrosswordPage } from "./pages/language-learning/CrosswordPage.tsx";
+import { LogsLayout } from "./pages/logs/LogsLayout.tsx";
+import { LogsPage } from "./pages/logs/LogsPage.tsx";
+import { TrackersPage } from "./pages/logs/TrackersPage.tsx";
+import { EbookLayout } from "./pages/ebook/EbookLayout.tsx";
+import { EbooksPage } from "./pages/ebook/EbooksPage.tsx";
+import { NotLearnedWordsPage } from "./pages/ebook/NotLearnedWordsPage.tsx";
+import { CanvasPage } from "./pages/canvas/CanvasPage.tsx";
+import { SpreadsheetListPage } from "./pages/spreadsheet/SpreadsheetListPage.tsx";
+import { SpreadsheetEditorPage } from "./pages/spreadsheet/SpreadsheetEditorPage.tsx";
+import { AsyncTaskListPage } from "./pages/AsyncTaskListPage.tsx";
+import { AsyncTaskDetailsPage } from "./pages/AsyncTaskDetailsPage.tsx";
+import { ShoppingLayout } from "./pages/shopping/ShoppingLayout.tsx";
+import { ProductsSearchPage } from "./pages/shopping/ProductsSearchPage.tsx";
+import { ProductDetailPage } from "./pages/shopping/ProductDetailPage.tsx";
+import { BestOffersPage } from "./pages/shopping/BestOffersPage.tsx";
+import { ProductAlertsPage } from "./pages/shopping/ProductAlertsPage.tsx";
+import { ShopConfigPage } from "./pages/shopping/ShopConfigPage.tsx";
+import { ProductConfigPage } from "./pages/shopping/ProductConfigPage.tsx";
+import { ScrapAuditPage } from "./pages/shopping/ScrapAuditPage.tsx";
+import { BudgetTreePage } from "./pages/invest-track/BudgetTreePage.tsx";
+import { SettingsPage } from "./pages/SettingsPage.tsx";
+import { OtpGeneratePage } from "./pages/OtpGeneratePage.tsx";
+import { useEffect, useState } from "react";
+import { BudgetMobileScanPage } from "./pages/invest-track/BudgetMobileScanPage.tsx";
+import { LoginTvPage } from "./pages/LoginTvPage.tsx";
+import { BiFoodMenu } from "react-icons/bi";
 
 const mobileCards: HomePageCard[] = [
-    {
-        title: "Scan Receipt",
-        description: "Scan receipts using your phone camera.",
-        icon: <FaBarcode/>,
-        route: "/invest-track/mobile/scan-receipt"
-    },
-    {
-        title: "TV Remote Control",
-        description: "Control your TV remotely — streaming, invest-track and files.",
-        icon: <FaDesktop/>,
-        route: "/remote"
-    },
-    {
-        title: "Files",
-        description: "Upload and manage files.",
-        icon: <FaCloudUploadAlt/>,
-        route: "/files"
-    }
+  {
+    title: "Scan Receipt",
+    description: "Scan receipts using your phone camera.",
+    icon: <FaBarcode />,
+    route: "/invest-track/mobile/scan-receipt",
+  },
+  {
+    title: "Quick Shopping Entry",
+    description: "Use to monitor expenses in the Shopping category",
+    icon: <FaShoppingCart />,
+    route: "/invest-track/mobile/quick-budget?category=Shopping",
+  },
+  {
+    title: "Quick Food Entry",
+    description: "Use to monitor expenses in the Food category",
+    icon: <BiFoodMenu />,
+    route: "/invest-track/mobile/quick-budget?category=Food",
+  },
+  {
+    title: "TV Remote Control",
+    description:
+      "Control your TV remotely — streaming, invest-track and files.",
+    icon: <FaDesktop />,
+    route: "/remote",
+  },
+  {
+    title: "Files",
+    description: "Upload and manage files.",
+    icon: <FaCloudUploadAlt />,
+    route: "/files",
+  },
 ];
 
 const cards: HomePageCard[] = [
-    {
-        title: "OTP",
-        description: "Generate one-time passwords.",
-        icon: <FaBarcode/>,
-        route: "/otp"
-    },
-    {
-        title: "Interview",
-        description: "Prepare for interviews.",
-        icon: <FaDesktop/>,
-        route: "/interview"
-    },
-    {
-        title: "Pocket",
-        description: "Manage your saved content.",
-        icon: <MdOutlineAddBox/>,
-        route: "/pocket"
-    },
-    {
-        title: "Ebook English Words",
-        description: "Review English words from ebooks.",
-        icon: <FaBook/>,
-        route: "/ebook"
-    },
-    {
-        title: "English Learning 🇺🇸",
-        description: "Explore English learning tools.",
-        icon: <FaBook/>,
-        route: "/english"
-    },
-    {
-        title: "Spanish Learning 🇪🇸",
-        description: "Start learning Spanish.",
-        icon: <FaBook/>,
-        route: "/spanish"
-    },
-    {
-        title: "Project Management",
-        description: "Track your projects.",
-        icon: <FaTasks/>,
-        route: "/projects"
-    },
-    {
-        title: "File Storage",
-        description: "Upload and manage files.",
-        icon: <FaCloudUploadAlt/>,
-        route: "/files"
-    },
-    {
-        title: "Spreadsheets",
-        description: "Work with spreadsheets.",
-        icon: <FaTable/>,
-        route: "/spreadsheets"
-    },
-    {
-        title: "Investments",
-        description: "Monitor your investments.",
-        icon: <FaMoneyBill/>,
-        route: "/invest-track/dashboard"
-    },
-    {
-        title: "Notepad",
-        description: "Write and draw freely.",
-        icon: <FaEdit/>,
-        route: "/notepad"
-    },
-    {
-        title: "Streaming",
-        description: "Manage video streaming content.",
-        icon: <FaFilm/>,
-        route: "/streaming"
-    },
-    {
-        title: "Shopping",
-        description: "Shop and manage your products.",
-        icon: <FaShoppingCart/>,
-        route: "/shopping"
-    },
-    {
-        title: "Logs",
-        description: "View system logs.",
-        icon: <FaDatabase/>,
-        route: "/logs"
-    },
-    {
-        title: "Async Tasks",
-        description: "Track background processes.",
-        icon: <FaPlane/>,
-        route: "/async"
-    },
-    {
-        title: "Settings",
-        description: "Configure application settings.",
-        icon: <FaCog/>,
-        route: "/settings"
-    }
+  {
+    title: "OTP",
+    description: "Generate one-time passwords.",
+    icon: <FaBarcode />,
+    route: "/otp",
+  },
+  {
+    title: "Interview",
+    description: "Prepare for interviews.",
+    icon: <FaDesktop />,
+    route: "/interview",
+  },
+  {
+    title: "Pocket",
+    description: "Manage your saved content.",
+    icon: <MdOutlineAddBox />,
+    route: "/pocket",
+  },
+  {
+    title: "Ebook English Words",
+    description: "Review English words from ebooks.",
+    icon: <FaBook />,
+    route: "/ebook",
+  },
+  {
+    title: "English Learning 🇺🇸",
+    description: "Explore English learning tools.",
+    icon: <FaBook />,
+    route: "/english",
+  },
+  {
+    title: "Spanish Learning 🇪🇸",
+    description: "Start learning Spanish.",
+    icon: <FaBook />,
+    route: "/spanish",
+  },
+  {
+    title: "Project Management",
+    description: "Track your projects.",
+    icon: <FaTasks />,
+    route: "/projects",
+  },
+  {
+    title: "File Storage",
+    description: "Upload and manage files.",
+    icon: <FaCloudUploadAlt />,
+    route: "/files",
+  },
+  {
+    title: "Spreadsheets",
+    description: "Work with spreadsheets.",
+    icon: <FaTable />,
+    route: "/spreadsheets",
+  },
+  {
+    title: "Investments",
+    description: "Monitor your investments.",
+    icon: <FaMoneyBill />,
+    route: "/invest-track/dashboard",
+  },
+  {
+    title: "Notepad",
+    description: "Write and draw freely.",
+    icon: <FaEdit />,
+    route: "/notepad",
+  },
+  {
+    title: "Streaming",
+    description: "Manage video streaming content.",
+    icon: <FaFilm />,
+    route: "/streaming",
+  },
+  {
+    title: "Shopping",
+    description: "Shop and manage your products.",
+    icon: <FaShoppingCart />,
+    route: "/shopping",
+  },
+  {
+    title: "Logs",
+    description: "View system logs.",
+    icon: <FaDatabase />,
+    route: "/logs",
+  },
+  {
+    title: "Async Tasks",
+    description: "Track background processes.",
+    icon: <FaPlane />,
+    route: "/async",
+  },
+  {
+    title: "Settings",
+    description: "Configure application settings.",
+    icon: <FaCog />,
+    route: "/settings",
+  },
 ];
 
 const NAV_ITEMS: NavItem[] = [
-    {path: "/home", label: "Home", icon: <FaHome/>},
-    {path: "/pocket", label: "Pocket", icon: <FaFolder/>},
-    {path: "/cook-book", label: "Cook Book", icon: <FaBook/>},
-    {path: "/ebook", label: "Ebook", icon: <FaBookOpen/>},
-    {path: "/english", label: "English", icon: <FaMicrophone/>},
-    {path: "/spanish", label: "Spanish", icon: <FaFlag/>},
-    {path: "/streaming", label: "Streaming", icon: <FaFilm/>},
-    {path: "/canvas", label: "Canvas", icon: <FaPaintBrush/>},
-    {path: "/invest-track", label: "Invest Track", icon: <FaChartLine/>},
-    {path: "/spreadsheet", label: "Spreadsheet", icon: <FaTable/>},
-    {path: "/projects", label: "Projects", icon: <FaTasks/>},
-    {path: "/interview", label: "Interview", icon: <FaUserTie/>},
-    {path: "/files", label: "Files", icon: <FaCloudUploadAlt/>},
-    {path: "/logs", label: "Logs", icon: <FaDatabase/>},
-    {path: "/shopping", label: "Shopping", icon: <FaShoppingCart/>},
+  { path: "/home", label: "Home", icon: <FaHome /> },
+  { path: "/pocket", label: "Pocket", icon: <FaFolder /> },
+  { path: "/cook-book", label: "Cook Book", icon: <FaBook /> },
+  { path: "/ebook", label: "Ebook", icon: <FaBookOpen /> },
+  { path: "/english", label: "English", icon: <FaMicrophone /> },
+  { path: "/spanish", label: "Spanish", icon: <FaFlag /> },
+  { path: "/streaming", label: "Streaming", icon: <FaFilm /> },
+  { path: "/canvas", label: "Canvas", icon: <FaPaintBrush /> },
+  { path: "/invest-track", label: "Invest Track", icon: <FaChartLine /> },
+  { path: "/spreadsheet", label: "Spreadsheet", icon: <FaTable /> },
+  { path: "/projects", label: "Projects", icon: <FaTasks /> },
+  { path: "/interview", label: "Interview", icon: <FaUserTie /> },
+  { path: "/files", label: "Files", icon: <FaCloudUploadAlt /> },
+  { path: "/logs", label: "Logs", icon: <FaDatabase /> },
+  { path: "/shopping", label: "Shopping", icon: <FaShoppingCart /> },
 ];
 
-function PlaceholderPage({name}: { name: string }) {
-    return (
-        <div style={{color: 'var(--color-text-secondary)'}}>
-            {name} — coming soon
-        </div>
-    )
+function PlaceholderPage({ name }: { name: string }) {
+  return (
+    <div style={{ color: "var(--color-text-secondary)" }}>
+      {name} — coming soon
+    </div>
+  );
 }
 
 export default function App() {
-    const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.matchMedia("(max-width: 768px)").matches);
-        };
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.matchMedia("(max-width: 768px)").matches);
+    };
 
-        checkMobile();
+    checkMobile();
 
-        window.addEventListener("resize", checkMobile);
+    window.addEventListener("resize", checkMobile);
 
-        return () => {
-            window.removeEventListener("resize", checkMobile);
-        };
-    }, []);
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+    };
+  }, []);
 
-    return (
-        <BrowserRouter>
-            <NotificationProvider>
-                <AuthProvider>
-                    <Routes>
-                        <Route path="/login-tv" element={<LoginTvPage/>}/>
-                        <Route path="/login" element={<LoginPage/>}/>
-                        <Route element={<RequireAuth/>}>
-                            <Route path="/accept-login/:uuid" element={<AcceptLoginPage/>}/>
-                        </Route>
-                        <Route element={<RequireAuth/>}>
-                            <Route element={<AppLayout navItems={NAV_ITEMS}/>}>
-                                <Route index element={<Navigate to="/home" replace/>}/>
-                                <Route path="/home"
-                                       element={<HomePage welcomeText={"Hi!"}
-                                                          cards={isMobile ? mobileCards : cards}/>}/>
-                                <Route path="/pocket" element={<PocketListPage/>}/>
-                                <Route path="/pocket/:pocketName" element={<PocketItemsPage/>}/>
-                                <Route path="/invest-track" element={<InvestTrackLayout/>}>
-                                    <Route index element={<Navigate to="dashboard" replace/>}/>
-                                    <Route path="dashboard" element={<DashboardPage/>}/>
-                                    <Route path="assets" element={<AssetsPage/>}/>
-                                    <Route path="wallets/:walletId" element={<WalletDetailPage/>}/>
-                                    <Route path="budget" element={<BudgetEntriesPage/>}/>
-                                    <Route path="budget-tree" element={<BudgetTreePage/>}/>
-                                    <Route path="alerts" element={<StockAlertsPage/>}/>
-                                    <Route path="stock-report" element={<StockReportPage/>}/>
-                                    <Route path="recommendations" element={<RecommendationsPage/>}/>
-                                    <Route path="data-ie" element={<DataIEPage/>}/>
-                                    <Route path="mobile/scan-receipt" element={<BudgetMobileScanPage/>}/>
-                                </Route>
-                                <Route path="/cook-book" element={<CookBookLayout/>}>
-                                    <Route index element={<Navigate to="recipes" replace/>}/>
-                                    <Route path="recipes" element={<RecipeListPage/>}/>
-                                    <Route path="recipes/:id" element={<RecipeDetailPage/>}/>
-                                    <Route path="search" element={<FridgeSearchPage/>}/>
-                                    <Route path="shopping-cart" element={<ShoppingCartPage/>}/>
-                                    <Route path="ingredients" element={<IngredientsPage/>}/>
-                                    <Route path="diet" element={<DietPage/>}/>
-                                    <Route path="diet-dashboard" element={<DietDashboardPage/>}/>
-                                </Route>
-                                <Route path="/interview" element={<InterviewLayout/>}>
-                                    <Route index element={<Navigate to="questions" replace/>}/>
-                                    <Route path="questions" element={<QuestionListPage/>}/>
-                                    <Route path="coding-tasks" element={<CodingTaskListPage/>}/>
-                                    <Route path="configs" element={<QuestionConfigListPage/>}/>
-                                    <Route path="sessions" element={<InterviewSessionListPage/>}/>
-                                    <Route path="sessions/:id" element={<InterviewSessionPage/>}/>
-                                    <Route path="start" element={<StartInterviewPage/>}/>
-                                    <Route path="plan" element={<InterviewPlanPage/>}/>
-                                </Route>
-                                <Route path="/remote" element={<RemoteControlPage/>}/>
-                                <Route path="/streaming" element={<StreamingLayout/>}>
-                                    <Route index element={<ProductionListPage/>}/>
-                                    <Route path="production/:name" element={<ProductionDetailsPage/>}/>
-                                    <Route path="player/:productionName/:videoFolderId" element={<VideoPlayerPage/>}/>
-                                    <Route path="remote" element={<Navigate to="/remote" replace/>}/>
-                                </Route>
-                                <Route path="/english" element={<LanguageLearningLayout/>}>
-                                    <Route index element={<Navigate to="words" replace/>}/>
-                                    <Route path="words" element={<WordListPage/>}/>
-                                    <Route path="flashcards" element={<FlashcardsPage/>}/>
-                                    <Route path="quiz" element={<QuizPage/>}/>
-                                    <Route path="crossword" element={<CrosswordPage/>}/>
-                                </Route>
-                                <Route path="/spanish" element={<LanguageLearningLayout/>}>
-                                    <Route index element={<Navigate to="words" replace/>}/>
-                                    <Route path="words" element={<WordListPage/>}/>
-                                    <Route path="flashcards" element={<FlashcardsPage/>}/>
-                                    <Route path="quiz" element={<QuizPage/>}/>
-                                    <Route path="crossword" element={<CrosswordPage/>}/>
-                                </Route>
-                                <Route path="/ebook" element={<EbookLayout/>}>
-                                    <Route index element={<NotLearnedWordsPage/>}/>
-                                    <Route path="words" element={<NotLearnedWordsPage/>}/>
-                                    <Route path="ebooks" element={<EbooksPage/>}/>
-                                </Route>
-                                <Route path="/logs" element={<LogsLayout/>}>
-                                    <Route index element={<LogsPage/>}/>
-                                    <Route path="all" element={<LogsPage/>}/>
-                                    <Route path="trackers" element={<TrackersPage/>}/>
-                                </Route>
-                                <Route path="/canvas" element={<CanvasPage/>}/>
-                                <Route path="/spreadsheet" element={<SpreadsheetListPage/>}/>
-                                <Route path="/spreadsheet/:id" element={<SpreadsheetEditorPage/>}/>
-                                <Route path="/files" element={<FilesPage/>}/>
-                                <Route path="/files/tv-view" element={<TvFileDisplay/>}/>
-                                <Route path="/projects" element={<ProjectListPage/>}/>
-                                <Route path="/projects/all-tasks" element={<AllTasksPage/>}/>
-                                <Route path="/projects/:projectId" element={<ProjectDetailsPage/>}/>
-                                <Route path="/projects/tasks/:taskId" element={<TaskDetailsPage/>}/>
-                                <Route path="/async" element={<AsyncTaskListPage/>}/>
-                                <Route path="/async/async-tasks/:id" element={<AsyncTaskDetailsPage/>}/>
-                                <Route path="/shopping" element={<ShoppingLayout/>}>
-                                    <Route index element={<Navigate to="products" replace/>}/>
-                                    <Route path="products" element={<ProductsSearchPage/>}/>
-                                    <Route path="best-offers" element={<BestOffersPage/>}/>
-                                    <Route path="alerts" element={<ProductAlertsPage/>}/>
-                                    <Route path="shop-config" element={<ShopConfigPage/>}/>
-                                    <Route path="product-config" element={<ProductConfigPage/>}/>
-                                    <Route path="scrap-audit" element={<ScrapAuditPage/>}/>
-                                </Route>
-                                <Route path="/shopping/product/:id" element={<ProductDetailPage/>}/>
-                                <Route path="/settings" element={<SettingsPage/>}/>
-                                <Route path="/otp" element={<OtpGeneratePage/>}/>
-                                {NAV_ITEMS.filter((item) => item.path !== '/pocket' && item.path !== '/invest-track' && item.path !== '/cook-book' && item.path !== '/streaming' && item.path !== '/projects' && item.path !== '/english' && item.path !== '/spanish' && item.path !== '/canvas' && item.path !== '/ebook' && item.path !== '/logs' && item.path !== '/spreadsheet' && item.path !== '/async' && item.path !== '/shopping').map((item) => (
-                                    <Route
-                                        key={item.path}
-                                        path={`${item.path}/*`}
-                                        element={<PlaceholderPage name={item.label}/>}
-                                    />
-                                ))}
-                            </Route>
-                        </Route>
-                        <Route path="*" element={<Navigate to="/" replace/>}/>
-                    </Routes>
-                </AuthProvider>
-            </NotificationProvider>
-        </BrowserRouter>
-    )
+  return (
+    <BrowserRouter>
+      <NotificationProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login-tv" element={<LoginTvPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route element={<RequireAuth />}>
+              <Route path="/accept-login/:uuid" element={<AcceptLoginPage />} />
+            </Route>
+            <Route element={<RequireAuth />}>
+              <Route element={<AppLayout navItems={NAV_ITEMS} />}>
+                <Route index element={<Navigate to="/home" replace />} />
+                <Route
+                  path="/home"
+                  element={
+                    <HomePage
+                      welcomeText={"Hi!"}
+                      cards={isMobile ? mobileCards : cards}
+                    />
+                  }
+                />
+                <Route path="/pocket" element={<PocketListPage />} />
+                <Route
+                  path="/pocket/:pocketName"
+                  element={<PocketItemsPage />}
+                />
+                <Route path="/invest-track" element={<InvestTrackLayout />}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="assets" element={<AssetsPage />} />
+                  <Route
+                    path="wallets/:walletId"
+                    element={<WalletDetailPage />}
+                  />
+                  <Route path="budget" element={<BudgetEntriesPage />} />
+                  <Route path="budget-tree" element={<BudgetTreePage />} />
+                  <Route path="alerts" element={<StockAlertsPage />} />
+                  <Route path="stock-report" element={<StockReportPage />} />
+                  <Route
+                    path="recommendations"
+                    element={<RecommendationsPage />}
+                  />
+                  <Route path="data-ie" element={<DataIEPage />} />
+                  <Route
+                    path="mobile/scan-receipt"
+                    element={<BudgetMobileScanPage />}
+                  />
+                </Route>
+                <Route path="/cook-book" element={<CookBookLayout />}>
+                  <Route index element={<Navigate to="recipes" replace />} />
+                  <Route path="recipes" element={<RecipeListPage />} />
+                  <Route path="recipes/:id" element={<RecipeDetailPage />} />
+                  <Route path="search" element={<FridgeSearchPage />} />
+                  <Route path="shopping-cart" element={<ShoppingCartPage />} />
+                  <Route path="ingredients" element={<IngredientsPage />} />
+                  <Route path="diet" element={<DietPage />} />
+                  <Route
+                    path="diet-dashboard"
+                    element={<DietDashboardPage />}
+                  />
+                </Route>
+                <Route path="/interview" element={<InterviewLayout />}>
+                  <Route index element={<Navigate to="questions" replace />} />
+                  <Route path="questions" element={<QuestionListPage />} />
+                  <Route path="coding-tasks" element={<CodingTaskListPage />} />
+                  <Route path="configs" element={<QuestionConfigListPage />} />
+                  <Route
+                    path="sessions"
+                    element={<InterviewSessionListPage />}
+                  />
+                  <Route
+                    path="sessions/:id"
+                    element={<InterviewSessionPage />}
+                  />
+                  <Route path="start" element={<StartInterviewPage />} />
+                  <Route path="plan" element={<InterviewPlanPage />} />
+                </Route>
+                <Route path="/remote" element={<RemoteControlPage />} />
+                <Route path="/streaming" element={<StreamingLayout />}>
+                  <Route index element={<ProductionListPage />} />
+                  <Route
+                    path="production/:name"
+                    element={<ProductionDetailsPage />}
+                  />
+                  <Route
+                    path="player/:productionName/:videoFolderId"
+                    element={<VideoPlayerPage />}
+                  />
+                  <Route
+                    path="remote"
+                    element={<Navigate to="/remote" replace />}
+                  />
+                </Route>
+                <Route path="/english" element={<LanguageLearningLayout />}>
+                  <Route index element={<Navigate to="words" replace />} />
+                  <Route path="words" element={<WordListPage />} />
+                  <Route path="flashcards" element={<FlashcardsPage />} />
+                  <Route path="quiz" element={<QuizPage />} />
+                  <Route path="crossword" element={<CrosswordPage />} />
+                </Route>
+                <Route path="/spanish" element={<LanguageLearningLayout />}>
+                  <Route index element={<Navigate to="words" replace />} />
+                  <Route path="words" element={<WordListPage />} />
+                  <Route path="flashcards" element={<FlashcardsPage />} />
+                  <Route path="quiz" element={<QuizPage />} />
+                  <Route path="crossword" element={<CrosswordPage />} />
+                </Route>
+                <Route path="/ebook" element={<EbookLayout />}>
+                  <Route index element={<NotLearnedWordsPage />} />
+                  <Route path="words" element={<NotLearnedWordsPage />} />
+                  <Route path="ebooks" element={<EbooksPage />} />
+                </Route>
+                <Route path="/logs" element={<LogsLayout />}>
+                  <Route index element={<LogsPage />} />
+                  <Route path="all" element={<LogsPage />} />
+                  <Route path="trackers" element={<TrackersPage />} />
+                </Route>
+                <Route path="/canvas" element={<CanvasPage />} />
+                <Route path="/spreadsheet" element={<SpreadsheetListPage />} />
+                <Route
+                  path="/spreadsheet/:id"
+                  element={<SpreadsheetEditorPage />}
+                />
+                <Route path="/files" element={<FilesPage />} />
+                <Route path="/files/tv-view" element={<TvFileDisplay />} />
+                <Route path="/projects" element={<ProjectListPage />} />
+                <Route path="/projects/all-tasks" element={<AllTasksPage />} />
+                <Route
+                  path="/projects/:projectId"
+                  element={<ProjectDetailsPage />}
+                />
+                <Route
+                  path="/projects/tasks/:taskId"
+                  element={<TaskDetailsPage />}
+                />
+                <Route path="/async" element={<AsyncTaskListPage />} />
+                <Route
+                  path="/async/async-tasks/:id"
+                  element={<AsyncTaskDetailsPage />}
+                />
+                <Route path="/shopping" element={<ShoppingLayout />}>
+                  <Route index element={<Navigate to="products" replace />} />
+                  <Route path="products" element={<ProductsSearchPage />} />
+                  <Route path="best-offers" element={<BestOffersPage />} />
+                  <Route path="alerts" element={<ProductAlertsPage />} />
+                  <Route path="shop-config" element={<ShopConfigPage />} />
+                  <Route
+                    path="product-config"
+                    element={<ProductConfigPage />}
+                  />
+                  <Route path="scrap-audit" element={<ScrapAuditPage />} />
+                </Route>
+                <Route
+                  path="/shopping/product/:id"
+                  element={<ProductDetailPage />}
+                />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/otp" element={<OtpGeneratePage />} />
+                {NAV_ITEMS.filter(
+                  (item) =>
+                    item.path !== "/pocket" &&
+                    item.path !== "/invest-track" &&
+                    item.path !== "/cook-book" &&
+                    item.path !== "/streaming" &&
+                    item.path !== "/projects" &&
+                    item.path !== "/english" &&
+                    item.path !== "/spanish" &&
+                    item.path !== "/canvas" &&
+                    item.path !== "/ebook" &&
+                    item.path !== "/logs" &&
+                    item.path !== "/spreadsheet" &&
+                    item.path !== "/async" &&
+                    item.path !== "/shopping"
+                ).map((item) => (
+                  <Route
+                    key={item.path}
+                    path={`${item.path}/*`}
+                    element={<PlaceholderPage name={item.label} />}
+                  />
+                ))}
+              </Route>
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthProvider>
+      </NotificationProvider>
+    </BrowserRouter>
+  );
 }

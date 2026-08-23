@@ -9,6 +9,7 @@ import styles from './AssetsPage.module.css'
 import { AssetCard } from './AssetCard.tsx'
 import { FaChartLine, FaMoneyBill, FaPiggyBank, FaPlus } from 'react-icons/fa'
 import { FcDataEncryption } from 'react-icons/fc'
+import { calculateValue } from './AssetsPage.tsx'
 
 
 const EMPTY_WALLET: Partial<Wallet> = {
@@ -98,7 +99,7 @@ export function WalletListPage() {
             icon={renderIcon(key)}
             title={key.name}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
+            value={calculateValue(key.currentValue, key.currency)}
             trend={calculateTrend(key)}
             onClick={() => {
               navigate(`/invest-track/wallets/${key.id}`)

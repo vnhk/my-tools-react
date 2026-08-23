@@ -14,6 +14,7 @@ import {
   FaPlus,
 } from "react-icons/fa";
 import { Button } from "../../components/ui/Button";
+import { calculateValue } from './AssetsPage.tsx'
 
 export function VehicleListPage() {
   const { showSuccess, showError } = useNotification();
@@ -113,7 +114,7 @@ export function VehicleListPage() {
             icon={renderIcon(key)}
             title={key.brand + " " + key.model}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
+            value={calculateValue(key.currentValue, 'PLN')}
             trend={calculateTrend(key)}
             onClick={() => {
               setEditItem(key);

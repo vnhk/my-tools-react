@@ -8,6 +8,7 @@ import styles from "./AssetsPage.module.css";
 import { AssetCard } from "./AssetCard";
 import { FaBuilding, FaHome, FaPlus, FaWarehouse } from "react-icons/fa";
 import { Button } from "../../components/ui/Button";
+import { calculateValue } from './AssetsPage.tsx'
 
 export function RealEstateListPage() {
   const { showSuccess, showError } = useNotification();
@@ -101,7 +102,7 @@ export function RealEstateListPage() {
             icon={renderIcon(key)}
             title={key.name}
             subtitle={renderSubtitle(key)}
-            value={key.currentValue ? key.currentValue + " zł" : "0 zł"}
+            value={calculateValue(key.currentValue, 'PLN')}
             trend={calculateTrend(key)}
             onClick={() => {
               setEditItem(key);
