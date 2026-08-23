@@ -8,14 +8,14 @@ import { ValuableListPage } from "./ValuableListPage";
 export const calculateValue = (value: number | null, currency: string) => {
   if (value) {
     if (currency.toUpperCase() == "PLN") {
-      return value + " zł";
+      return value + "zł";
     } else if (currency.toUpperCase() == "USD") {
-      return value + " $";
+      return value + "$";
     } else if (currency.toUpperCase() == "EUR") {
-      return value + " e";
+      return value + "e";
     }
   } else {
-    return "0 zł";
+    return "0zł";
   }
 };
 

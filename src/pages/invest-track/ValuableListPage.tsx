@@ -110,7 +110,7 @@ export function ValuableListPage() {
         <AssetCard
           icon={<FaPlus />}
           title="New Item"
-          value="0 zł"
+          value="0zł"
           variant="add"
           subtitle="Description"
           onClick={() => {

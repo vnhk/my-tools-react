@@ -126,7 +126,7 @@ export function VehicleListPage() {
           icon={<FaPlus />}
           title="New Vehicle"
           subtitle={renderSubtitleBase("Production Year", "Description")}
-          value="0 zł"
+          value="0zł"
           variant="add"
           onClick={() => {
             setEditItem(empty());

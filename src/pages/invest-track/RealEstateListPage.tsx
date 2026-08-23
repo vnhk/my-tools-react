@@ -113,7 +113,7 @@ export function RealEstateListPage() {
         <AssetCard
           icon={<FaPlus />}
           title="New Property"
-          value="0 zł"
+          value="0zł"
           variant="add"
           subtitle={renderSubtitleBase("Adress", "Description")}
           onClick={() => {
