@@ -99,7 +99,6 @@ import { OtpGeneratePage } from "./pages/OtpGeneratePage.tsx";
 import { useEffect, useState } from "react";
 import { BudgetMobileScanPage } from "./pages/invest-track/BudgetMobileScanPage.tsx";
 import { LoginTvPage } from "./pages/LoginTvPage.tsx";
-import { BiFoodMenu } from "react-icons/bi";
 import { BudgetMobileQuickAdd } from "./pages/invest-track/BudgetMobileQuickAdd.tsx";
 
 const mobileCards: HomePageCard[] = [
