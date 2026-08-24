@@ -100,6 +100,7 @@ import { useEffect, useState } from "react";
 import { BudgetMobileScanPage } from "./pages/invest-track/BudgetMobileScanPage.tsx";
 import { LoginTvPage } from "./pages/LoginTvPage.tsx";
 import { BiFoodMenu } from "react-icons/bi";
+import { BudgetMobileQuickAdd } from "./pages/invest-track/BudgetMobileQuickAdd.tsx";
 
 const mobileCards: HomePageCard[] = [
   {
@@ -109,16 +110,10 @@ const mobileCards: HomePageCard[] = [
     route: "/invest-track/mobile/scan-receipt",
   },
   {
-    title: "Quick Shopping Entry",
-    description: "Use to monitor expenses in the Shopping category",
+    title: "Quick Budget Entry",
+    description: "Use to monitor expenses",
     icon: <FaShoppingCart />,
-    route: "/invest-track/mobile/quick-budget?category=Shopping",
-  },
-  {
-    title: "Quick Food Entry",
-    description: "Use to monitor expenses in the Food category",
-    icon: <BiFoodMenu />,
-    route: "/invest-track/mobile/quick-budget?category=Food",
+    route: "/invest-track/mobile/quick-budget",
   },
   {
     title: "TV Remote Control",
@@ -324,6 +319,10 @@ export default function App() {
                   <Route
                     path="mobile/scan-receipt"
                     element={<BudgetMobileScanPage />}
+                  />
+                   <Route
+                    path="mobile/quick-budget"
+                    element={<BudgetMobileQuickAdd />}
                   />
                 </Route>
                 <Route path="/cook-book" element={<CookBookLayout />}>
