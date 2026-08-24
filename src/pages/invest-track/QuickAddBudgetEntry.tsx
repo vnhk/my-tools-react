@@ -1,5 +1,5 @@
 import { useNotification } from "../../components/ui/Notification.tsx";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { budgetEntriesApi, BudgetEntry } from "../../api/investments.ts";
 import { validateFields } from "../../api/entityConfig.ts";
 import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog.tsx";
