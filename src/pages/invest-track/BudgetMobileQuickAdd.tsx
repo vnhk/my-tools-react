@@ -30,7 +30,7 @@ export function BudgetMobileQuickAdd() {
           setQuickAddBudgetReady(true);
         }}
       >
-        Shopping Card
+        Food Card
       </Button>
       <Button
         variant="primary"
@@ -52,12 +52,15 @@ export function BudgetMobileQuickAdd() {
           setQuickAddBudgetReady(true);
         }}
       >
-        Food Card
+        Shopping Card
       </Button>
       {quickAddBudgetReady && (
         <QuickAddBudgetEntry
           categoryV={category}
           typeV={type}
+          onClose={() => {
+            setQuickAddBudgetReady(false);
+          }}
           paymentMethodV={paymentMethod}
           onFinish={() => {
             setQuickAddBudgetReady(false);

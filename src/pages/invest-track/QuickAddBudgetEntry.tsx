@@ -10,14 +10,16 @@ interface Props {
   categoryV: string;
   typeV: string;
   paymentMethodV: string;
-  onFinish: () => void
+  onFinish: () => void;
+  onClose: () => void;
 }
 
 export function QuickAddBudgetEntry({
   categoryV,
   typeV,
   paymentMethodV,
-  onFinish
+  onFinish,
+  onClose,
 }: Props) {
   const [defaultEntry, setDefaultEntry] = useState<Partial<BudgetEntry>>();
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -36,11 +38,10 @@ export function QuickAddBudgetEntry({
     try {
       await budgetEntriesApi.create(defaultEntry as Record<string, undefined>);
       showSuccess("Saved");
-      onFinish()
+      onFinish();
     } catch {
       showError("Failed to save");
     }
-
   };
 
   useEffect(() => {
@@ -64,7 +65,9 @@ export function QuickAddBudgetEntry({
       <DynamicFormDialog
         open={true}
         title="Quick Add Entry"
-        onClose={() => {}}
+        onClose={() => {
+          onClose();
+        }}
         onConfirm={handleSave}
         width="min(90vw, 720px)"
       >
