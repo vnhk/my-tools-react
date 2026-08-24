@@ -54,16 +54,16 @@ export function BudgetMobileQuickAdd() {
       >
         Food Card
       </Button>
-      {quickAddBudgetReady}: (
-      <QuickAddBudgetEntry
-        categoryV={category}
-        typeV={type}
-        paymentMethodV={paymentMethod}
-        onFinish={() => {
-          setQuickAddBudgetReady(false);
-        }}
-      />
-      )
+      {quickAddBudgetReady && (
+        <QuickAddBudgetEntry
+          categoryV={category}
+          typeV={type}
+          paymentMethodV={paymentMethod}
+          onFinish={() => {
+            setQuickAddBudgetReady(false);
+          }}
+        />
+      )}
     </div>
   );
 }
