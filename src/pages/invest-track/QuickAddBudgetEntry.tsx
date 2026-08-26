@@ -9,6 +9,9 @@ import styles from "./BudgetEntriesPage.module.css";
 interface Props {
   categoryV: string;
   typeV: string;
+  nameV: string | null;
+  valueV: number | undefined;
+  currencyV: string | null;
   paymentMethodV: string;
   onFinish: () => void;
   onClose: () => void;
@@ -17,6 +20,9 @@ interface Props {
 export function QuickAddBudgetEntry({
   categoryV,
   typeV,
+  valueV,
+  nameV,
+  currencyV,
   paymentMethodV,
   onFinish,
   onClose,
@@ -45,20 +51,27 @@ export function QuickAddBudgetEntry({
   };
 
   useEffect(() => {
-    const nameV = categoryV;
+    if (!nameV) {
+      nameV = categoryV;
+    }
+
+    if(!currencyV) {
+      currencyV = 'PLN';
+    }
 
     const entryDateV = new Date().toISOString().slice(0, 10);
 
     setDefaultEntry({
       category: categoryV,
       entryDate: entryDateV,
-      currency: "PLN",
+      currency: currencyV,
       name: nameV,
+      value: valueV,
       entryType: typeV,
       paymentMethod: paymentMethodV,
       isRecurring: false,
     });
-  });
+  }, []);
 
   return (
     <div className={styles.treeTabWrap}>
