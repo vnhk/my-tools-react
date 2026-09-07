@@ -102,6 +102,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const [activeSub, setActiveSub] = useState<string | null>(null)
   const [showSubMenu, setShowSubMenu] = useState(false)
   const [resolvedSubtitles, setResolvedSubtitles] = useState<SubtitleTrack[]>([])
+  const [audioTracks, setAudioTracks] = useState<AudioTrackInfo[]>([])
+  const [activeAudioTrack, setActiveAudioTrack] = useState<number>(-1)
+  const [showAudioMenu, setShowAudioMenu] = useState(false)
   // Native Fullscreen API requires a real user gesture (transient activation) —
   // a command arriving async over the remote-control WebSocket never has one,
   // so requestFullscreen() silently rejects for it. This CSS-only fallback needs
@@ -155,13 +158,17 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     getSubtitleLangs: () => resolvedSubtitles.map((s) => s.lang),
     setAudioTrack: (index) => {
       if (hlsRef.current) hlsRef.current.audioTrack = index
+      setActiveAudioTrack(index)
     },
-    getAudioTracks: () => (hlsRef.current?.audioTracks ?? []).map((t, index) => ({
-      index,
-      name: t.name || t.lang || `Track ${index + 1}`,
-      lang: t.lang,
-    })),
-    getActiveAudioTrack: () => hlsRef.current?.audioTrack ?? -1,
+    getAudioTracks: () => {
+      if (audioTracks.length) return audioTracks
+      return (hlsRef.current?.audioTracks ?? []).map((t, index) => ({
+        index: t.id ?? index,
+        name: t.name || t.lang || `Track ${index + 1}`,
+        lang: t.lang,
+      }))
+    },
+    getActiveAudioTrack: () => (hlsRef.current ? hlsRef.current.audioTrack : activeAudioTrack),
   }))
 
   useEffect(() => {
@@ -170,6 +177,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     hlsRef.current?.destroy()
     hlsRef.current = null
     video.removeAttribute('src')
+    setAudioTracks([])
+    setActiveAudioTrack(-1)
+    setShowAudioMenu(false)
 
     // Native <video> errors (unsupported codec/container, decode failure, etc.)
     // otherwise fail completely silently — nothing shows up in the console.
@@ -215,8 +225,32 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
           console.log('[VideoPlayer][HLS] master manifest parsed', {
             levels: data.levels?.length,
             firstLevel: data.firstLevel,
+            audioTracks: data.audioTracks?.length,
           })
+          if (data.audioTracks && data.audioTracks.length > 0) {
+            const tracks: AudioTrackInfo[] = data.audioTracks.map((t, index) => ({
+              index: t.id ?? index,
+              name: t.name || t.lang || `Track ${index + 1}`,
+              lang: t.lang,
+            }))
+            setAudioTracks(tracks)
+            setActiveAudioTrack(hls.audioTrack)
+          }
           if (startTime > 5) video.currentTime = startTime
+        })
+        hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (_evt, data) => {
+          console.log('[VideoPlayer][HLS] audio tracks updated', data.audioTracks?.length)
+          const tracks: AudioTrackInfo[] = (data.audioTracks ?? []).map((t, index) => ({
+            index: t.id ?? index,
+            name: t.name || t.lang || `Track ${index + 1}`,
+            lang: t.lang,
+          }))
+          setAudioTracks(tracks)
+          setActiveAudioTrack(hls.audioTrack)
+        })
+        hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (_evt, data) => {
+          console.log('[VideoPlayer][HLS] audio track switched', data.id)
+          setActiveAudioTrack(data.id)
         })
         hls.on(Hls.Events.LEVEL_LOADED, (_evt, data) => {
           console.log('[VideoPlayer][HLS] level loaded', {
@@ -281,6 +315,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
         hlsRef.current?.destroy()
         hlsRef.current = null
         video.removeEventListener('error', onNativeError)
+        setAudioTracks([])
+        setActiveAudioTrack(-1)
+        setShowAudioMenu(false)
       }
     } else {
       // MP4 — plain native playback; append token via query parameter since headers can't be sent
@@ -292,6 +329,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
       }
       return () => {
         video.removeEventListener('error', onNativeError)
+        setAudioTracks([])
+        setActiveAudioTrack(-1)
+        setShowAudioMenu(false)
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -381,22 +421,48 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     })
   }, [subtitles])
 
+  const selectAudioTrack = useCallback((index: number) => {
+    if (hlsRef.current) {
+      hlsRef.current.audioTrack = index
+    }
+    setActiveAudioTrack(index)
+    setShowAudioMenu(false)
+  }, [])
+
+  const cycleAudio = useCallback(() => {
+    if (!audioTracks.length || !hlsRef.current) return
+    const currentIdx = hlsRef.current.audioTrack
+    const currentIndexInArray = audioTracks.findIndex((t) => t.index === currentIdx)
+    const nextItem = audioTracks[(currentIndexInArray + 1) % audioTracks.length]
+    if (nextItem) {
+      selectAudioTrack(nextItem.index)
+    }
+  }, [audioTracks, selectAudioTrack])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       const v = videoRef.current
       if (!v) return
       switch (e.key) {
-        case ' ': e.preventDefault(); v.paused ? v.play()?.catch(() => {}) : v.pause(); break
+        case ' ':
+          e.preventDefault()
+          if (v.paused) {
+            v.play()?.catch(() => {})
+          } else {
+            v.pause()
+          }
+          break
         case 'ArrowLeft': e.preventDefault(); v.currentTime = Math.max(0, v.currentTime - 5); break
         case 'ArrowRight': e.preventDefault(); v.currentTime = Math.min(v.duration || 0, v.currentTime + 5); break
         case 'f': case 'F': handleToggleFullscreen(); break
         case 'b': case 'B': cycleSub(); break
+        case 'a': case 'A': cycleAudio(); break
       }
     }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [cycleSub, handleToggleFullscreen])
+  }, [cycleSub, cycleAudio, handleToggleFullscreen])
 
   const showControlsTemporarily = useCallback(() => {
     setShowControls(true)
@@ -407,7 +473,11 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const togglePlay = useCallback(() => {
     const v = videoRef.current
     if (!v) return
-    v.paused ? v.play()?.catch(() => {}) : v.pause()
+    if (v.paused) {
+      v.play()?.catch(() => {})
+    } else {
+      v.pause()
+    }
   }, [])
 
   const handleProgressClick = useCallback((e: React.MouseEvent) => {
@@ -458,11 +528,40 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
           <span className={styles.timeDisplay}>{fmt(currentTime)} / {fmt(duration)}</span>
 
           <div className={styles.controlsRight}>
+            {audioTracks.length > 0 && (
+              <div className={styles.audioControl}>
+                <button
+                  className={`${styles.ctrlBtn} ${activeAudioTrack >= 0 ? styles.active : ''}`}
+                  onClick={() => {
+                    setShowAudioMenu((p) => !p)
+                    setShowSubMenu(false)
+                  }}
+                  title="Audio track (A)"
+                >🎧</button>
+                {showAudioMenu && (
+                  <div className={styles.audioMenu}>
+                    {audioTracks.map((track) => (
+                      <button
+                        key={track.index}
+                        className={activeAudioTrack === track.index ? styles.active : ''}
+                        onClick={() => selectAudioTrack(track.index)}
+                      >
+                        {track.name || track.lang || `Track ${track.index + 1}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {resolvedSubtitles.length > 0 && (
               <div className={styles.subtitleControl}>
                 <button
                   className={`${styles.ctrlBtn} ${activeSub ? styles.active : ''}`}
-                  onClick={() => setShowSubMenu((p) => !p)}
+                  onClick={() => {
+                    setShowSubMenu((p) => !p)
+                    setShowAudioMenu(false)
+                  }}
                   title="Subtitles (B)"
                 >CC</button>
                 {showSubMenu && (

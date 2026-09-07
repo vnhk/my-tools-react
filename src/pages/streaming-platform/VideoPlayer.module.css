@@ -117,11 +117,13 @@
 }
 @media (max-width: 480px) { .volumeSlider { display: none; } }
 
-/* ── Subtitle control ── */
-.subtitleControl {
+/* ── Subtitle & Audio controls ── */
+.subtitleControl,
+.audioControl {
   position: relative;
 }
-.subtitleMenu {
+.subtitleMenu,
+.audioMenu {
   position: absolute;
   bottom: calc(100% + 8px);
   right: 0;
@@ -132,7 +134,8 @@
   min-width: 100px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.6);
 }
-.subtitleMenu button {
+.subtitleMenu button,
+.audioMenu button {
   display: block;
   width: 100%;
   padding: 6px 12px;
@@ -145,5 +148,8 @@
   border-radius: 4px;
   transition: background 0.1s;
 }
-.subtitleMenu button:hover { background: rgba(255,255,255,0.08); color: #fff; }
-.subtitleMenu button.active { color: #a5b4fc; font-weight: 600; }
+.subtitleMenu button:hover,
+.audioMenu button:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.subtitleMenu button.active,
+.audioMenu button.active { color: #a5b4fc; font-weight: 600; }
+
