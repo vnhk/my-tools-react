@@ -34,6 +34,8 @@ export function WalletListPage() {
     const renderIcon = (item: Wallet) => {
       console.log(item.walletType)
       switch(item.walletType) {
+        case "PPK": 
+        case "INVESTMENT_FUND": 
         case "INVESTMENT": {
           return <FaChartLine/>
         }
