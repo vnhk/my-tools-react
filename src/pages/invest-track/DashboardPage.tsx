@@ -363,6 +363,8 @@ interface DashboardTabProps {
     data: DashboardData
     investSeries: TimeSeriesPoint[]
     netWorthSeries: TimeSeriesPoint[]
+    ppkSeries: TimeSeriesPoint[]
+    investFundSeries: TimeSeriesPoint[]
     showSp500: boolean
     showWig20: boolean
     showNasdaq: boolean
@@ -374,6 +376,8 @@ function DashboardTab({
                           data,
                           investSeries,
                           netWorthSeries,
+                          ppkSeries,
+                          investFundSeries,
                           showSp500,
                           showWig20,
                           showNasdaq,
@@ -478,6 +482,90 @@ function DashboardTab({
                                     <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Bank Deposit 3.5%"
                                           stroke="#d7f63b"
                                           strokeWidth={1.5} dot={false}/>}
+                                {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
+                                                     strokeWidth={1.5} dot={false}/>}
+                                {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
+                                                  strokeWidth={1.5} dot={false}/>}
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    ) : <div className={styles.empty}>Not enough data</div>}
+                </div>
+
+                <div className={styles.chartCard}>
+                    <h3 className={styles.chartTitle}>PPK: Balance vs Deposits</h3>
+                    {ppkSeries.length > 1 ? (
+                        <ResponsiveContainer width="100%" height={260}>
+                            <AreaChart data={ppkSeries}>
+                                <defs>
+                                    <linearGradient id="ppkBalGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/>
+                                    </linearGradient>
+                                    <linearGradient id="ppkDepGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
+                                <XAxis dataKey="date" tick={{fontSize: 11, fill: '#888'}} tickLine={false}/>
+                                <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                                       tick={{fontSize: 11, fill: '#888'}} tickLine={false}/>
+                                <Tooltip content={<CurrencyTooltip/>}/>
+                                <Legend wrapperStyle={{fontSize: 12}}/>
+                                <Area type="monotone" dataKey="balance" name="Balance" stroke="#06b6d4"
+                                      fill="url(#ppkBalGrad)" strokeWidth={2} dot={false}/>
+                                <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
+                                      fill="url(#ppkDepGrad)" strokeWidth={2} dot={false}/>
+                                {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899"
+                                                    strokeWidth={1.5} dot={false}/>}
+                                {showBankFixed3_5 &&
+                                    <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Deposit 3.5%"
+                                          stroke="#d7f63b"
+                                          strokeWidth={1.5} dot={false}/>}
+                                {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
+                                                    strokeWidth={1.5} dot={false}/>}
+                                {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
+                                                     strokeWidth={1.5} dot={false}/>}
+                                {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
+                                                  strokeWidth={1.5} dot={false}/>}
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    ) : <div className={styles.empty}>Not enough data</div>}
+                </div>
+
+                <div className={styles.chartCard}>
+                    <h3 className={styles.chartTitle}>Investment Funds: Balance vs Deposits</h3>
+                    {investFundSeries.length > 1 ? (
+                        <ResponsiveContainer width="100%" height={260}>
+                            <AreaChart data={investFundSeries}>
+                                <defs>
+                                    <linearGradient id="fundBalGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#a855f7" stopOpacity={0}/>
+                                    </linearGradient>
+                                    <linearGradient id="fundDepGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
+                                <XAxis dataKey="date" tick={{fontSize: 11, fill: '#888'}} tickLine={false}/>
+                                <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                                       tick={{fontSize: 11, fill: '#888'}} tickLine={false}/>
+                                <Tooltip content={<CurrencyTooltip/>}/>
+                                <Legend wrapperStyle={{fontSize: 12}}/>
+                                <Area type="monotone" dataKey="balance" name="Balance" stroke="#a855f7"
+                                      fill="url(#fundBalGrad)" strokeWidth={2} dot={false}/>
+                                <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
+                                      fill="url(#fundDepGrad)" strokeWidth={2} dot={false}/>
+                                {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899"
+                                                    strokeWidth={1.5} dot={false}/>}
+                                {showBankFixed3_5 &&
+                                    <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Deposit 3.5%"
+                                          stroke="#d7f63b"
+                                          strokeWidth={1.5} dot={false}/>}
+                                {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
+                                                    strokeWidth={1.5} dot={false}/>}
                                 {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
                                                      strokeWidth={1.5} dot={false}/>}
                                 {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
@@ -1066,6 +1154,14 @@ export function DashboardPage() {
         () => filterSeries(data?.netWorthTimeSeries ?? [], filter),
         [data, filter],
     )
+    const ppkSeries = useMemo(
+        () => filterSeries(data?.ppkTimeSeries ?? [], filter),
+        [data, filter],
+    )
+    const investFundSeries = useMemo(
+        () => filterSeries(data?.investFundTimeSeries ?? [], filter),
+        [data, filter],
+    )
 
     const processedWalletSeries = useMemo(() => {
         if (!data) return []
@@ -1147,6 +1243,8 @@ export function DashboardPage() {
                         data={data}
                         investSeries={investSeries}
                         netWorthSeries={netWorthSeries}
+                        ppkSeries={ppkSeries}
+                        investFundSeries={investFundSeries}
                         showSp500={showSp500}
                         showWig20={showWig20}
                         showNasdaq={showNasdaq}

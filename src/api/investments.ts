@@ -324,6 +324,8 @@ export interface DashboardData {
   kpi: DashboardKpi;
   investTimeSeries: TimeSeriesPoint[];
   netWorthTimeSeries: TimeSeriesPoint[];
+  ppkTimeSeries: TimeSeriesPoint[];
+  investFundTimeSeries: TimeSeriesPoint[];
   allocation: AllocationEntry[];
   heatmap: Record<string, number>;
   budget: BudgetPoint[];
