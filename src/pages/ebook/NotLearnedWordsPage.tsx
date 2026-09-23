@@ -71,7 +71,6 @@ export function NotLearnedWordsPage() {
       .then((res) => {
         const list = res.data ?? []
         setWords(list)
-        if (list.length > 0) setDialogWord(list[0])
       })
       .catch(() => showError('Failed to load words'))
       .finally(() => setLoading(false))

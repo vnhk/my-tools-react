@@ -178,8 +178,9 @@ export default function ProductionDetailsPage() {
         const d = res.data
         setDetails(d)
         setPosterKey(Date.now())
-        if (d.seasons && d.seasons.length > 0) {
-          setOpenSeasons((prev) => (prev.size === 0 ? new Set([d.seasons[0].name]) : prev))
+        if (d?.seasons && d.seasons.length > 0 && d.seasons[0]?.name) {
+          const firstSeasonName = d.seasons[0].name
+          setOpenSeasons((prev) => (prev.size === 0 ? new Set([firstSeasonName]) : prev))
         }
       })
       .catch(() => navigate('/streaming'))
