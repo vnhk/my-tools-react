@@ -370,13 +370,14 @@ const PIE_COLORS = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444', '#06b6d4', '#a85
 
 function AllocationPie({data}: { data: { name: string; valuePln: number }[] }) {
     return (
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={280} minWidth={0}>
             <PieChart>
                 <Pie
                     data={data} dataKey="valuePln" nameKey="name"
                     cx="50%" cy="50%" innerRadius={60} outerRadius={110} paddingAngle={2}
                     label={({name, percent}) => `${name}: ${((percent ?? 0) * 100).toFixed(1)}%`}
                     labelLine={false}
+                    isAnimationActive={false}
                 >
                     {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]}/>)}
                 </Pie>
@@ -488,8 +489,8 @@ function DashboardTab({
                 <div className={styles.chartCard}>
                     <h3 className={styles.chartTitle}>Investment Portfolio: Balance vs Deposits</h3>
                     {investSeries.length > 1 ? (
-                        <ResponsiveContainer width="100%" height={260}>
-                            <AreaChart data={investSeries}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0}>
+                            <AreaChart data={investSeries} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
@@ -507,21 +508,21 @@ function DashboardTab({
                                 <Tooltip content={<CurrencyTooltip/>}/>
                                 <Legend wrapperStyle={{fontSize: 12}}/>
                                 <Area type="monotone" dataKey="balance" name="Balance" stroke="#6366f1"
-                                      fill="url(#balGrad)" strokeWidth={2} dot={false}/>
+                                      fill="url(#balGrad)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                 <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
-                                      fill="url(#depGrad)" strokeWidth={2} dot={false}/>
+                                      fill="url(#depGrad)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                 {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showBankFixed3_5 &&
                                     <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Deposit 3.5%"
                                           stroke="#d7f63b"
-                                          strokeWidth={1.5} dot={false}/>}
+                                          strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
-                                                     strokeWidth={1.5} dot={false}/>}
+                                                     strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
-                                                  strokeWidth={1.5} dot={false}/>}
+                                                  strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                             </AreaChart>
                         </ResponsiveContainer>
                     ) : <div className={styles.empty}>Not enough data</div>}
@@ -530,8 +531,8 @@ function DashboardTab({
                 <div className={styles.chartCard}>
                     <h3 className={styles.chartTitle}>Net Worth (All Wallets)</h3>
                     {netWorthSeries.length > 1 ? (
-                        <ResponsiveContainer width="100%" height={260}>
-                            <AreaChart data={netWorthSeries}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0}>
+                            <AreaChart data={netWorthSeries} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="nwGrad" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
@@ -545,21 +546,21 @@ function DashboardTab({
                                 <Tooltip content={<CurrencyTooltip/>}/>
                                 <Legend wrapperStyle={{fontSize: 12}}/>
                                 <Area type="monotone" dataKey="balance" name="Net Worth" stroke="#22c55e"
-                                      fill="url(#nwGrad)" strokeWidth={2} dot={false}/>
+                                      fill="url(#nwGrad)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                 <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
-                                      strokeWidth={2} dot={false} fill="none"/>
+                                      strokeWidth={2} dot={false} fill="none" isAnimationActive={false} connectNulls/>
                                 {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showBankFixed3_5 &&
                                     <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Bank Deposit 3.5%"
                                           stroke="#d7f63b"
-                                          strokeWidth={1.5} dot={false}/>}
+                                          strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
-                                                     strokeWidth={1.5} dot={false}/>}
+                                                     strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
-                                                  strokeWidth={1.5} dot={false}/>}
+                                                  strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                             </AreaChart>
                         </ResponsiveContainer>
                     ) : <div className={styles.empty}>Not enough data</div>}
@@ -568,8 +569,8 @@ function DashboardTab({
                 <div className={styles.chartCard}>
                     <h3 className={styles.chartTitle}>PPK: Balance vs Deposits</h3>
                     {ppkSeries.length > 1 ? (
-                        <ResponsiveContainer width="100%" height={260}>
-                            <AreaChart data={ppkSeries}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0}>
+                            <AreaChart data={ppkSeries} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="ppkBalGrad" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/>
@@ -587,21 +588,21 @@ function DashboardTab({
                                 <Tooltip content={<CurrencyTooltip/>}/>
                                 <Legend wrapperStyle={{fontSize: 12}}/>
                                 <Area type="monotone" dataKey="balance" name="Balance" stroke="#06b6d4"
-                                      fill="url(#ppkBalGrad)" strokeWidth={2} dot={false}/>
+                                      fill="url(#ppkBalGrad)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                 <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
-                                      fill="url(#ppkDepGrad)" strokeWidth={2} dot={false}/>
+                                      fill="url(#ppkDepGrad)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                 {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showBankFixed3_5 &&
                                     <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Deposit 3.5%"
                                           stroke="#d7f63b"
-                                          strokeWidth={1.5} dot={false}/>}
+                                          strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
-                                                     strokeWidth={1.5} dot={false}/>}
+                                                     strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
-                                                  strokeWidth={1.5} dot={false}/>}
+                                                  strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                             </AreaChart>
                         </ResponsiveContainer>
                     ) : <div className={styles.empty}>Not enough data</div>}
@@ -610,8 +611,8 @@ function DashboardTab({
                 <div className={styles.chartCard}>
                     <h3 className={styles.chartTitle}>Investment Funds: Balance vs Deposits</h3>
                     {investFundSeries.length > 1 ? (
-                        <ResponsiveContainer width="100%" height={260}>
-                            <AreaChart data={investFundSeries}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0}>
+                            <AreaChart data={investFundSeries} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="fundBalGrad" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#a855f7" stopOpacity={0.3}/>
@@ -629,21 +630,21 @@ function DashboardTab({
                                 <Tooltip content={<CurrencyTooltip/>}/>
                                 <Legend wrapperStyle={{fontSize: 12}}/>
                                 <Area type="monotone" dataKey="balance" name="Balance" stroke="#a855f7"
-                                      fill="url(#fundBalGrad)" strokeWidth={2} dot={false}/>
+                                      fill="url(#fundBalGrad)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                 <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
-                                      fill="url(#fundDepGrad)" strokeWidth={2} dot={false}/>
+                                      fill="url(#fundDepGrad)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                 {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showBankFixed3_5 &&
                                     <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Deposit 3.5%"
                                           stroke="#d7f63b"
-                                          strokeWidth={1.5} dot={false}/>}
+                                          strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
-                                                    strokeWidth={1.5} dot={false}/>}
+                                                    strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showNasdaq && <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
-                                                     strokeWidth={1.5} dot={false}/>}
+                                                     strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
-                                                  strokeWidth={1.5} dot={false}/>}
+                                                  strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                             </AreaChart>
                         </ResponsiveContainer>
                     ) : <div className={styles.empty}>Not enough data</div>}
@@ -652,16 +653,16 @@ function DashboardTab({
                 <div className={styles.chartCard}>
                     <h3 className={styles.chartTitle}>Monthly Income vs Expense (12m)</h3>
                     {budget.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={260}>
-                            <BarChart data={budget}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0}>
+                            <BarChart data={budget} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
                                 <XAxis dataKey="month" tick={{fontSize: 11, fill: '#888'}} tickLine={false}/>
                                 <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                                        tick={{fontSize: 11, fill: '#888'}} tickLine={false}/>
                                 <Tooltip content={<CurrencyTooltip/>}/>
                                 <Legend wrapperStyle={{fontSize: 12}}/>
-                                <Bar dataKey="income" name="Income" fill="#22c55e" radius={[2, 2, 0, 0]}/>
-                                <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[2, 2, 0, 0]}/>
+                                <Bar dataKey="income" name="Income" fill="#22c55e" radius={[2, 2, 0, 0]} isAnimationActive={false}/>
+                                <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[2, 2, 0, 0]} isAnimationActive={false}/>
                             </BarChart>
                         </ResponsiveContainer>
                     ) : <div className={styles.empty}>No budget data</div>}
@@ -715,8 +716,8 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
                     <div key={w.walletId} className={styles.walletTile}>
                         <WalletTileTitle w={w}/>
                         {w.series.length > 1 ? (
-                            <ResponsiveContainer width="100%" height={180}>
-                                <AreaChart data={w.series}>
+                            <ResponsiveContainer width="100%" height={180} minWidth={0}>
+                                <AreaChart data={w.series} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id={`bg-${w.walletId}`} x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
@@ -729,21 +730,21 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
                                            tick={{fontSize: 10, fill: '#888'}} tickLine={false}/>
                                     <Tooltip content={<CurrencyTooltip/>}/>
                                     <Area type="monotone" dataKey="balance" name="Balance" stroke="#6366f1"
-                                          fill={`url(#bg-${w.walletId})`} strokeWidth={2} dot={false}/>
+                                          fill={`url(#bg-${w.walletId})`} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                     <Area type="monotone" dataKey="cumDeposit" name="Deposits" stroke="#f59e0b"
-                                          fill="none" strokeWidth={1.5} dot={false} strokeDasharray="4 2"/>
+                                          fill="none" strokeWidth={1.5} dot={false} strokeDasharray="4 2" isAnimationActive={false} connectNulls/>
                                     {showSp500 && <Line type="monotone" dataKey="sp500" name="S&P 500" stroke="#ec4899"
-                                                        strokeWidth={1.5} dot={false}/>}
+                                                        strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
-                                                        strokeWidth={1.5} dot={false}/>}
+                                                        strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showBankFixed3_5 &&
                                         <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Deposit 3.5%" stroke="#d7f63b"
-                                              strokeWidth={1.5} dot={false}/>}
+                                              strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showNasdaq &&
                                         <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
-                                              strokeWidth={1.5} dot={false}/>}
+                                              strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showDji && <Line type="monotone" dataKey="dji" name="Dow Jones" stroke="#a855f7"
-                                                      strokeWidth={1.5} dot={false}/>}
+                                                      strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 </AreaChart>
                             </ResponsiveContainer>
                         ) : <div className={styles.empty} style={{height: 80}}>Not enough data</div>}
@@ -795,8 +796,8 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
                     <div key={w.walletId} className={styles.walletTile}>
                         <WalletTileTitle w={w}/>
                         {w.series.length > 1 ? (
-                            <ResponsiveContainer width="100%" height={180}>
-                                <AreaChart data={w.series}>
+                            <ResponsiveContainer width="100%" height={180} minWidth={0}>
+                                <AreaChart data={w.series} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id={`eg-${w.walletId}`} x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
@@ -809,22 +810,22 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
                                            tick={{fontSize: 10, fill: '#888'}} tickLine={false}/>
                                     <Tooltip content={<CurrencyTooltip/>}/>
                                     <Area type="monotone" dataKey="earnings" name="Earnings" stroke="#22c55e"
-                                          fill={`url(#eg-${w.walletId})`} strokeWidth={2} dot={false}/>
+                                          fill={`url(#eg-${w.walletId})`} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                                     {showSp500 &&
                                         <Line type="monotone" dataKey="sp500_earnings" name="S&P 500" stroke="#ec4899"
-                                              strokeWidth={1.5} dot={false}/>}
+                                              strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showWig20 &&
                                         <Line type="monotone" dataKey="wig20_earnings" name="WIG20" stroke="#3b82f6"
-                                              strokeWidth={1.5} dot={false}/>}
+                                              strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showBankFixed3_5 &&
                                         <Line type="monotone" dataKey="fixedDeposit3_5_earnings"
                                               name="Fixed Deposit 3.5%" stroke="#d7f63b"
-                                              strokeWidth={1.5} dot={false}/>}
+                                              strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showNasdaq && <Line type="monotone" dataKey="nasdaq_earnings" name="NASDAQ-100"
-                                                         stroke="#06b6d4" strokeWidth={1.5} dot={false}/>}
+                                                         stroke="#06b6d4" strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                     {showDji &&
                                         <Line type="monotone" dataKey="dji_earnings" name="Dow Jones" stroke="#a855f7"
-                                              strokeWidth={1.5} dot={false}/>}
+                                              strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls/>}
                                 </AreaChart>
                             </ResponsiveContainer>
                         ) : <div className={styles.empty} style={{height: 80}}>Not enough data</div>}
@@ -947,8 +948,8 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                 </div>
 
                 {/* 3b — Chart */}
-                <ResponsiveContainer width="100%" height={340}>
-                    <LineChart data={chartData}>
+                <ResponsiveContainer width="100%" height={340} minWidth={0}>
+                    <LineChart data={chartData} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
                         <XAxis dataKey="label" tick={{fontSize: 10, fill: '#888'}} tickLine={false}/>
                         <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{fontSize: 11, fill: '#888'}}
@@ -959,16 +960,16 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                                        label={{value: 'FIRE Goal', fill: '#f59e0b', fontSize: 11}}/>
                         <ReferenceLine x={todayLabel} stroke="#64748b" strokeDasharray="4 4"
                                        label={{value: 'Today', fill: '#94a3b8', fontSize: 11, position: 'top'}}/>
-                        <Line type="monotone" dataKey="Actual Net Worth" stroke="#3b82f6" strokeWidth={2.5} dot={false}/>
+                        <Line type="monotone" dataKey="Actual Net Worth" stroke="#3b82f6" strokeWidth={2.5} dot={false} isAnimationActive={false} connectNulls/>
                         <Line type="monotone" dataKey="Actual Deposits" stroke="#64748b" strokeWidth={1.5} dot={false}
-                              strokeDasharray="4 4"/>
-                        <Line type="monotone" dataKey="Baseline" stroke="#6366f1" strokeWidth={2} dot={false}/>
+                              strokeDasharray="4 4" isAnimationActive={false} connectNulls/>
+                        <Line type="monotone" dataKey="Baseline" stroke="#6366f1" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls/>
                         <Line type="monotone" dataKey="Plus 20%" stroke="#22c55e" strokeWidth={1.5} dot={false}
-                              strokeDasharray="4 2"/>
+                              strokeDasharray="4 2" isAnimationActive={false} connectNulls/>
                         <Line type="monotone" dataKey="Minus 20%" stroke="#ef4444" strokeWidth={1.5} dot={false}
-                              strokeDasharray="4 2"/>
+                              strokeDasharray="4 2" isAnimationActive={false} connectNulls/>
                         <Line type="monotone" dataKey="Only Deposits" stroke="#94a3b8" strokeWidth={1} dot={false}
-                              strokeDasharray="2 3"/>
+                              strokeDasharray="2 3" isAnimationActive={false} connectNulls/>
                     </LineChart>
                 </ResponsiveContainer>
 
@@ -1166,8 +1167,8 @@ function StrategiesTab() {
             </span>
                     </div>
                     {s.series.length > 1 ? (
-                        <ResponsiveContainer width="100%" height={220}>
-                            <LineChart data={s.series}>
+                        <ResponsiveContainer width="100%" height={220} minWidth={0}>
+                            <LineChart data={s.series} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
                                 <XAxis dataKey="date" tick={{fontSize: 9, fill: '#888'}} tickLine={false}
                                        interval="preserveStartEnd"/>
@@ -1176,11 +1177,11 @@ function StrategiesTab() {
                                 <Tooltip content={<PctTooltipStrategy/>}/>
                                 <Legend wrapperStyle={{fontSize: 11}}/>
                                 <Line type="monotone" dataKey="Best" stroke="#22c55e" strokeWidth={1.5} dot={false}
-                                      connectNulls/>
+                                      isAnimationActive={false} connectNulls/>
                                 <Line type="monotone" dataKey="Good" stroke="#6366f1" strokeWidth={1.5} dot={false}
-                                      connectNulls/>
+                                      isAnimationActive={false} connectNulls/>
                                 <Line type="monotone" dataKey="Risky" stroke="#ef4444" strokeWidth={1.5} dot={false}
-                                      connectNulls/>
+                                      isAnimationActive={false} connectNulls/>
                             </LineChart>
                         </ResponsiveContainer>
                     ) : (

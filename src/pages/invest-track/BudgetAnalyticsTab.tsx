@@ -267,16 +267,16 @@ export function BudgetAnalyticsTab({entries}: { entries: BudgetEntry[] }) {
             <div className={styles.analyticsCard}>
                 <h3 className={styles.analyticsTitle}>Monthly Income vs Expense</h3>
                 {monthlyData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={320}>
-                        <BarChart data={monthlyData} margin={{top: 4, right: 8, bottom: 4, left: 8}}>
+                    <ResponsiveContainer width="100%" height={320} minWidth={0}>
+                        <BarChart data={monthlyData} margin={{top: 10, right: 15, bottom: 4, left: 8}}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
                             <XAxis dataKey="month" tick={{fontSize: 11, fill: '#888'}} tickLine={false}/>
                             <YAxis tickFormatter={v => `${(v / 1000).toFixed(0)}k`} tick={{fontSize: 11, fill: '#888'}}
                                    tickLine={false}/>
                             <Tooltip content={<CurrencyTip/>}/>
                             <Legend wrapperStyle={{fontSize: 12}}/>
-                            <Bar dataKey="income" name="Income" fill="#10b981" radius={[3, 3, 0, 0]}/>
-                            <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[3, 3, 0, 0]}/>
+                            <Bar dataKey="income" name="Income" fill="#10b981" radius={[3, 3, 0, 0]} isAnimationActive={false}/>
+                            <Bar dataKey="expense" name="Expense" fill="#ef4444" radius={[3, 3, 0, 0]} isAnimationActive={false}/>
                         </BarChart>
                     </ResponsiveContainer>
                 ) : <div className={styles.noData}>No data for selected range/categories</div>}
@@ -315,10 +315,11 @@ export function BudgetAnalyticsTab({entries}: { entries: BudgetEntry[] }) {
 
                 {pieData.length > 0 ? (
                     <div className={styles.pieRow}>
-                        <ResponsiveContainer width={340} height={340}>
+                        <ResponsiveContainer width={340} height={340} minWidth={0}>
                             <PieChart>
                                 <Pie data={pieData} dataKey="value" nameKey="name"
-                                     cx="50%" cy="50%" innerRadius={60} outerRadius={130} paddingAngle={2}>
+                                     cx="50%" cy="50%" innerRadius={60} outerRadius={130} paddingAngle={2}
+                                     isAnimationActive={false}>
                                     {pieData.map((_, i) => <Cell key={i} fill={PIE_PALETTE[i % PIE_PALETTE.length]}/>)}
                                 </Pie>
                                 <Tooltip formatter={(v: any) => fmt(Number(v))}/>

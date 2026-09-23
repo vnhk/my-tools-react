@@ -147,26 +147,26 @@ export function DietDashboardPage() {
         <div className={styles.grid}>
 
           <ChartCard title="Activity Calories Burned">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={activityData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height={220} minWidth={0}>
+              <BarChart data={activityData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
                 <CartesianGrid {...GRID_STYLE} />
                 <XAxis dataKey="label" tick={TICK_STYLE} interval="preserveStartEnd" />
                 <YAxis tick={TICK_STYLE} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="value" name="Activity kcal" fill="#6366f1" radius={[3,3,0,0]} />
+                <Bar dataKey="value" name="Activity kcal" fill="#6366f1" radius={[3,3,0,0]} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
           <ChartCard title="Net Deficit (green = deficit, red = surplus)">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={deficitData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height={220} minWidth={0}>
+              <BarChart data={deficitData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
                 <CartesianGrid {...GRID_STYLE} />
                 <XAxis dataKey="label" tick={TICK_STYLE} interval="preserveStartEnd" />
                 <YAxis tick={TICK_STYLE} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" />
-                <Bar dataKey="value" name="Deficit (kcal)" radius={[3,3,0,0]}>
+                <Bar dataKey="value" name="Deficit (kcal)" radius={[3,3,0,0]} isAnimationActive={false}>
                   {deficitData.map((entry, i) => (
                     <Cell key={i} fill={entry.value == null || entry.value >= 0 ? '#22c55e' : '#ef4444'} />
                   ))}
@@ -176,23 +176,23 @@ export function DietDashboardPage() {
           </ChartCard>
 
           <ChartCard title="Calorie Intake vs Target vs TDEE">
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={calorieData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height={220} minWidth={0}>
+              <LineChart data={calorieData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
                 <CartesianGrid {...GRID_STYLE} />
                 <XAxis dataKey="label" tick={TICK_STYLE} interval="preserveStartEnd" />
                 <YAxis tick={TICK_STYLE} />
                 <Tooltip contentStyle={TOOLTIP_STYLE} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="consumed" name="Consumed" stroke="#6366f1" dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="target" name="Target" stroke="#f59e0b" dot={false} strokeWidth={1.5} strokeDasharray="4 3" />
-                <Line type="monotone" dataKey="tdee" name="TDEE" stroke="#22c55e" dot={false} strokeWidth={1.5} strokeDasharray="2 2" />
+                <Line type="monotone" dataKey="consumed" name="Consumed" stroke="#6366f1" dot={false} strokeWidth={2} isAnimationActive={false} connectNulls />
+                <Line type="monotone" dataKey="target" name="Target" stroke="#f59e0b" dot={false} strokeWidth={1.5} strokeDasharray="4 3" isAnimationActive={false} connectNulls />
+                <Line type="monotone" dataKey="tdee" name="TDEE" stroke="#22c55e" dot={false} strokeWidth={1.5} strokeDasharray="2 2" isAnimationActive={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
 
           <ChartCard title="Cumulative Deficit (≈ kg fat: ÷7700)">
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={cumulData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+            <ResponsiveContainer width="100%" height={220} minWidth={0}>
+              <LineChart data={cumulData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
                 <CartesianGrid {...GRID_STYLE} />
                 <XAxis dataKey="label" tick={TICK_STYLE} interval="preserveStartEnd" />
                 <YAxis tick={TICK_STYLE} />
@@ -201,22 +201,22 @@ export function DietDashboardPage() {
                   formatter={(v) => [`${Number(v)} kcal (≈${(Number(v)/7700).toFixed(2)} kg)`, 'Cumul. deficit']}
                 />
                 <ReferenceLine y={0} stroke="rgba(255,255,255,0.2)" />
-                <Line type="monotone" dataKey="cumul" name="Cumulative deficit" stroke="#818cf8" dot={false} strokeWidth={2} />
+                <Line type="monotone" dataKey="cumul" name="Cumulative deficit" stroke="#818cf8" dot={false} strokeWidth={2} isAnimationActive={false} connectNulls />
               </LineChart>
             </ResponsiveContainer>
           </ChartCard>
 
           {macro?.hasData && (
             <ChartCard title="Macro Breakdown — avg/day (Protein / Fat / Carbs)">
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={macroBarData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height={220} minWidth={0}>
+                <BarChart data={macroBarData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
                   <CartesianGrid {...GRID_STYLE} />
                   <XAxis dataKey="name" tick={TICK_STYLE} />
                   <YAxis tick={TICK_STYLE} unit="g" />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="consumed" name="Consumed (g)" fill="#6366f1" radius={[3,3,0,0]} />
-                  <Bar dataKey="target" name="Target (g)" fill="#f59e0b" radius={[3,3,0,0]} />
+                  <Bar dataKey="consumed" name="Consumed (g)" fill="#6366f1" radius={[3,3,0,0]} isAnimationActive={false} />
+                  <Bar dataKey="target" name="Target (g)" fill="#f59e0b" radius={[3,3,0,0]} isAnimationActive={false} />
                 </BarChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -224,13 +224,13 @@ export function DietDashboardPage() {
 
           {hasWeight && (
             <ChartCard title="Weight (kg)">
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={weightData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height={220} minWidth={0}>
+                <LineChart data={weightData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
                   <CartesianGrid {...GRID_STYLE} />
                   <XAxis dataKey="label" tick={TICK_STYLE} interval="preserveStartEnd" />
                   <YAxis tick={TICK_STYLE} unit=" kg" domain={['auto', 'auto']} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
-                  <Line type="monotone" dataKey="weight" name="Weight (kg)" stroke="#22c55e" dot={{ r: 3 }} strokeWidth={2} connectNulls={false} />
+                  <Line type="monotone" dataKey="weight" name="Weight (kg)" stroke="#22c55e" dot={{ r: 3 }} strokeWidth={2} connectNulls isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
@@ -238,15 +238,15 @@ export function DietDashboardPage() {
 
           {projData.length > 0 && proj && (
             <ChartCard title={`Weight Projection — 13 weeks (avg deficit ${proj.avgDailyDeficit.toFixed(0)} kcal/day → ${proj.weeklyWeightChange >= 0 ? '-' : '+'}${Math.abs(proj.weeklyWeightChange).toFixed(2)} kg/week)`}>
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={projData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+              <ResponsiveContainer width="100%" height={220} minWidth={0}>
+                <LineChart data={projData} margin={{ top: 5, right: 15, left: -10, bottom: 5 }}>
                   <CartesianGrid {...GRID_STYLE} />
                   <XAxis dataKey="label" tick={TICK_STYLE} interval="preserveStartEnd" />
                   <YAxis tick={TICK_STYLE} unit=" kg" domain={['auto', 'auto']} />
                   <Tooltip contentStyle={TOOLTIP_STYLE} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Line type="monotone" dataKey="actual" name="Actual" stroke="#22c55e" dot={{ r: 3 }} strokeWidth={2} connectNulls={false} />
-                  <Line type="monotone" dataKey="projected" name="Projected" stroke="#6366f1" strokeDasharray="5 3" dot={false} strokeWidth={1.5} connectNulls={false} />
+                  <Line type="monotone" dataKey="actual" name="Actual" stroke="#22c55e" dot={{ r: 3 }} strokeWidth={2} connectNulls isAnimationActive={false} />
+                  <Line type="monotone" dataKey="projected" name="Projected" stroke="#6366f1" strokeDasharray="5 3" dot={false} strokeWidth={1.5} connectNulls isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
             </ChartCard>
