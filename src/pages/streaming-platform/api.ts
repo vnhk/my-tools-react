@@ -77,3 +77,12 @@ export function uploadSubtitles(productionName: string, file: File) {
     fd
   )
 }
+
+export function uploadPoster(productionName: string, file: File) {
+  const fd = new FormData()
+  fd.append('file', file)
+  return client.post(
+    `/streaming/admin/productions/${encodeURIComponent(productionName)}/poster`,
+    fd
+  )
+}

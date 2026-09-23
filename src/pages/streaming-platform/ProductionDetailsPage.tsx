@@ -7,6 +7,7 @@ import {
   uploadEpisodeHLS,
   uploadMovieMP4,
   uploadSubtitles,
+  uploadPoster,
   reloadConfig,
 } from './api'
 import type { ProductionDetails } from './types'
@@ -17,7 +18,15 @@ import { NumberField } from '../../components/fields/NumberField'
 import styles from './ProductionDetailsPage.module.css'
 
 // ---- Admin section ----
-function AdminSection({ details, productionName }: { details: ProductionDetails; productionName: string }) {
+function AdminSection({
+  details,
+  productionName,
+  onReload,
+}: {
+  details: ProductionDetails
+  productionName: string
+  onReload?: () => void
+}) {
   const { showNotification } = useNotification()
   const isTvSeries = details.summary.type === 'TV_SERIES'
   const nextSeason = (details.seasons?.length ?? 0) + 1
@@ -31,6 +40,7 @@ function AdminSection({ details, productionName }: { details: ProductionDetails;
   const hlsRef = useRef<HTMLInputElement>(null)
   const movieMp4Ref = useRef<HTMLInputElement>(null)
   const subtitlesRef = useRef<HTMLInputElement>(null)
+  const posterRef = useRef<HTMLInputElement>(null)
 
   const wrap = async (label: string, fn: () => Promise<unknown>) => {
     setBusy(true)
@@ -118,8 +128,29 @@ function AdminSection({ details, productionName }: { details: ProductionDetails;
       <div className={styles.adminDivider} />
 
       <div className={styles.adminBlock}>
+        <div className={styles.adminBlockTitle}>Upload Poster (JPG / PNG)</div>
+        <div className={styles.adminRow}>
+          <input ref={posterRef} type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" className={styles.adminFileBtn} />
+          <Button variant="secondary" disabled={busy} onClick={() => {
+            const f = posterRef.current?.files?.[0]
+            if (!f) { showNotification('Select an image file first', 'error'); return }
+            wrap('Poster', async () => {
+              await uploadPoster(productionName, f)
+              if (posterRef.current) posterRef.current.value = ''
+              onReload?.()
+            })
+          }}>Upload</Button>
+        </div>
+      </div>
+
+      <div className={styles.adminDivider} />
+
+      <div className={styles.adminBlock}>
         <Button variant="secondary" disabled={busy}
-          onClick={() => wrap('Reload config', reloadConfig)}>
+          onClick={() => wrap('Reload config', async () => {
+            await reloadConfig()
+            onReload?.()
+          })}>
           🔄 Reload Config
         </Button>
       </div>
@@ -138,19 +169,25 @@ export default function ProductionDetailsPage() {
   const [loading, setLoading] = useState(true)
   const [openSeasons, setOpenSeasons] = useState<Set<string>>(new Set())
   const [showAdmin, setShowAdmin] = useState(false)
+  const [posterKey, setPosterKey] = useState(Date.now())
 
-  useEffect(() => {
+  const loadDetails = () => {
     if (!name) return
     fetchProductionDetails(name)
       .then((res) => {
         const d = res.data
         setDetails(d)
+        setPosterKey(Date.now())
         if (d.seasons && d.seasons.length > 0) {
-          setOpenSeasons(new Set([d.seasons[0].name]))
+          setOpenSeasons((prev) => (prev.size === 0 ? new Set([d.seasons[0].name]) : prev))
         }
       })
       .catch(() => navigate('/streaming'))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadDetails()
   }, [name, navigate])
 
   if (loading) return <div className={styles.loading}>Loading…</div>
@@ -182,7 +219,8 @@ export default function ProductionDetailsPage() {
         <div className={styles.heroContent}>
           <div className={styles.heroPoster}>
             <img
-              src={summary.posterUrl}
+              key={posterKey}
+              src={summary.posterUrl ? `${summary.posterUrl}?t=${posterKey}` : undefined}
               alt={summary.title ?? name}
               onError={(e) => { e.currentTarget.style.display = 'none' }}
             />
@@ -266,7 +304,9 @@ export default function ProductionDetailsPage() {
           <button className={styles.adminToggleBtn} onClick={() => setShowAdmin((p) => !p)}>
             ⚙ Admin {showAdmin ? '▲' : '▼'}
           </button>
-          {showAdmin && <AdminSection details={details} productionName={name!} />}
+          {showAdmin && (
+            <AdminSection details={details} productionName={name!} onReload={loadDetails} />
+          )}
         </div>
       )}
     </div>

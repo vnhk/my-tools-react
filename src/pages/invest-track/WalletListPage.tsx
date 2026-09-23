@@ -7,7 +7,7 @@ import { walletsApi, type Wallet } from '../../api/investments'
 import { toPage } from '../../api/crud'
 import styles from './AssetsPage.module.css'
 import { AssetCard } from './AssetCard.tsx'
-import { FaChartLine, FaMoneyBill, FaPiggyBank, FaPlus } from 'react-icons/fa'
+import { FaChartLine, FaChartPie, FaMoneyBill, FaPiggyBank, FaPlus, FaUserShield } from 'react-icons/fa'
 import { FcDataEncryption } from 'react-icons/fc'
 import { calculateValue } from './AssetsPage.tsx'
 
@@ -30,44 +30,68 @@ export function WalletListPage() {
       .then((res) => { const p = toPage(res.data); setRows(p.content);})
   }
 
-  //"INVESTMENT", "SAVINGS", "BONDS", "CRYPTO", "CASH" 
-    const renderIcon = (item: Wallet) => {
-      console.log(item.walletType)
-      switch(item.walletType) {
-        case "PPK": 
-        case "INVESTMENT_FUND": 
-        case "INVESTMENT": {
-          return <FaChartLine/>
-        }
-        case "BONDS":
-        case "SAVINGS": {
-          return <FaPiggyBank/>
-        }
-        case "CASH" : {
-           return <FaMoneyBill/>
-        }
-        case "CRYPTO": {
-            return <FcDataEncryption/>
-        }
-      }
-    };
-  
-    const renderSubtitle = (item: Wallet) => {
-      return renderSubtitleBase(item.riskLevel, item.walletType, item.description)
-    };
-  
-    const renderSubtitleBase = (riskLevel:string, walletType:string, description:string | null) => {
-      return (
-        <span>
-          {riskLevel}
-          {<br />}
-          {walletType}
-          {<br />}
-          {description}
-          <br/>
-        </span>
-      );
-    };
+  const renderIcon = (item: Wallet) => {
+    const type = (item.walletType ?? '').toUpperCase().replace(/[\s-]+/g, '_')
+    switch (type) {
+      case 'PPK':
+        return <FaUserShield title="PPK" />
+      case 'INVESTMENT_FUND':
+      case 'INVESTMENT_FUNDS':
+        return <FaChartPie title="Investment Fund" />
+      case 'INVESTMENT':
+        return <FaChartLine title="Investment" />
+      case 'BONDS':
+      case 'SAVINGS':
+        return <FaPiggyBank title="Savings / Bonds" />
+      case 'CASH':
+        return <FaMoneyBill title="Cash" />
+      case 'CRYPTO':
+        return <FcDataEncryption title="Crypto" />
+      default:
+        return <FaChartLine />
+    }
+  }
+
+  const formatWalletType = (wt?: string) => {
+    if (!wt) return ''
+    const normalized = wt.toUpperCase().replace(/[\s-]+/g, '_')
+    switch (normalized) {
+      case 'INVESTMENT_FUND':
+      case 'INVESTMENT_FUNDS':
+        return 'Investment Fund'
+      case 'INVESTMENT':
+        return 'Investment'
+      case 'SAVINGS':
+        return 'Savings'
+      case 'BONDS':
+        return 'Bonds'
+      case 'PPK':
+        return 'PPK'
+      case 'CRYPTO':
+        return 'Crypto'
+      case 'CASH':
+        return 'Cash'
+      default:
+        return wt
+    }
+  }
+
+  const renderSubtitle = (item: Wallet) => {
+    return renderSubtitleBase(item.riskLevel, formatWalletType(item.walletType), item.description)
+  }
+
+  const renderSubtitleBase = (riskLevel: string, walletType: string, description: string | null) => {
+    return (
+      <span>
+        {riskLevel}
+        {<br />}
+        {walletType}
+        {<br />}
+        {description}
+        <br />
+      </span>
+    )
+  }
 
     const calculateTrend = (item: Wallet) => {
       return item.returnRate;
