@@ -330,8 +330,8 @@ export function WalletDetailPage() {
 
       <DynamicFormDialog
         open={snapshotsDialogOpen}
-        title={editWalletItem?.id ? "Edit Snapshot" : "New Snapshot"}
-        onClose={() => setWalletDialogOpen(false)}
+        title={editSnapshotItem?.id ? "Edit Snapshot" : "New Snapshot"}
+        onClose={() => setSnapshotDialogOpen(false)}
         onConfirm={handleSnapshotSave}
         width="560px"
       >

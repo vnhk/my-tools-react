@@ -438,7 +438,11 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
 
             {/* Dialogs */}
             <DynamicFormDialog open={editOpen} title={editItem.id ? 'Edit Entry' : 'New Entry'}
-                    onClose={() => setEditOpen(false)} onConfirm={handleSave} width="min(90vw, 720px)">
+                    onClose={() => {
+                        setEditOpen(false)
+                        setFormErrors({})
+                        setEditItem(EMPTY_ENTRY)
+                    }} onConfirm={handleSave} width="min(90vw, 720px)">
                 <div className={styles.dialogField}>
                     <label className={styles.dialogLabel} htmlFor="entry-category">Category</label>
                     <input
@@ -462,12 +466,17 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
             </DynamicFormDialog>
 
             <DynamicFormDialog open={bulkEditOpen} title={'Bulk Update'}
-                    onClose={() => setBulkEditOpen(false)} onConfirm={handleBulkSave} width="min(90vw, 720px)">
+                    onClose={() => {
+                        setBulkEditOpen(false)
+                        setBulkEditItems([])
+                        setBulkEditField('id')
+                        setBulkEditValue(null)
+                    }} onConfirm={handleBulkSave} width="min(90vw, 720px)">
                 <div className={styles.dialogField}>
                     <label className={styles.dialogLabel} htmlFor="entry-category">Field</label>
-                    <select id="entry-bulk-update-field-list" value={undefined}
+                    <select id="entry-bulk-update-field-list" value={bulkEditField}
                             onChange={e => setBulkEditField(e.target.value as keyof BudgetEntry)}>
-                        <option value="null">Select a field</option>
+                        <option value="id">Select a field</option>
                         {bulkUpdateFields.map(c => <option key={c.field} value={c.field}>{c.name}</option>)}
                     </select>
                     {bulkEditField !== 'id' &&

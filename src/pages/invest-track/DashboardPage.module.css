@@ -45,6 +45,33 @@
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.kpiInfoIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+  width: 14px;
+  height: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  font-style: normal;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-text-secondary);
+  cursor: help;
+  line-height: 1;
+  user-select: none;
+  transition: background var(--transition), color var(--transition);
+}
+
+.kpiInfoIcon:hover,
+.kpiInfoIcon:focus {
+  background: var(--color-primary, #6366f1);
+  color: #ffffff;
 }
 
 .kpiValue {

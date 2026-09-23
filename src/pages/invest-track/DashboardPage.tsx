@@ -91,7 +91,7 @@ function aggregateAllWallets(walletSeries: WalletTimeSeriesEntry[]): WalletTimeS
         ? ((last.balance - last.cumDeposit) / last.cumDeposit) * 100 : 0
     return {
         walletId: 'aggregated',
-        walletName: `Aggregated Wallet (${returnRate >= 0 ? '+' : ''}${returnRate.toFixed(2)}%)`,
+        walletName: 'Aggregated Wallet',
         isInvestment: true,
         returnRate,
         series: aggregated,
@@ -128,13 +128,19 @@ function futureValue(current: number, monthly: number, rate: number, months: num
     return current * factor + monthly * ((factor - 1) / rate)
 }
 
-function computeMonthlyReturn(balance: number, deposits: number, monthsSpan: number): number {
-    if (deposits <= 0 || balance <= 0 || monthsSpan <= 0) return 0
+function computeMonthlyReturn(balance: number, deposits: number, monthsSpan: number, investTwr?: number): number {
     const years = monthsSpan / 12
+    if (years > 0 && investTwr != null && !isNaN(investTwr) && investTwr !== 0) {
+        const twrDec = investTwr / 100
+        if (twrDec > -1) {
+            const annualReturn = Math.pow(1 + twrDec, 1 / years) - 1
+            return Math.pow(1 + annualReturn, 1 / 12) - 1
+        }
+    }
+    if (deposits <= 0 || balance <= 0 || monthsSpan <= 0) return 0
     const multiplier = balance / deposits
     const annualReturn = Math.pow(multiplier, 1 / years) - 1
-    const realAnnualReturn = (1 + annualReturn) / 1.038 - 1
-    return Math.pow(1 + realAnnualReturn, 1 / 12) - 1
+    return Math.pow(1 + annualReturn, 1 / 12) - 1
 }
 
 function estimateMonthsToTarget(
@@ -166,36 +172,101 @@ function formatMonths(months: number): string {
     if (yrs > 0) return `${yrs} yr`
     return `${rem} mos`
 }
-
 function computeFireChartData(
-    investBalance: number, savingsBalance: number,
-    monthlyInvest: number, monthlySavings: number,
-    monthlyReturn: number, yearsToProject: number,
+    investBalance: number,
+    savingsBalance: number,
+    monthlyInvest: number,
+    savingsMonthly: number,
+    monthlyReturn: number,
+    yearsToProject: number,
+    historicalSeries?: TimeSeriesPoint[],
 ) {
     const invest80 = monthlyInvest * 0.8
     const invest120 = monthlyInvest * 1.2
+    const currentNetWorth = Math.round(investBalance + savingsBalance)
 
-    return Array.from({length: yearsToProject + 1}, (_, y) => {
+    const points: Array<{
+        label: string
+        isProjection?: boolean
+        'Actual Net Worth'?: number | null
+        'Actual Deposits'?: number | null
+        Baseline?: number | null
+        'Plus 20%'?: number | null
+        'Minus 20%'?: number | null
+        'Only Deposits'?: number | null
+    }> = []
+
+    let lastDateStr = ''
+    if (historicalSeries && historicalSeries.length > 0) {
+        const histPoints = historicalSeries.slice(0, historicalSeries.length - 1)
+        for (const p of histPoints) {
+            points.push({
+                label: p.date,
+                isProjection: false,
+                'Actual Net Worth': Math.round(p.balance),
+                'Actual Deposits': Math.round(p.cumDeposit),
+                Baseline: null,
+                'Plus 20%': null,
+                'Minus 20%': null,
+                'Only Deposits': null,
+            })
+        }
+        lastDateStr = historicalSeries[historicalSeries.length - 1].date
+    }
+
+    const todayLabel = lastDateStr ? `Today (${lastDateStr})` : 'Today'
+    const lastPoint = historicalSeries && historicalSeries.length > 0 ? historicalSeries[historicalSeries.length - 1] : null
+    const actualNetWorthToday = lastPoint ? Math.round(lastPoint.balance) : currentNetWorth
+    const actualDepositsToday = lastPoint ? Math.round(lastPoint.cumDeposit) : null
+
+    points.push({
+        label: todayLabel,
+        isProjection: false,
+        'Actual Net Worth': actualNetWorthToday,
+        'Actual Deposits': actualDepositsToday,
+        Baseline: currentNetWorth,
+        'Plus 20%': currentNetWorth,
+        'Minus 20%': currentNetWorth,
+        'Only Deposits': currentNetWorth,
+    })
+
+    const baseYear = lastDateStr ? parseInt(lastDateStr.substring(0, 4), 10) || new Date().getFullYear() : new Date().getFullYear()
+
+    for (let y = 1; y <= yearsToProject; y++) {
         const n = y * 12
-        const savingsFV = savingsBalance + monthlySavings * n
-        return {
-            year: y,
+        const savingsFV = savingsBalance + savingsMonthly * n
+        const yearLabel = `+${y}y (${baseYear + y})`
+
+        points.push({
+            label: yearLabel,
+            isProjection: true,
+            'Actual Net Worth': null,
+            'Actual Deposits': null,
             Baseline: Math.round(futureValue(investBalance, monthlyInvest, monthlyReturn, n) + savingsFV),
             'Plus 20%': Math.round(futureValue(investBalance, invest120, monthlyReturn, n) + savingsFV),
             'Minus 20%': Math.round(futureValue(investBalance, invest80, monthlyReturn, n) + savingsFV),
-            'Only Deposits': Math.round(investBalance + savingsBalance + (monthlyInvest + monthlySavings) * n),
-        }
-    })
+            'Only Deposits': Math.round(investBalance + savingsBalance + (monthlyInvest + savingsMonthly) * n),
+        })
+    }
+
+    return { data: points, todayLabel }
 }
 
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
-function KpiCard({label, value, sub, trend}: {
-    label: string; value: string; sub?: string; trend?: 'positive' | 'negative' | null
+function KpiCard({label, value, sub, trend, info}: {
+    label: string; value: string; sub?: string; trend?: 'positive' | 'negative' | null; info?: string
 }) {
     return (
         <div className={styles.kpiCard}>
-            <span className={styles.kpiLabel}>{label}</span>
+            <span className={styles.kpiLabel}>
+                {label}
+                {info && (
+                    <span className={styles.kpiInfoIcon} title={info} tabIndex={0} aria-label={info}>
+                        i
+                    </span>
+                )}
+            </span>
             <span className={[styles.kpiValue, trend ? styles[trend] : ''].join(' ')}>{value}</span>
             {sub && <span className={styles.kpiSub}>{sub}</span>}
         </div>
@@ -393,9 +464,11 @@ function DashboardTab({
                     <KpiCard label="Balance" value={PLN(kpi.investBalance)}/>
                     <KpiCard label="Net Deposits" value={PLN(kpi.investNetDeposits)}/>
                     <KpiCard label="Total Return" value={PLN(kpi.investReturn)}
-                             sub={PCT(kpi.investReturnPct)} trend={kpi.investReturn >= 0 ? 'positive' : 'negative'}/>
+                             sub={PCT(kpi.investReturnPct)} trend={kpi.investReturn >= 0 ? 'positive' : 'negative'}
+                             info="Total return from investment wallets only (stocks, bonds, crypto, funds, PPK). Excludes savings accounts and cash."/>
                     <KpiCard label="Return Rate" value={PCT(kpi.investReturnPct)}
-                             trend={kpi.investReturnPct >= 0 ? 'positive' : 'negative'}/>
+                             trend={kpi.investReturnPct >= 0 ? 'positive' : 'negative'}
+                             info="Return rate from investment wallets only."/>
                     <KpiCard label="CAGR" value={PCT(kpi.investCagr)} sub="Compound Annual"
                              trend={kpi.investCagr >= 0 ? 'positive' : 'negative'}/>
                     <KpiCard label="TWR" value={PCT(kpi.investTwr)} sub="Time-Weighted"
@@ -405,7 +478,8 @@ function DashboardTab({
                 <div className={styles.kpiRow}>
                     <KpiCard label="Savings Balance" value={PLN(kpi.savingsBalance)}/>
                     <KpiCard label="Savings Growth" value={PLN(kpi.savingsGrowth)}
-                             trend={kpi.savingsGrowth >= 0 ? 'positive' : 'negative'}/>
+                             trend={kpi.savingsGrowth >= 0 ? 'positive' : 'negative'}
+                             info="Interest and growth accumulated on savings accounts and fixed deposits."/>
                     <KpiCard label="Net Worth" value={PLN(kpi.netWorth)}/>
                 </div>
             </section>
@@ -633,7 +707,8 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
                 <KpiCard label="Total Balance" value={PLN(totalBalance)}/>
                 <KpiCard label="Total Deposits" value={PLN(totalDeposit)}/>
                 <KpiCard label="Total Profit" value={PLN(totalBalance - totalDeposit)}
-                         trend={(totalBalance - totalDeposit) >= 0 ? 'positive' : 'negative'}/>
+                         trend={(totalBalance - totalDeposit) >= 0 ? 'positive' : 'negative'}
+                         info="Combined profit from all wallets (both investment returns and savings accounts interest/growth)."/>
             </div>
             <div className={styles.walletGrid}>
                 {wallets.map(w => (
@@ -662,7 +737,7 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
                                     {showWig20 && <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#3b82f6"
                                                         strokeWidth={1.5} dot={false}/>}
                                     {showBankFixed3_5 &&
-                                        <Line type="monotone" dataKey="wig20" name="WIG20" stroke="#d7f63b"
+                                        <Line type="monotone" dataKey="fixedDeposit3_5" name="Fixed Deposit 3.5%" stroke="#d7f63b"
                                               strokeWidth={1.5} dot={false}/>}
                                     {showNasdaq &&
                                         <Line type="monotone" dataKey="nasdaq" name="NASDAQ-100" stroke="#06b6d4"
@@ -699,6 +774,7 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
             wig20_earnings: (p as any).wig20 != null ? (p as any).wig20 - p.cumDeposit : null,
             nasdaq_earnings: (p as any).nasdaq != null ? (p as any).nasdaq - p.cumDeposit : null,
             dji_earnings: (p as any).dji != null ? (p as any).dji - p.cumDeposit : null,
+            fixedDeposit3_5_earnings: (p as any).fixedDeposit3_5 != null ? (p as any).fixedDeposit3_5 - p.cumDeposit : null,
         })),
     }))
 
@@ -711,7 +787,8 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
         <>
             <div className={styles.kpiRow} style={{padding: '12px 16px 0'}}>
                 <KpiCard label="Total Profit" value={PLN(totalEarnings)}
-                         trend={totalEarnings >= 0 ? 'positive' : 'negative'}/>
+                         trend={totalEarnings >= 0 ? 'positive' : 'negative'}
+                         info="Combined profit from all wallets (both investment returns and savings accounts interest/growth)."/>
             </div>
             <div className={styles.walletGrid}>
                 {walletsWithEarnings.map(w => (
@@ -740,8 +817,8 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
                                         <Line type="monotone" dataKey="wig20_earnings" name="WIG20" stroke="#3b82f6"
                                               strokeWidth={1.5} dot={false}/>}
                                     {showBankFixed3_5 &&
-                                        <Line type="monotone" dataKey="showBankFixed3_5_earnings"
-                                              name="Fixed Deposit 3_5" stroke="#d7f63b"
+                                        <Line type="monotone" dataKey="fixedDeposit3_5_earnings"
+                                              name="Fixed Deposit 3.5%" stroke="#d7f63b"
                                               strokeWidth={1.5} dot={false}/>}
                                     {showNasdaq && <Line type="monotone" dataKey="nasdaq_earnings" name="NASDAQ-100"
                                                          stroke="#06b6d4" strokeWidth={1.5} dot={false}/>}
@@ -761,14 +838,14 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
 
 // ── FIRE tab ──────────────────────────────────────────────────────────────────
 
-function FireTab({kpi, fireGoal, onGoalChange}: {
-    kpi: DashboardKpi; fireGoal: number; onGoalChange: (g: number) => void
+function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
+    kpi: DashboardKpi; fireGoal: number; onGoalChange: (g: number) => void; historicalSeries?: TimeSeriesPoint[]
 }) {
     const savingsNetDeps = kpi.savingsBalance - kpi.savingsGrowth
     const span = Math.max(1, kpi.investMonthsSpan)
     const avgMonthlyInvest = kpi.investNetDeposits / span
     const avgMonthlySavings = savingsNetDeps / span
-    const monthlyReturn = computeMonthlyReturn(kpi.investBalance, kpi.investNetDeposits, span)
+    const monthlyReturn = computeMonthlyReturn(kpi.investBalance, kpi.investNetDeposits, span, kpi.investTwr)
 
     const defaultTotal = Math.ceil(avgMonthlyInvest + avgMonthlySavings)
 
@@ -781,9 +858,9 @@ function FireTab({kpi, fireGoal, onGoalChange}: {
     const investMonthly = autoMode ? avgMonthlyInvest : manualInvest
     const savingsMonthly = autoMode ? Math.max(0, totalMonthly - avgMonthlyInvest) : manualSavings
 
-    const chartData = useMemo(
-        () => computeFireChartData(kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, yearsToInvest),
-        [kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, yearsToInvest],
+    const { data: chartData, todayLabel } = useMemo(
+        () => computeFireChartData(kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, yearsToInvest, historicalSeries),
+        [kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, yearsToInvest, historicalSeries],
     )
 
     const stages = useMemo(() =>
@@ -849,7 +926,7 @@ function FireTab({kpi, fireGoal, onGoalChange}: {
                     </div>
                 ))}
                 <div className={styles.stagesNote}>
-                    * Projections use historical deposits and estimated monthly return after inflation (3.8%).
+                    * Projections use historical deposits and estimated monthly return (nominal).
                     Savings counted towards goal without investment returns.
                 </div>
             </div>
@@ -870,23 +947,27 @@ function FireTab({kpi, fireGoal, onGoalChange}: {
                 </div>
 
                 {/* 3b — Chart */}
-                <ResponsiveContainer width="100%" height={320}>
+                <ResponsiveContainer width="100%" height={340}>
                     <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
-                        <XAxis dataKey="year" tickFormatter={v => `Y${v}`} tick={{fontSize: 11, fill: '#888'}}
-                               tickLine={false}/>
+                        <XAxis dataKey="label" tick={{fontSize: 10, fill: '#888'}} tickLine={false}/>
                         <YAxis tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tick={{fontSize: 11, fill: '#888'}}
                                tickLine={false}/>
-                        <Tooltip formatter={(v: any) => PLN(Number(v))} labelFormatter={(l) => `Year ${l}`}/>
+                        <Tooltip formatter={(v: any) => v != null ? PLN(Number(v)) : ''} labelFormatter={(l) => `${l}`}/>
                         <Legend wrapperStyle={{fontSize: 12}}/>
                         <ReferenceLine y={fireGoal} stroke="#f59e0b" strokeDasharray="6 3"
                                        label={{value: 'FIRE Goal', fill: '#f59e0b', fontSize: 11}}/>
+                        <ReferenceLine x={todayLabel} stroke="#64748b" strokeDasharray="4 4"
+                                       label={{value: 'Today', fill: '#94a3b8', fontSize: 11, position: 'top'}}/>
+                        <Line type="monotone" dataKey="Actual Net Worth" stroke="#3b82f6" strokeWidth={2.5} dot={false}/>
+                        <Line type="monotone" dataKey="Actual Deposits" stroke="#64748b" strokeWidth={1.5} dot={false}
+                              strokeDasharray="4 4"/>
                         <Line type="monotone" dataKey="Baseline" stroke="#6366f1" strokeWidth={2} dot={false}/>
                         <Line type="monotone" dataKey="Plus 20%" stroke="#22c55e" strokeWidth={1.5} dot={false}
                               strokeDasharray="4 2"/>
                         <Line type="monotone" dataKey="Minus 20%" stroke="#ef4444" strokeWidth={1.5} dot={false}
                               strokeDasharray="4 2"/>
-                        <Line type="monotone" dataKey="Only Deposits" stroke="#888" strokeWidth={1} dot={false}
+                        <Line type="monotone" dataKey="Only Deposits" stroke="#94a3b8" strokeWidth={1} dot={false}
                               strokeDasharray="2 3"/>
                     </LineChart>
                 </ResponsiveContainer>
@@ -966,7 +1047,7 @@ function FireTab({kpi, fireGoal, onGoalChange}: {
                     </div>
                     <div className={styles.metricBox}>
                         <span className={styles.metricValue}>{(monthlyReturn * 100).toFixed(3)}%</span>
-                        <span className={styles.metricLabel}>Monthly investment return</span>
+                        <span className={styles.metricLabel}>Monthly investment return (nominal)</span>
                     </div>
                 </div>
 
@@ -1273,7 +1354,12 @@ export function DashboardPage() {
                     />
                 )}
                 {activeTab === 'FIRE' && (
-                    <FireTab kpi={data.kpi} fireGoal={fireGoal} onGoalChange={setFireGoal}/>
+                    <FireTab
+                        kpi={data.kpi}
+                        fireGoal={fireGoal}
+                        onGoalChange={setFireGoal}
+                        historicalSeries={data.netWorthTimeSeries}
+                    />
                 )}
                 {activeTab === 'Short Term Strategies' && <StrategiesTab/>}
             </div>
