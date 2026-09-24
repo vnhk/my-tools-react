@@ -751,15 +751,39 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
 }) {
     const totalBalance = wallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.balance ?? 0), 0)
     const totalDeposit = wallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
+    const totalProfit = totalBalance - totalDeposit
+    const totalReturnPct = totalDeposit > 0 ? (totalProfit / totalDeposit) * 100 : 0
+
+    const investWallets = wallets.filter(w => w.isInvestment)
+    const savingsWallets = wallets.filter(w => !w.isInvestment)
+
+    const investBalance = investWallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.balance ?? 0), 0)
+    const investDeposit = investWallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
+    const investProfit = investBalance - investDeposit
+    const investReturnPct = investDeposit > 0 ? (investProfit / investDeposit) * 100 : 0
+
+    const savingsBalance = savingsWallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.balance ?? 0), 0)
+    const savingsDeposit = savingsWallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
+    const savingsProfit = savingsBalance - savingsDeposit
+    const savingsReturnPct = savingsDeposit > 0 ? (savingsProfit / savingsDeposit) * 100 : 0
 
     return (
         <>
             <div className={styles.kpiRow} style={{padding: '12px 16px 0'}}>
                 <KpiCard label="Total Balance" value={PLN(totalBalance)}/>
                 <KpiCard label="Total Deposits" value={PLN(totalDeposit)}/>
-                <KpiCard label="Total Profit" value={PLN(totalBalance - totalDeposit)}
-                         trend={(totalBalance - totalDeposit) >= 0 ? 'positive' : 'negative'}
+                <KpiCard label="Total Profit" value={PLN(totalProfit)}
+                         sub={PCT(totalReturnPct)}
+                         trend={totalProfit >= 0 ? 'positive' : 'negative'}
                          info="Combined profit from all wallets (both investment returns and savings accounts interest/growth)."/>
+                <KpiCard label="Investments Return Rate" value={PCT(investReturnPct)}
+                         sub={PLN(investProfit)}
+                         trend={investReturnPct >= 0 ? 'positive' : 'negative'}
+                         info="Profit rate and nominal return from investment wallets only."/>
+                <KpiCard label="Savings Return Rate" value={PCT(savingsReturnPct)}
+                         sub={PLN(savingsProfit)}
+                         trend={savingsReturnPct >= 0 ? 'positive' : 'negative'}
+                         info="Interest rate and growth from savings and cash wallets only."/>
             </div>
             <div className={styles.walletGrid}>
                 {wallets.map(w => (
@@ -829,17 +853,42 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
         })),
     }))
 
-    const totalEarnings = wallets.reduce((s, w) => {
+    const investWallets = wallets.filter(w => w.isInvestment)
+    const savingsWallets = wallets.filter(w => !w.isInvestment)
+
+    const investEarnings = investWallets.reduce((s, w) => {
         const last = w.series[w.series.length - 1]
         return s + ((last?.balance ?? 0) - (last?.cumDeposit ?? 0))
     }, 0)
+    const investDeposit = investWallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
+    const investReturnPct = investDeposit > 0 ? (investEarnings / investDeposit) * 100 : 0
+
+    const savingsEarnings = savingsWallets.reduce((s, w) => {
+        const last = w.series[w.series.length - 1]
+        return s + ((last?.balance ?? 0) - (last?.cumDeposit ?? 0))
+    }, 0)
+    const savingsDeposit = savingsWallets.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumDeposit ?? 0), 0)
+    const savingsReturnPct = savingsDeposit > 0 ? (savingsEarnings / savingsDeposit) * 100 : 0
+
+    const totalEarnings = investEarnings + savingsEarnings
+    const totalDeposit = investDeposit + savingsDeposit
+    const totalReturnPct = totalDeposit > 0 ? (totalEarnings / totalDeposit) * 100 : 0
 
     return (
         <>
             <div className={styles.kpiRow} style={{padding: '12px 16px 0'}}>
                 <KpiCard label="Total Profit" value={PLN(totalEarnings)}
+                         sub={PCT(totalReturnPct)}
                          trend={totalEarnings >= 0 ? 'positive' : 'negative'}
                          info="Combined profit from all wallets (both investment returns and savings accounts interest/growth)."/>
+                <KpiCard label="Investments Profit Rate" value={PCT(investReturnPct)}
+                         sub={PLN(investEarnings)}
+                         trend={investReturnPct >= 0 ? 'positive' : 'negative'}
+                         info="Profit rate and nominal gain from investment wallets only."/>
+                <KpiCard label="Savings Profit Rate" value={PCT(savingsReturnPct)}
+                         sub={PLN(savingsEarnings)}
+                         trend={savingsReturnPct >= 0 ? 'positive' : 'negative'}
+                         info="Interest rate and gain from savings and cash wallets only."/>
             </div>
             <div className={styles.walletGrid}>
                 {walletsWithEarnings.map(w => (
@@ -927,6 +976,9 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                 return {name: FIRE_STAGE_NAMES[i], pct, amount, progress, left, monthsEst, achieved: left === 0}
             }),
         [fireGoal, kpi, avgMonthlyInvest, avgMonthlySavings, monthlyReturn, savingsMonthlyReturn])
+
+    const investAnnualReturn = (Math.pow(1 + monthlyReturn, 12) - 1) * 100
+    const savingsAnnualReturn = (Math.pow(1 + savingsMonthlyReturn, 12) - 1) * 100
 
     const nextYearInvestFV = futureValue(kpi.investBalance, avgMonthlyInvest, monthlyReturn, 12)
     const nextYearSavingsFV = futureValue(kpi.savingsBalance, avgMonthlySavings, savingsMonthlyReturn, 12)
@@ -1098,8 +1150,16 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                         <span className={styles.metricLabel}>Avg monthly savings deposit</span>
                     </div>
                     <div className={styles.metricBox}>
+                        <span className={styles.metricValue}>{investAnnualReturn.toFixed(2)}%</span>
+                        <span className={styles.metricLabel}>Annual investment return (nominal)</span>
+                    </div>
+                    <div className={styles.metricBox}>
                         <span className={styles.metricValue}>{(monthlyReturn * 100).toFixed(3)}%</span>
                         <span className={styles.metricLabel}>Monthly investment return (nominal)</span>
+                    </div>
+                    <div className={styles.metricBox}>
+                        <span className={styles.metricValue}>{savingsAnnualReturn.toFixed(2)}%</span>
+                        <span className={styles.metricLabel}>Savings annual return (nominal)</span>
                     </div>
                     <div className={styles.metricBox}>
                         <span className={styles.metricValue}>{(savingsMonthlyReturn * 100).toFixed(3)}%</span>
