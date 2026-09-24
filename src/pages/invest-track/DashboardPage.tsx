@@ -58,15 +58,50 @@ function applyDateRange(series: TimeSeriesPoint[], from: string, to: string): Ti
     return series.filter(p => (!from || p.date >= from) && (!to || p.date <= to))
 }
 
-function applyPeriodAgg(series: TimeSeriesPoint[], period: PeriodAgg): TimeSeriesPoint[] {
-    if (period === 'Monthly' || series.length === 0) return series
-    const step = period === 'Two-Monthly' ? 2 : period === 'Quarterly' ? 3 : period === 'Half-Yearly' ? 6 : 12
-    const result: TimeSeriesPoint[] = []
-    for (let i = 0; i < series.length; i++) {
-        if (i % step === 0) result.push(series[i])
+function addMonthsToDate(dateStr: string, months: number): string {
+    const parts = dateStr.split('-').map(Number)
+    if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        const year = parts[0]
+        const month = parts[1] - 1
+        const day = parts[2] || 1
+        const d = new Date(year, month + months, day)
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const dd = String(d.getDate()).padStart(2, '0')
+        return `${y}-${m}-${dd}`
     }
-    const last = series[series.length - 1]
-    if (result[result.length - 1] !== last) result.push(last)
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return dateStr
+    d.setMonth(d.getMonth() + months)
+    return d.toISOString().slice(0, 10)
+}
+
+function applyPeriodAgg(series: TimeSeriesPoint[], period: PeriodAgg): TimeSeriesPoint[] {
+    if (period === 'Monthly' || series.length <= 2) return series
+    const stepMonths = period === 'Two-Monthly' ? 2 : period === 'Quarterly' ? 3 : period === 'Half-Yearly' ? 6 : 12
+
+    const sorted = [...series].sort((a, b) => a.date.localeCompare(b.date))
+    const result: TimeSeriesPoint[] = []
+
+    // 1. Pick first point
+    result.push(sorted[0])
+    let lastPickedDate = sorted[0].date
+    let targetNextDate = addMonthsToDate(lastPickedDate, stepMonths)
+
+    // 2. Pick next point that is >= targetNextDate
+    for (let i = 1; i < sorted.length - 1; i++) {
+        if (sorted[i].date >= targetNextDate) {
+            result.push(sorted[i])
+            lastPickedDate = sorted[i].date
+            targetNextDate = addMonthsToDate(lastPickedDate, stepMonths)
+        }
+    }
+
+    // 3. Always include last point if different
+    const last = sorted[sorted.length - 1]
+    if (result[result.length - 1].date !== last.date) {
+        result.push(last)
+    }
     return result
 }
 
@@ -196,9 +231,14 @@ function computeFireChartData(
         'Only Deposits'?: number | null
     }> = []
 
+    // Sample historical points to Half-Yearly so historical data isn't overcrowded with dense monthly points
+    const sampledHistorical = historicalSeries && historicalSeries.length > 0
+        ? applyPeriodAgg(historicalSeries, 'Half-Yearly')
+        : []
+
     let lastDateStr = ''
-    if (historicalSeries && historicalSeries.length > 0) {
-        const histPoints = historicalSeries.slice(0, historicalSeries.length - 1)
+    if (sampledHistorical.length > 0) {
+        const histPoints = sampledHistorical.slice(0, sampledHistorical.length - 1)
         for (const p of histPoints) {
             points.push({
                 label: p.date,
@@ -211,11 +251,11 @@ function computeFireChartData(
                 'Only Deposits': null,
             })
         }
-        lastDateStr = historicalSeries[historicalSeries.length - 1].date
+        lastDateStr = sampledHistorical[sampledHistorical.length - 1].date
     }
 
     const todayLabel = lastDateStr ? `Today (${lastDateStr})` : 'Today'
-    const lastPoint = historicalSeries && historicalSeries.length > 0 ? historicalSeries[historicalSeries.length - 1] : null
+    const lastPoint = sampledHistorical.length > 0 ? sampledHistorical[sampledHistorical.length - 1] : null
     const actualNetWorthToday = lastPoint ? Math.round(lastPoint.balance) : currentNetWorth
     const actualDepositsToday = lastPoint ? Math.round(lastPoint.cumDeposit) : null
 
@@ -948,7 +988,7 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                 </div>
 
                 {/* 3b — Chart */}
-                <ResponsiveContainer width="100%" height={340} minWidth={0}>
+                <ResponsiveContainer width="100%" height={480} minWidth={0}>
                     <LineChart data={chartData} margin={{ top: 10, right: 15, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
                         <XAxis dataKey="label" tick={{fontSize: 10, fill: '#888'}} tickLine={false}/>
