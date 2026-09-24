@@ -288,7 +288,12 @@ export interface DashboardKpi {
   investTwr: number;
   investCagr: number;
   savingsBalance: number;
+  savingsNetDeposits?: number;
   savingsGrowth: number;
+  savingsReturnPct?: number;
+  savingsTwr?: number;
+  savingsCagr?: number;
+  savingsMonthsSpan?: number;
   netWorth: number;
   avgMonthlyDeposit: number;
   investMonthsSpan: number;

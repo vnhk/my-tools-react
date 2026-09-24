@@ -181,19 +181,19 @@ function computeMonthlyReturn(balance: number, deposits: number, monthsSpan: num
 function estimateMonthsToTarget(
     investCurrent: number, savingsCurrent: number,
     monthlyInvest: number, monthlySavings: number,
-    monthlyReturn: number, target: number,
+    monthlyReturn: number, savingsMonthlyReturn: number, target: number,
 ): number {
     if (investCurrent + savingsCurrent >= target) return 0
     let low = 0, high = 1200
     for (let i = 0; i < 80; i++) {
         const mid = (low + high) / 2
         const fv = futureValue(investCurrent, monthlyInvest, monthlyReturn, mid)
-            + savingsCurrent + monthlySavings * mid
+            + futureValue(savingsCurrent, monthlySavings, savingsMonthlyReturn, mid)
         if (fv >= target) high = mid
         else low = mid
     }
     const fv = futureValue(investCurrent, monthlyInvest, monthlyReturn, high)
-        + savingsCurrent + monthlySavings * high
+        + futureValue(savingsCurrent, monthlySavings, savingsMonthlyReturn, high)
     return fv < target - 0.5 ? Infinity : high
 }
 
@@ -213,6 +213,7 @@ function computeFireChartData(
     monthlyInvest: number,
     savingsMonthly: number,
     monthlyReturn: number,
+    savingsMonthlyReturn: number,
     yearsToProject: number,
     historicalSeries?: TimeSeriesPoint[],
 ) {
@@ -274,7 +275,7 @@ function computeFireChartData(
 
     for (let y = 1; y <= yearsToProject; y++) {
         const n = y * 12
-        const savingsFV = savingsBalance + savingsMonthly * n
+        const savingsFV = futureValue(savingsBalance, savingsMonthly, savingsMonthlyReturn, n)
         const yearLabel = `+${y}y (${baseYear + y})`
 
         points.push({
@@ -521,6 +522,15 @@ function DashboardTab({
                     <KpiCard label="Savings Growth" value={PLN(kpi.savingsGrowth)}
                              trend={kpi.savingsGrowth >= 0 ? 'positive' : 'negative'}
                              info="Interest and growth accumulated on savings accounts and fixed deposits."/>
+                    <KpiCard label="Savings Return Rate" value={PCT(kpi.savingsReturnPct ?? 0)}
+                             trend={(kpi.savingsReturnPct ?? 0) >= 0 ? 'positive' : 'negative'}
+                             info="Return rate from savings accounts and cash."/>
+                    <KpiCard label="Savings CAGR" value={PCT(kpi.savingsCagr ?? 0)} sub="Compound Annual"
+                             trend={(kpi.savingsCagr ?? 0) >= 0 ? 'positive' : 'negative'}
+                             info="Compound Annual Growth Rate of savings accounts."/>
+                    <KpiCard label="Savings TWR" value={PCT(kpi.savingsTwr ?? 0)} sub="Time-Weighted"
+                             trend={(kpi.savingsTwr ?? 0) >= 0 ? 'positive' : 'negative'}
+                             info="Time-Weighted Return for savings accounts."/>
                     <KpiCard label="Net Worth" value={PLN(kpi.netWorth)}/>
                 </div>
             </section>
@@ -882,11 +892,13 @@ function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBa
 function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
     kpi: DashboardKpi; fireGoal: number; onGoalChange: (g: number) => void; historicalSeries?: TimeSeriesPoint[]
 }) {
-    const savingsNetDeps = kpi.savingsBalance - kpi.savingsGrowth
-    const span = Math.max(1, kpi.investMonthsSpan)
-    const avgMonthlyInvest = kpi.investNetDeposits / span
-    const avgMonthlySavings = savingsNetDeps / span
-    const monthlyReturn = computeMonthlyReturn(kpi.investBalance, kpi.investNetDeposits, span, kpi.investTwr)
+    const savingsNetDeps = kpi.savingsNetDeposits ?? (kpi.savingsBalance - kpi.savingsGrowth)
+    const investSpan = Math.max(1, kpi.investMonthsSpan)
+    const savingsSpan = Math.max(1, kpi.savingsMonthsSpan ?? kpi.investMonthsSpan)
+    const avgMonthlyInvest = kpi.investNetDeposits / investSpan
+    const avgMonthlySavings = savingsNetDeps / savingsSpan
+    const monthlyReturn = computeMonthlyReturn(kpi.investBalance, kpi.investNetDeposits, investSpan, kpi.investTwr)
+    const savingsMonthlyReturn = computeMonthlyReturn(kpi.savingsBalance, savingsNetDeps, savingsSpan, kpi.savingsTwr)
 
     const defaultTotal = Math.ceil(avgMonthlyInvest + avgMonthlySavings)
 
@@ -900,8 +912,8 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
     const savingsMonthly = autoMode ? Math.max(0, totalMonthly - avgMonthlyInvest) : manualSavings
 
     const { data: chartData, todayLabel } = useMemo(
-        () => computeFireChartData(kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, yearsToInvest, historicalSeries),
-        [kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, yearsToInvest, historicalSeries],
+        () => computeFireChartData(kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, savingsMonthlyReturn, yearsToInvest, historicalSeries),
+        [kpi.investBalance, kpi.savingsBalance, investMonthly, savingsMonthly, monthlyReturn, savingsMonthlyReturn, yearsToInvest, historicalSeries],
     )
 
     const stages = useMemo(() =>
@@ -910,17 +922,17 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                 const progress = amount > 0 ? Math.min(1, kpi.netWorth / amount) : 1
                 const left = Math.max(0, amount - kpi.netWorth)
                 const monthsEst = estimateMonthsToTarget(
-                    kpi.investBalance, kpi.savingsBalance, avgMonthlyInvest, avgMonthlySavings, monthlyReturn, amount,
+                    kpi.investBalance, kpi.savingsBalance, avgMonthlyInvest, avgMonthlySavings, monthlyReturn, savingsMonthlyReturn, amount,
                 )
                 return {name: FIRE_STAGE_NAMES[i], pct, amount, progress, left, monthsEst, achieved: left === 0}
             }),
-        [fireGoal, kpi, avgMonthlyInvest, avgMonthlySavings, monthlyReturn])
+        [fireGoal, kpi, avgMonthlyInvest, avgMonthlySavings, monthlyReturn, savingsMonthlyReturn])
 
     const nextYearInvestFV = futureValue(kpi.investBalance, avgMonthlyInvest, monthlyReturn, 12)
-    const nextYearSavingsFV = kpi.savingsBalance + avgMonthlySavings * 12
+    const nextYearSavingsFV = futureValue(kpi.savingsBalance, avgMonthlySavings, savingsMonthlyReturn, 12)
     const nextYearCombined = nextYearInvestFV + nextYearSavingsFV
     const nextYearPlus20 = futureValue(kpi.investBalance, avgMonthlyInvest * 1.2, monthlyReturn, 12)
-        + kpi.savingsBalance + avgMonthlySavings * 1.2 * 12
+        + futureValue(kpi.savingsBalance, avgMonthlySavings * 1.2, savingsMonthlyReturn, 12)
 
     return (
         <div className={styles.fireContainer}>
@@ -967,8 +979,7 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                     </div>
                 ))}
                 <div className={styles.stagesNote}>
-                    * Projections use historical deposits and estimated monthly return (nominal).
-                    Savings counted towards goal without investment returns.
+                    * Projections use historical deposits and estimated monthly returns for investments and savings.
                 </div>
             </div>
 
@@ -1089,6 +1100,10 @@ function FireTab({kpi, fireGoal, onGoalChange, historicalSeries}: {
                     <div className={styles.metricBox}>
                         <span className={styles.metricValue}>{(monthlyReturn * 100).toFixed(3)}%</span>
                         <span className={styles.metricLabel}>Monthly investment return (nominal)</span>
+                    </div>
+                    <div className={styles.metricBox}>
+                        <span className={styles.metricValue}>{(savingsMonthlyReturn * 100).toFixed(3)}%</span>
+                        <span className={styles.metricLabel}>Monthly savings return (nominal)</span>
                     </div>
                 </div>
 
