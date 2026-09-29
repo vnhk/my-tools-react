@@ -741,8 +741,9 @@ function WalletTileTitle({w}: { w: WalletTimeSeriesEntry }) {
     return <h3 className={styles.chartTitle}>{w.walletName}{rr}</h3>
 }
 
-function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBankFixed3_5}: {
+function BalanceTab({wallets, displayWallets, showSp500, showWig20, showNasdaq, showDji, showBankFixed3_5}: {
     wallets: WalletTimeSeriesEntry[]
+    displayWallets: WalletTimeSeriesEntry[]
     showSp500: boolean
     showWig20: boolean
     showNasdaq: boolean
@@ -786,7 +787,7 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
                          info="Interest rate and growth from savings and cash wallets only."/>
             </div>
             <div className={styles.walletGrid}>
-                {wallets.map(w => (
+                {displayWallets.map(w => (
                     <div key={w.walletId} className={styles.walletTile}>
                         <WalletTileTitle w={w}/>
                         {w.series.length > 1 ? (
@@ -824,7 +825,7 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
                         ) : <div className={styles.empty} style={{height: 80}}>Not enough data</div>}
                     </div>
                 ))}
-                {wallets.length === 0 && <div className={styles.empty}>No wallets</div>}
+                {displayWallets.length === 0 && <div className={styles.empty}>No wallets</div>}
             </div>
         </>
     )
@@ -832,15 +833,16 @@ function BalanceTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBan
 
 // ── Earnings tab ──────────────────────────────────────────────────────────────
 
-function EarningsTab({wallets, showSp500, showWig20, showNasdaq, showDji, showBankFixed3_5}: {
+function EarningsTab({wallets, displayWallets, showSp500, showWig20, showNasdaq, showDji, showBankFixed3_5}: {
     wallets: WalletTimeSeriesEntry[]
+    displayWallets: WalletTimeSeriesEntry[]
     showSp500: boolean
     showWig20: boolean
     showNasdaq: boolean
     showDji: boolean
     showBankFixed3_5: boolean
 }) {
-    const walletsWithEarnings = wallets.map(w => ({
+    const walletsWithEarnings = displayWallets.map(w => ({
         ...w,
         series: w.series.map(p => ({
             ...p,
@@ -1360,17 +1362,21 @@ export function DashboardPage() {
         [data, filter],
     )
 
-    const processedWalletSeries = useMemo(() => {
+    const filteredProcessedWallets = useMemo(() => {
         if (!data) return []
         const filteredWallets = data.walletSeries.filter(w => selectedWalletIds.has(w.walletId))
-        const wallets = aggMode === 'One Wallet'
-            ? [aggregateAllWallets(filteredWallets)]
-            : filteredWallets
-        return wallets.map(w => ({
+        return filteredWallets.map(w => ({
             ...w,
             series: applyPeriodAgg(applyDateRange(w.series, fromDate, toDate), period),
         }))
-    }, [data, aggMode, period, fromDate, toDate, selectedWalletIds])
+    }, [data, period, fromDate, toDate, selectedWalletIds])
+
+    const displayWalletSeries = useMemo(() => {
+        if (aggMode === 'One Wallet' && filteredProcessedWallets.length > 0) {
+            return [aggregateAllWallets(filteredProcessedWallets)]
+        }
+        return filteredProcessedWallets
+    }, [aggMode, filteredProcessedWallets])
 
     if (loading) return <div className={styles.loading}>Loading dashboard…</div>
     if (!data) return <div className={styles.empty}>Failed to load dashboard</div>
@@ -1451,7 +1457,8 @@ export function DashboardPage() {
                 )}
                 {activeTab === 'Balance' && (
                     <BalanceTab
-                        wallets={processedWalletSeries}
+                        wallets={filteredProcessedWallets}
+                        displayWallets={displayWalletSeries}
                         showSp500={showSp500}
                         showWig20={showWig20}
                         showNasdaq={showNasdaq}
@@ -1461,7 +1468,8 @@ export function DashboardPage() {
                 )}
                 {activeTab === 'Earnings' && (
                     <EarningsTab
-                        wallets={processedWalletSeries}
+                        wallets={filteredProcessedWallets}
+                        displayWallets={displayWalletSeries}
                         showSp500={showSp500}
                         showWig20={showWig20}
                         showNasdaq={showNasdaq}
