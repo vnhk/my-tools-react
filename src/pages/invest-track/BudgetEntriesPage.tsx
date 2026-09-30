@@ -28,18 +28,18 @@ import {
 
 export function getCategoryIcon(name: string): React.ReactNode {
     const l = name.toLowerCase()
-    if (l.includes('shop') || l.includes('shopping') || l.includes('zakup')) return <LuShoppingCart className={styles.catIcon} />
-    if (l.includes('food') || l.includes('jedzen') || l.includes('restaur')) return <LuUtensils className={styles.catIcon} />
-    if (l.includes('house') || l.includes('rent') || l.includes('mieszkan') || l.includes('dom')) return <LuHouse className={styles.catIcon} />
-    if (l.includes('car') || l.includes('auto') || l.includes('paliw') || l.includes('transport')) return <LuCar className={styles.catIcon} />
-    if (l.includes('work') || l.includes('prac') || l.includes('salary') || l.includes('wyplat')) return <LuBriefcase className={styles.catIcon} />
-    if (l.includes('wedding') || l.includes('slub') || l.includes('wesele')) return <LuSparkles className={styles.catIcon} />
-    if (l.includes('entertainment') || l.includes('rozrywk') || l.includes('kino') || l.includes('film')) return <LuClapperboard className={styles.catIcon} />
-    if (l.includes('subscription') || l.includes('subskrypcj') || l.includes('media')) return <LuDisc className={styles.catIcon} />
-    if (l.includes('loan') || l.includes('kredyt') || l.includes('bank') || l.includes('pozyczk')) return <LuLandmark className={styles.catIcon} />
-    if (l.includes('health') || l.includes('zdrow') || l.includes('leki') || l.includes('apteka')) return <LuStethoscope className={styles.catIcon} />
-    if (l.includes('travel') || l.includes('podroz') || l.includes('wakacj') || l.includes('hotel')) return <LuPlane className={styles.catIcon} />
-    if (l.includes('education') || l.includes('edukacj') || l.includes('kurs') || l.includes('szkol')) return <LuGraduationCap className={styles.catIcon} />
+    if (l.includes('shop') || l.includes('shopping')) return <LuShoppingCart className={styles.catIcon} />
+    if (l.includes('food') || l.includes('restaurant')) return <LuUtensils className={styles.catIcon} />
+    if (l.includes('house') || l.includes('rent') || l.includes('home')) return <LuHouse className={styles.catIcon} />
+    if (l.includes('car') || l.includes('fuel') || l.includes('transport')) return <LuCar className={styles.catIcon} />
+    if (l.includes('work') || l.includes('salary')) return <LuBriefcase className={styles.catIcon} />
+    if (l.includes('wedding')) return <LuSparkles className={styles.catIcon} />
+    if (l.includes('entertainment') || l.includes('movie') || l.includes('cinema')) return <LuClapperboard className={styles.catIcon} />
+    if (l.includes('subscription') || l.includes('media')) return <LuDisc className={styles.catIcon} />
+    if (l.includes('loan') || l.includes('bank')) return <LuLandmark className={styles.catIcon} />
+    if (l.includes('health') || l.includes('medicine') || l.includes('pharmacy')) return <LuStethoscope className={styles.catIcon} />
+    if (l.includes('travel') || l.includes('vacation') || l.includes('trip') || l.includes('hotel')) return <LuPlane className={styles.catIcon} />
+    if (l.includes('education') || l.includes('course') || l.includes('school')) return <LuGraduationCap className={styles.catIcon} />
     return <LuTag className={styles.catIcon} />
 }
 
