@@ -9,18 +9,51 @@ import {BudgetAnalyticsTab} from "./BudgetAnalyticsTab.tsx";
 import { MoneyFlowTab } from './MoneyFlowTab.tsx';
 
 
-export function getCategoryIcon(name: string): string {
+import type React from 'react'
+import {
+    LuShoppingCart,
+    LuUtensils,
+    LuHouse,
+    LuCar,
+    LuBriefcase,
+    LuSparkles,
+    LuClapperboard,
+    LuDisc,
+    LuLandmark,
+    LuStethoscope,
+    LuPlane,
+    LuGraduationCap,
+    LuTag,
+    LuBanknote,
+    LuCreditCard,
+    LuSmartphone,
+    LuWallet,
+} from 'react-icons/lu'
+
+export function getCategoryIcon(name: string): React.ReactNode {
     const l = name.toLowerCase()
-    if (l.includes('shop') || l.includes('shopping')) return '🛒'
-    if (l.includes('food')) return '🍴'
-    if (l.includes('house') || l.includes('rent')) return '🏠'
-    if (l.includes('car')) return '🚗'
-    if (l.includes('work')) return '💼'
-    if (l.includes('wedding')) return '💍'
-    if (l.includes('entertainment')) return '🎬'
-    if (l.includes('subscription')) return '📀'
-    if (l.includes('loan')) return '🏦'
-    return '🏷️'
+    if (l.includes('shop') || l.includes('shopping') || l.includes('zakup')) return <LuShoppingCart className={styles.catIcon} />
+    if (l.includes('food') || l.includes('jedzen') || l.includes('restaur')) return <LuUtensils className={styles.catIcon} />
+    if (l.includes('house') || l.includes('rent') || l.includes('mieszkan') || l.includes('dom')) return <LuHouse className={styles.catIcon} />
+    if (l.includes('car') || l.includes('auto') || l.includes('paliw') || l.includes('transport')) return <LuCar className={styles.catIcon} />
+    if (l.includes('work') || l.includes('prac') || l.includes('salary') || l.includes('wyplat')) return <LuBriefcase className={styles.catIcon} />
+    if (l.includes('wedding') || l.includes('slub') || l.includes('wesele')) return <LuSparkles className={styles.catIcon} />
+    if (l.includes('entertainment') || l.includes('rozrywk') || l.includes('kino') || l.includes('film')) return <LuClapperboard className={styles.catIcon} />
+    if (l.includes('subscription') || l.includes('subskrypcj') || l.includes('media')) return <LuDisc className={styles.catIcon} />
+    if (l.includes('loan') || l.includes('kredyt') || l.includes('bank') || l.includes('pozyczk')) return <LuLandmark className={styles.catIcon} />
+    if (l.includes('health') || l.includes('zdrow') || l.includes('leki') || l.includes('apteka')) return <LuStethoscope className={styles.catIcon} />
+    if (l.includes('travel') || l.includes('podroz') || l.includes('wakacj') || l.includes('hotel')) return <LuPlane className={styles.catIcon} />
+    if (l.includes('education') || l.includes('edukacj') || l.includes('kurs') || l.includes('szkol')) return <LuGraduationCap className={styles.catIcon} />
+    return <LuTag className={styles.catIcon} />
+}
+
+export function getPaymentMethodIcon(method?: string | null): React.ReactNode {
+    const m = (method || '').toLowerCase()
+    if (m === 'cash' || m.includes('gotow')) return <LuBanknote title="Cash" />
+    if (m === 'card' || m.includes('kart')) return <LuCreditCard title="Card" />
+    if (m === 'transfer' || m.includes('przelew')) return <LuLandmark title="Transfer" />
+    if (m === 'blik' || m.includes('blik') || m.includes('mobil')) return <LuSmartphone title="BLIK" />
+    return <LuWallet title={method || 'Payment'} />
 }
 
 // TO BE CHANGED, USE BACKED TODO

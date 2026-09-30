@@ -5,6 +5,7 @@ import {validateFields} from "../../api/entityConfig.ts";
 import {DynamicFormDialog} from "../../components/ui/DynamicFormDialog.tsx";
 import {DynamicForm} from "../../components/ui/DynamicForm";
 import styles from "./BudgetEntriesPage.module.css";
+import {LuScanLine} from 'react-icons/lu';
 
 interface ScanReceiptProps {
     categories: string[]
@@ -181,7 +182,7 @@ export function ScanReceipt({categories, onReload}: ScanReceiptProps) {
                     scanInputRef.current?.click()
                 }}
             >
-                Scan Receipt
+                <LuScanLine size={14} /> Scan Receipt
             </button>
 
 
