@@ -7,6 +7,8 @@ import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog.tsx'
 import {DynamicForm} from '../../components/ui/DynamicForm'
 import {fmt, getCategoryIcon, toPln} from "./BudgetEntriesPage.tsx";
 import {ScanReceipt} from "./ScanReceipt";
+import type React from "react";
+import {LuBanknote, LuCreditCard, LuLandmark} from "react-icons/lu";
 
 function monthToDefaultDate(k: string): string {
     const {month, year} = parseMonthKey(k)
@@ -17,7 +19,11 @@ function monthToDefaultDate(k: string): string {
     return `${year}-${String(month).padStart(2, '0')}-${last}`
 }
 
-const PAYMENT_ICONS: Record<string, string> = {Cash: '💵', Card: '💳', Transfer: '🏦'}
+const PAYMENT_ICONS: Record<string, React.ReactNode> = {
+    Cash: <LuBanknote title="Cash" />,
+    Card: <LuCreditCard title="Card" />,
+    Transfer: <LuLandmark title="Transfer" />
+}
 
 const EMPTY_ENTRY: Partial<BudgetEntry> = {
     name: '', category: null, currency: 'PLN', value: 0,

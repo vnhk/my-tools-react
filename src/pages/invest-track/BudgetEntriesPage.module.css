@@ -171,7 +171,7 @@
 
 .colName    { display: flex; align-items: center; gap: 2px; overflow: hidden; }
 .colAmount  { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.colPayment { font-size: 14px; }
+.colPayment { font-size: 14px; display: inline-flex; align-items: center; }
 .colDate    { font-size: 11px; color: var(--color-text-secondary); white-space: nowrap; }
 .colNotes   { font-size: 11px; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .colCheck   { display: flex; align-items: center; justify-content: center; }
