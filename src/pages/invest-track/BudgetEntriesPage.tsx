@@ -24,10 +24,6 @@ import {
     LuPlane,
     LuGraduationCap,
     LuTag,
-    LuBanknote,
-    LuCreditCard,
-    LuSmartphone,
-    LuWallet,
 } from 'react-icons/lu'
 
 export function getCategoryIcon(name: string): React.ReactNode {
@@ -45,15 +41,6 @@ export function getCategoryIcon(name: string): React.ReactNode {
     if (l.includes('travel') || l.includes('podroz') || l.includes('wakacj') || l.includes('hotel')) return <LuPlane className={styles.catIcon} />
     if (l.includes('education') || l.includes('edukacj') || l.includes('kurs') || l.includes('szkol')) return <LuGraduationCap className={styles.catIcon} />
     return <LuTag className={styles.catIcon} />
-}
-
-export function getPaymentMethodIcon(method?: string | null): React.ReactNode {
-    const m = (method || '').toLowerCase()
-    if (m === 'cash' || m.includes('gotow')) return <LuBanknote title="Cash" />
-    if (m === 'card' || m.includes('kart')) return <LuCreditCard title="Card" />
-    if (m === 'transfer' || m.includes('przelew')) return <LuLandmark title="Transfer" />
-    if (m === 'blik' || m.includes('blik') || m.includes('mobil')) return <LuSmartphone title="BLIK" />
-    return <LuWallet title={method || 'Payment'} />
 }
 
 // TO BE CHANGED, USE BACKED TODO

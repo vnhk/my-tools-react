@@ -5,20 +5,8 @@ import {validateFields} from "../../api/entityConfig.ts";
 import styles from "./BudgetEntriesPage.module.css";
 import {DynamicFormDialog} from '../../components/ui/DynamicFormDialog.tsx'
 import {DynamicForm} from '../../components/ui/DynamicForm'
-import {fmt, getCategoryIcon, getPaymentMethodIcon, toPln} from "./BudgetEntriesPage.tsx";
+import {fmt, getCategoryIcon, toPln} from "./BudgetEntriesPage.tsx";
 import {ScanReceipt} from "./ScanReceipt";
-import {
-    LuChevronDown,
-    LuChevronRight,
-    LuPlus,
-    LuChevronsUpDown,
-    LuChevronsDownUp,
-    LuTrash2,
-    LuLayers,
-    LuCopy,
-    LuPencil,
-    LuArrowRightLeft,
-} from 'react-icons/lu';
 
 function monthToDefaultDate(k: string): string {
     const {month, year} = parseMonthKey(k)
@@ -28,6 +16,8 @@ function monthToDefaultDate(k: string): string {
     const last = new Date(year, month, 0).getDate()
     return `${year}-${String(month).padStart(2, '0')}-${last}`
 }
+
+const PAYMENT_ICONS: Record<string, string> = {Cash: '💵', Card: '💳', Transfer: '🏦'}
 
 const EMPTY_ENTRY: Partial<BudgetEntry> = {
     name: '', category: null, currency: 'PLN', value: 0,
@@ -323,24 +313,20 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
         <div className={styles.treeTabWrap}>
             {/* Toolbar */}
             <div className={styles.toolbar}>
-                <button className={styles.toolBtn} onClick={expandAll}><LuChevronsUpDown size={14} /> Expand All</button>
-                <button className={styles.toolBtn} onClick={collapseAll}><LuChevronsDownUp size={14} /> Collapse All</button>
-                <button className={`${styles.toolBtn} ${styles.danger}`} disabled={!has} onClick={handleDelete}>
-                    <LuTrash2 size={14} /> Delete
+                <button className={styles.toolBtn} onClick={expandAll}>Expand All</button>
+                <button className={styles.toolBtn} onClick={collapseAll}>Collapse All</button>
+                <button className={`${styles.toolBtn} ${styles.danger}`} disabled={!has} onClick={handleDelete}>Delete
                 </button>
-                <button className={`${styles.toolBtn} ${styles.primary}`} disabled={!has} onClick={openBulkUpdate}>
-                    <LuLayers size={14} /> Bulk Update
+                <button className={`${styles.toolBtn} ${styles.primary}`} disabled={!has} onClick={openBulkUpdate}>Bulk
+                    Update
                 </button>
                 <button className={`${styles.toolBtn} ${styles.primary}`} disabled={!has}
-                        onClick={() => setCopyOpen(true)}>
-                    <LuCopy size={14} /> Copy
+                        onClick={() => setCopyOpen(true)}>Copy
                 </button>
-                <button className={`${styles.toolBtn} ${styles.primary}`} disabled={!single} onClick={openEdit}>
-                    <LuPencil size={14} /> Edit
+                <button className={`${styles.toolBtn} ${styles.primary}`} disabled={!single} onClick={openEdit}>Edit
                 </button>
                 <button className={`${styles.toolBtn} ${styles.warning}`} disabled={!has}
-                        onClick={() => setMoveOpen(true)}>
-                    <LuArrowRightLeft size={14} /> Move
+                        onClick={() => setMoveOpen(true)}>Move
                 </button>
                 <span>
                     <ScanReceipt
@@ -348,9 +334,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                         onReload={onReload}
                     />
                 </span>
-                <button className={`${styles.toolBtn} ${styles.success}`} onClick={() => openAdd()}>
-                    <LuPlus size={14} /> New Entry
-                </button>
+                <button className={`${styles.toolBtn} ${styles.success}`} onClick={() => openAdd()}>+ New Entry</button>
             </div>
 
             {/* Tree */}
@@ -374,7 +358,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                             <div className={`${styles.treeRow} ${styles.monthRow}`}
                                  onClick={() => setExpandedMonths(toggle(expandedMonths, month.key))}>
                 <span className={styles.colName}>
-                  <span className={styles.chevron}>{mExp ? <LuChevronDown size={14} /> : <LuChevronRight size={14} />}</span>
+                  <span className={styles.chevron}>{mExp ? '▼' : '▶'}</span>
                     {month.label}
                 </span>
                                 <span
@@ -388,7 +372,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                           onClick={e => {
                               e.stopPropagation();
                               openAdd(monthToDefaultDate(month.key), '')
-                          }}><LuPlus size={12} /></button>
+                          }}>+</button>
                 </span>
                             </div>
 
@@ -401,7 +385,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                                              onClick={() => setExpandedCats(toggle(expandedCats, ck))}>
                       <span className={styles.colName}>
                         <span className={styles.catIndent}/>
-                        <span className={styles.chevron}>{cExp ? <LuChevronDown size={14} /> : <LuChevronRight size={14} />}</span>
+                        <span className={styles.chevron}>{cExp ? '▼' : '▶'}</span>
                         {getCategoryIcon(cat.name)}
                         {cat.name}
                       </span>
@@ -416,7 +400,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                                 onClick={e => {
                                     e.stopPropagation();
                                     openAdd(monthToDefaultDate(month.key), cat.name)
-                                }}><LuPlus size={12} /></button>
+                                }}>+</button>
                       </span>
                                         </div>
 
@@ -433,7 +417,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                           {item.entryType === 'Income' ? '' : '−'}{fmt(Number(item.value), item.currency ?? 'PLN')}
                         </span>
                                                 <span
-                                                    className={styles.colPayment}>{getPaymentMethodIcon(item.paymentMethod)}</span>
+                                                    className={styles.colPayment}>{PAYMENT_ICONS[item.paymentMethod ?? ''] ?? item.paymentMethod ?? ''}</span>
                                                 <span
                                                     className={styles.colDate}>{item.entryDate ? item.entryDate.slice(5).replace('-', '.') : ''}</span>
                                                 <span className={styles.colNotes}>{item.notes ?? ''}</span>
