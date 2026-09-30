@@ -48,6 +48,10 @@
 }
 
 /* ── Toolbar ── */
+.filtersRow {
+  flex-shrink: 0;
+}
+
 .toolbar {
   display: flex;
   gap: 6px;

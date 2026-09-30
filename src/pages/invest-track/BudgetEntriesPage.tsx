@@ -100,23 +100,21 @@ export function BudgetEntriesPage() {
             ) : (
                 <>
                     {loading && <div className={styles.refreshing}>Updating...</div>}
-                    <span className={styles.filtersRow}>
-                                <div className={styles.root}>
-                                     <div className={styles.toolbar}>
-                                    <EntityFilters entityName="BudgetEntry" filters={filters}
-                                                   onFiltersChange={setFilter}
-                                                   onClear={clearFilters}/>
-                                     </div>
-                                </div>
-                            </span>
-                    {activeTab === 'Budget Tree' && (
-                        <div>
-                            <BudgetTreeTab
-                                entries={entries}
-                                categories={categories}
-                                onReload={load}
-                            />
+                    <div className={styles.filtersRow}>
+                        <div className={styles.root}>
+                            <div className={styles.toolbar}>
+                                <EntityFilters entityName="BudgetEntry" filters={filters}
+                                               onFiltersChange={setFilter}
+                                               onClear={clearFilters}/>
+                            </div>
                         </div>
+                    </div>
+                    {activeTab === 'Budget Tree' && (
+                        <BudgetTreeTab
+                            entries={entries}
+                            categories={categories}
+                            onReload={load}
+                        />
                     )}
 
                     {activeTab === 'Charts' && (
