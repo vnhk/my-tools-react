@@ -199,10 +199,16 @@ export function ScanReceipt({categories, onReload}: ScanReceiptProps) {
             <DynamicFormDialog
                 open={scanOpen && !!scanCurrent}
                 title={`Scanned entry ${scanIndex + 1} / ${scanResult?.length ?? 0}`}
+                confirmLabel={
+                    scanResult && scanIndex + 1 < scanResult.length
+                        ? `Save & Next (${scanIndex + 1}/${scanResult.length})`
+                        : "Save Entry"
+                }
                 onClose={() => {
                     setScanOpen(false)
                     setScanCurrent(null)
                     setScanFormErrors({})
+                    if (scanIndex > 0) onReload()
                 }}
                 onConfirm={handleSaveScanResult}
                 width="min(90vw, 720px)">
