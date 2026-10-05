@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
 import { useNotification } from "../../components/ui/Notification";
@@ -8,10 +9,10 @@ import styles from "./AssetsPage.module.css";
 import { FaLaptop, FaPlus } from "react-icons/fa";
 import { FaShield } from "react-icons/fa6";
 import { AssetCard } from "./AssetCard";
-import { Button } from "../../components/ui/Button";
-import { calculateValue } from './AssetsPage.tsx'
+import { calculateValue } from "./AssetsPage";
 
 export function ValuableListPage() {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
   const [rows, setRows] = useState<Valuable[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -30,20 +31,17 @@ export function ValuableListPage() {
   };
 
   const renderSubtitle = (item: Valuable) => {
-    return <span>{item.description}</span>;
+    return (
+      <span>
+        {item.valuableType}
+        {item.description && <br />}
+        {item.description}
+      </span>
+    );
   };
 
   const calculateTrend = (item: Valuable) => {
-    if (
-      (item.purchaseCosts ? item.purchaseCosts : 0) == 0 &&
-      item.purchasePrice == 0
-    ) {
-      return 0;
-    }
-
-    let totalCost =
-      (item.purchaseCosts ? item.purchaseCosts : 0) + item.purchasePrice;
-    return ((item.currentValue - totalCost) / totalCost) * 100;
+    return item.returnRate ?? 0;
   };
 
   const load = () => {
@@ -58,7 +56,7 @@ export function ValuableListPage() {
         const p = toPage(res.data);
         setRows(p.content);
       })
-      .finally();
+      .catch(() => {});
   };
 
   useEffect(load, []);
@@ -97,13 +95,12 @@ export function ValuableListPage() {
           <AssetCard
             key={key.id}
             icon={renderIcon(key)}
-            title={key.valuableType}
+            title={key.name || key.valuableType}
             subtitle={renderSubtitle(key)}
-            value={calculateValue(key.currentValue, 'PLN')}
+            value={calculateValue(key.currentValue, "PLN")}
             trend={calculateTrend(key)}
             onClick={() => {
-              setEditItem(key);
-              setDialogOpen(true);
+              navigate(`/invest-track/valuable/${key.id}`);
             }}
           />
         ))}
@@ -126,29 +123,6 @@ export function ValuableListPage() {
         onClose={() => setDialogOpen(false)}
         onConfirm={handleSave}
         width="min(90vw, 720px)"
-        leftAdditionalButton={
-          <Button
-            variant="danger"
-            onClick={async () => {
-              if (
-                editItem.id &&
-                confirm("Are you sure you want to delete this item?")
-              ) {
-                try {
-                  await valuableApi.delete(editItem.id);
-
-                  showSuccess("Item has been deleted!");
-                  setDialogOpen(false);
-                  load();
-                } catch {
-                  showError("Failed to delete item");
-                }
-              }
-            }}
-          >
-            Delete Item
-          </Button>
-        }
       >
         <DynamicForm
           entityName="Valuable"

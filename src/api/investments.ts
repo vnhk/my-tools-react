@@ -6,40 +6,44 @@ export interface RealEstate {
   name: string;
   description: string | null;
   address: string | null;
+  realEstateType: string;
+  currentValue: number;
+  initialValue: number;
+  returnRate: number;
+  initialDate?: string | null;
+  latestDate?: string | null;
   createdDate: string | null;
   modificationDate: string | null;
-  currentValue: number;
-  purchasePrice: number;
-  purchaseCosts: number | null;
-  purchaseDate: string;
-  realEstateType: string;
 }
 
 export interface Valuable {
   id: string;
+  name?: string;
   description: string | null;
+  valuableType: string;
+  currentValue: number;
+  initialValue: number;
+  returnRate: number;
+  initialDate?: string | null;
+  latestDate?: string | null;
   createdDate: string | null;
   modificationDate: string | null;
-  currentValue: number;
-  purchasePrice: number;
-  purchaseCosts: number | null;
-  purchaseDate: string;
-  valuableType: string;
 }
 
 export interface Vehicle {
   id: string;
-  model: string;
   brand: string;
+  model: string;
   description: string | null;
-  createdDate: string | null;
-  modificationDate: string | null;
+  vehicleType: string;
   productionYear: number;
   currentValue: number;
-  purchasePrice: number;
-  purchaseCosts: number | null;
-  purchaseDate: string;
-  vehicleType: string;
+  initialValue: number;
+  returnRate: number;
+  initialDate?: string | null;
+  latestDate?: string | null;
+  createdDate: string | null;
+  modificationDate: string | null;
 }
 
 export interface Wallet {
@@ -67,6 +71,14 @@ export interface WalletSnapshot {
   monthlyDeposit: number;
   monthlyWithdrawal: number;
   monthlyEarnings: number;
+  notes: string | null;
+}
+
+export interface AssetSnapshot {
+  id: string;
+  assetId: string;
+  snapshotDate: string;
+  assetValue: number;
   notes: string | null;
 }
 
@@ -195,6 +207,15 @@ export const realEstateApi = {
   getAll: (params?: Record<string, unknown>) =>
     client.get<Page<RealEstate>>("/invest-track/real-estate", { params }),
 
+  getById: (id: string) =>
+    client.get<RealEstate>(`/invest-track/real-estate/${id}`),
+
+  getSnapshots: (id: string) =>
+    client.get<AssetSnapshot[]>(`/invest-track/real-estate/${id}/snapshots`),
+
+  getMetrics: (id: string) =>
+    client.get<Record<string, unknown>>(`/invest-track/real-estate/${id}/metrics`),
+
   create: (data: Partial<RealEstate>) =>
     client.post<RealEstate>("/invest-track/real-estate", data),
 
@@ -202,11 +223,31 @@ export const realEstateApi = {
     client.put<RealEstate>(`/invest-track/real-estate/${id}`, data),
 
   delete: (id: string) => client.delete(`/invest-track/real-estate/${id}`),
+
+  createSnapshot: (id: string, data: Partial<AssetSnapshot>) =>
+    client.post<AssetSnapshot>(`/invest-track/real-estate/${id}/snapshots`, data),
+
+  updateSnapshot: (id: string, snapshotId: string, data: Partial<AssetSnapshot>) =>
+    client.put<AssetSnapshot>(
+      `/invest-track/real-estate/${id}/snapshots/${snapshotId}`,
+      data
+    ),
+
+  deleteSnapshot: (id: string, snapshotId: string) =>
+    client.delete(`/invest-track/real-estate/${id}/snapshots/${snapshotId}`),
 };
 
 export const vehicleApi = {
   getAll: (params?: Record<string, unknown>) =>
     client.get<Page<Vehicle>>("/invest-track/vehicle", { params }),
+
+  getById: (id: string) => client.get<Vehicle>(`/invest-track/vehicle/${id}`),
+
+  getSnapshots: (id: string) =>
+    client.get<AssetSnapshot[]>(`/invest-track/vehicle/${id}/snapshots`),
+
+  getMetrics: (id: string) =>
+    client.get<Record<string, unknown>>(`/invest-track/vehicle/${id}/metrics`),
 
   create: (data: Partial<Vehicle>) =>
     client.post<Vehicle>("/invest-track/vehicle", data),
@@ -215,11 +256,31 @@ export const vehicleApi = {
     client.put<Vehicle>(`/invest-track/vehicle/${id}`, data),
 
   delete: (id: string) => client.delete(`/invest-track/vehicle/${id}`),
+
+  createSnapshot: (id: string, data: Partial<AssetSnapshot>) =>
+    client.post<AssetSnapshot>(`/invest-track/vehicle/${id}/snapshots`, data),
+
+  updateSnapshot: (id: string, snapshotId: string, data: Partial<AssetSnapshot>) =>
+    client.put<AssetSnapshot>(
+      `/invest-track/vehicle/${id}/snapshots/${snapshotId}`,
+      data
+    ),
+
+  deleteSnapshot: (id: string, snapshotId: string) =>
+    client.delete(`/invest-track/vehicle/${id}/snapshots/${snapshotId}`),
 };
 
 export const valuableApi = {
   getAll: (params?: Record<string, unknown>) =>
     client.get<Page<Valuable>>("/invest-track/valuable", { params }),
+
+  getById: (id: string) => client.get<Valuable>(`/invest-track/valuable/${id}`),
+
+  getSnapshots: (id: string) =>
+    client.get<AssetSnapshot[]>(`/invest-track/valuable/${id}/snapshots`),
+
+  getMetrics: (id: string) =>
+    client.get<Record<string, unknown>>(`/invest-track/valuable/${id}/metrics`),
 
   create: (data: Partial<Valuable>) =>
     client.post<Valuable>("/invest-track/valuable", data),
@@ -228,6 +289,18 @@ export const valuableApi = {
     client.put<Valuable>(`/invest-track/valuable/${id}`, data),
 
   delete: (id: string) => client.delete(`/invest-track/valuable/${id}`),
+
+  createSnapshot: (id: string, data: Partial<AssetSnapshot>) =>
+    client.post<AssetSnapshot>(`/invest-track/valuable/${id}/snapshots`, data),
+
+  updateSnapshot: (id: string, snapshotId: string, data: Partial<AssetSnapshot>) =>
+    client.put<AssetSnapshot>(
+      `/invest-track/valuable/${id}/snapshots/${snapshotId}`,
+      data
+    ),
+
+  deleteSnapshot: (id: string, snapshotId: string) =>
+    client.delete(`/invest-track/valuable/${id}/snapshots/${snapshotId}`),
 };
 
 export const stockAlertsApi = {

@@ -11,6 +11,7 @@ import { InvestTrackLayout } from "./pages/invest-track/InvestTrackLayout";
 import { DashboardPage } from "./pages/invest-track/DashboardPage";
 import { WalletDetailPage } from "./pages/invest-track/WalletDetailPage";
 import { AssetsPage } from "./pages/invest-track/AssetsPage";
+import { AssetDetailPage } from "./pages/invest-track/AssetDetailPage";
 import { BudgetEntriesPage } from "./pages/invest-track/BudgetEntriesPage";
 import { StockAlertsPage } from "./pages/invest-track/StockAlertsPage";
 import { RecommendationsPage } from "./pages/invest-track/RecommendationsPage";
@@ -305,6 +306,18 @@ export default function App() {
                   <Route
                     path="wallets/:walletId"
                     element={<WalletDetailPage />}
+                  />
+                  <Route
+                    path="valuable/:id"
+                    element={<AssetDetailPage assetType="Valuable" />}
+                  />
+                  <Route
+                    path="vehicle/:id"
+                    element={<AssetDetailPage assetType="Vehicle" />}
+                  />
+                  <Route
+                    path="real-estate/:id"
+                    element={<AssetDetailPage assetType="RealEstate" />}
                   />
                   <Route path="budget" element={<BudgetEntriesPage />} />
                   <Route path="budget-tree" element={<BudgetTreePage />} />

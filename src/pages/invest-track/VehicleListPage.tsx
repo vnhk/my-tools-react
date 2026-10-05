@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
 import { useNotification } from "../../components/ui/Notification";
@@ -13,10 +14,10 @@ import {
   FaMotorcycle,
   FaPlus,
 } from "react-icons/fa";
-import { Button } from "../../components/ui/Button";
-import { calculateValue } from './AssetsPage.tsx'
+import { calculateValue } from "./AssetsPage";
 
 export function VehicleListPage() {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
   const [rows, setRows] = useState<Vehicle[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -34,7 +35,8 @@ export function VehicleListPage() {
       .then((res) => {
         const p = toPage(res.data);
         setRows(p.content);
-      });
+      })
+      .catch(() => {});
   };
 
   useEffect(load, []);
@@ -72,6 +74,7 @@ export function VehicleListPage() {
         return <FaCar />;
       case "Bike":
         return <FaBiking />;
+      case "Motorcycle":
       case "Motocycle":
         return <FaMotorcycle />;
       default:
@@ -80,29 +83,17 @@ export function VehicleListPage() {
   };
 
   const renderSubtitle = (item: Vehicle) => {
-    return renderSubtitleBase(item.productionYear + '', item.description);
-  };
-
-  const renderSubtitleBase = (productionYear: string, description: string | null) => {
     return (
       <span>
-        {productionYear}
-        {<br />}
-        {description}
+        {item.vehicleType} • {item.productionYear}
+        {item.description && <br />}
+        {item.description}
       </span>
     );
   };
 
   const calculateTrend = (item: Vehicle) => {
-    if (
-      (item.purchaseCosts ? item.purchaseCosts : 0) == 0 &&
-      item.purchasePrice == 0
-    ) {
-      return 0;
-    }
-    let totalCost =
-      (item.purchaseCosts ? item.purchaseCosts : 0) + item.purchasePrice;
-    return ((item.currentValue - totalCost) / totalCost) * 100;
+    return item.returnRate ?? 0;
   };
 
   return (
@@ -114,18 +105,17 @@ export function VehicleListPage() {
             icon={renderIcon(key)}
             title={key.brand + " " + key.model}
             subtitle={renderSubtitle(key)}
-            value={calculateValue(key.currentValue, 'PLN')}
+            value={calculateValue(key.currentValue, "PLN")}
             trend={calculateTrend(key)}
             onClick={() => {
-              setEditItem(key);
-              setDialogOpen(true);
+              navigate(`/invest-track/vehicle/${key.id}`);
             }}
           />
         ))}
         <AssetCard
           icon={<FaPlus />}
           title="New Vehicle"
-          subtitle={renderSubtitleBase("Production Year", "Description")}
+          subtitle="Add vehicle"
           value="0zł"
           variant="add"
           onClick={() => {
@@ -139,29 +129,6 @@ export function VehicleListPage() {
         open={dialogOpen}
         title={editItem.id ? "Edit Vehicle" : "New Vehicle"}
         onClose={() => setDialogOpen(false)}
-        leftAdditionalButton={
-          <Button
-            variant="danger"
-            onClick={async () => {
-              if (
-                editItem.id &&
-                confirm("Are you sure you want to delete this vehicle?")
-              ) {
-                try {
-                  await vehicleApi.delete(editItem.id);
-
-                  showSuccess("Vehicle has been deleted!");
-                  setDialogOpen(false);
-                  load();
-                } catch {
-                  showError("Failed to delete vehicle");
-                }
-              }
-            }}
-          >
-            Delete Vehicle
-          </Button>
-        }
         onConfirm={handleSave}
         width="min(90vw, 720px)"
       >

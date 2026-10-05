@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { DynamicForm, validateFields } from "../../components/ui/DynamicForm";
 import { useNotification } from "../../components/ui/Notification";
@@ -7,10 +8,10 @@ import { toPage } from "../../api/crud";
 import styles from "./AssetsPage.module.css";
 import { AssetCard } from "./AssetCard";
 import { FaBuilding, FaHome, FaPlus, FaWarehouse } from "react-icons/fa";
-import { Button } from "../../components/ui/Button";
-import { calculateValue } from './AssetsPage.tsx'
+import { calculateValue } from "./AssetsPage";
 
 export function RealEstateListPage() {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
   const [rows, setRows] = useState<RealEstate[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -28,7 +29,8 @@ export function RealEstateListPage() {
       .then((res) => {
         const p = toPage(res.data);
         setRows(p.content);
-      });
+      })
+      .catch(() => {});
   };
 
   useEffect(load, []);
@@ -74,23 +76,18 @@ export function RealEstateListPage() {
   };
 
   const renderSubtitle = (item: RealEstate) => {
-    return renderSubtitleBase(item.address, item.description)
-  };
-
-    const renderSubtitleBase = (address: string | null, description: string | null) => {
     return (
       <span>
-        {address}
-        {address && description && <br />}
-        {description}
+        {item.realEstateType}
+        {item.address && <> • {item.address}</>}
+        {item.description && <br />}
+        {item.description}
       </span>
     );
   };
 
   const calculateTrend = (item: RealEstate) => {
-    let totalCost =
-      (item.purchaseCosts ? item.purchaseCosts : 0) + item.purchasePrice;
-    return ((item.currentValue - totalCost) / totalCost) * 100;
+    return item.returnRate ?? 0;
   };
 
   return (
@@ -102,11 +99,10 @@ export function RealEstateListPage() {
             icon={renderIcon(key)}
             title={key.name}
             subtitle={renderSubtitle(key)}
-            value={calculateValue(key.currentValue, 'PLN')}
+            value={calculateValue(key.currentValue, "PLN")}
             trend={calculateTrend(key)}
             onClick={() => {
-              setEditItem(key);
-              setDialogOpen(true);
+              navigate(`/invest-track/real-estate/${key.id}`);
             }}
           />
         ))}
@@ -115,7 +111,7 @@ export function RealEstateListPage() {
           title="New Property"
           value="0zł"
           variant="add"
-          subtitle={renderSubtitleBase("Adress", "Description")}
+          subtitle="Add property"
           onClick={() => {
             setEditItem(empty());
             setDialogOpen(true);
@@ -129,29 +125,6 @@ export function RealEstateListPage() {
         onClose={() => setDialogOpen(false)}
         onConfirm={handleSave}
         width="min(90vw, 720px)"
-        leftAdditionalButton={
-          <Button
-            variant="danger"
-            onClick={async () => {
-              if (
-                editItem.id &&
-                confirm("Are you sure you want to delete this asset?")
-              ) {
-                try {
-                  await realEstateApi.delete(editItem.id);
-
-                  showSuccess("Property has been deleted!");
-                  setDialogOpen(false);
-                  load();
-                } catch {
-                  showError("Failed to delete property");
-                }
-              }
-            }}
-          >
-            Delete Asset
-          </Button>
-        }
       >
         <DynamicForm
           entityName="RealEstate"
