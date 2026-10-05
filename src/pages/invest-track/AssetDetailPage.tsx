@@ -206,10 +206,17 @@ export function AssetDetailPage({ assetType }: AssetDetailPageProps) {
     navigate("/invest-track/assets");
   };
 
+  const basePath =
+    assetType === "Valuable"
+      ? "valuable"
+      : assetType === "Vehicle"
+      ? "vehicle"
+      : "real-estate";
+
   const tabs = [
     { path: "/invest-track/assets", label: "← Assets" },
     {
-      path: `/invest-track/${assetType.toLowerCase()}/${id}`,
+      path: `/invest-track/${basePath}/${id}`,
       label: getAssetName(),
     },
   ];
