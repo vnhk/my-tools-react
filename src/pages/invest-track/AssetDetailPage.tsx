@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { DataTable, type Column } from "../../components/table/DataTable";
 import { DynamicFormDialog } from "../../components/ui/DynamicFormDialog";
 import { NumberField } from "../../components/fields/NumberField";
@@ -107,6 +116,13 @@ export function AssetDetailPage({ assetType }: AssetDetailPageProps) {
     const cmp = a.snapshotDate.localeCompare(b.snapshotDate);
     return table.sortDir === "desc" ? -cmp : cmp;
   });
+
+  const chartData = [...snapshots]
+    .sort((a, b) => a.snapshotDate.localeCompare(b.snapshotDate))
+    .map((s) => ({
+      date: s.snapshotDate,
+      assetValue: Number(s.assetValue),
+    }));
 
   const openSnapshotEdit = (item: Partial<AssetSnapshot>) => {
     setEditSnapshotItem(item);
@@ -312,6 +328,72 @@ export function AssetDetailPage({ assetType }: AssetDetailPageProps) {
               </Button>
             </span>
           </div>
+        </div>
+      )}
+
+      {chartData.length > 0 && (
+        <div className={styles.chartSection}>
+          <div className={styles.chartTitle}>Valuation History</div>
+          <ResponsiveContainer width="100%" height={260} minWidth={0}>
+            <AreaChart
+              data={chartData}
+              margin={{ top: 10, right: 15, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="assetValGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="rgba(255,255,255,0.06)"
+              />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: "#888" }}
+                tickLine={false}
+              />
+              <YAxis
+                tickFormatter={(v) =>
+                  v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`
+                }
+                tick={{ fontSize: 11, fill: "#888" }}
+                tickLine={false}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const item = payload[0];
+                  return (
+                    <div className={styles.tooltip}>
+                      <div className={styles.tooltipLabel}>{label}</div>
+                      <div
+                        style={{
+                          color: "#38bdf8",
+                          fontWeight: 600,
+                          fontSize: 12,
+                        }}
+                      >
+                        Value: {Number(item.value).toFixed(2)} PLN
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="assetValue"
+                name="Asset Value"
+                stroke="#38bdf8"
+                fill="url(#assetValGrad)"
+                strokeWidth={2}
+                dot={{ r: 3, fill: "#38bdf8" }}
+                activeDot={{ r: 5 }}
+                isAnimationActive={false}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       )}
 
