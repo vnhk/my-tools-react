@@ -7,6 +7,7 @@ import {
     validateFields
 } from '../../api/entityConfig'
 import {TextField} from '../fields/TextField'
+import {NumberField} from '../fields/NumberField'
 import {Checkbox} from '../fields/Checkbox'
 import {SelectField} from '../fields/SelectField'
 import {RichTextEditor} from './RichTextEditor'
@@ -142,15 +143,16 @@ export function DynamicForm({
                     )
                 }
 
-                // Number field — when min/max are set and the value is numeric (not a text field)
-                if (f.min != null && f.max != null && (f.dataType?.toLowerCase() == "number" || typeof val === 'number')) {
+                // Number field — when dataType is number or when min/max are set and the value is numeric
+                if (f.dataType?.toLowerCase() === 'number' || (f.min != null && f.max != null && typeof val === 'number')) {
                     return (
-                        <TextField
+                        <NumberField
                             key={f.field}
                             label={f.displayName}
-                            type="number"
-                            value={val != null ? String(val) : ''}
-                            onChange={(e) => onChange(f.field, e.target.value === '' ? null : Number(e.target.value))}
+                            value={val as number | '' | null}
+                            min={f.min != null ? f.min : undefined}
+                            max={f.max != null && f.max > 0 ? f.max : undefined}
+                            onChange={(v) => onChange(f.field, v === '' ? null : v)}
                             required={f.required}
                             autoFocus={i === 0}
                             error={errors[f.field]}
