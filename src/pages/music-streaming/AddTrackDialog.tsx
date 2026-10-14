@@ -20,6 +20,7 @@ export function AddTrackDialog({ album, onClose, onAdded }: Props) {
   const [title, setTitle] = useState('')
   const [artist, setArtist] = useState(album.artist)
   const [trackNumber, setTrackNumber] = useState<string>(String(album.tracks.length + 1))
+  const [genres, setGenres] = useState(album.genres ? album.genres.join(', ') : '')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleSubmit = async () => {
@@ -36,7 +37,8 @@ export function AddTrackDialog({ album, onClose, onAdded }: Props) {
         file,
         title.trim() || undefined,
         artist.trim() || undefined,
-        trackNumber ? Number(trackNumber) : undefined
+        trackNumber ? Number(trackNumber) : undefined,
+        genres.trim() || undefined
       )
 
       showNotification(`Track "${res.data.title}" added`, 'success')
@@ -109,6 +111,13 @@ export function AddTrackDialog({ album, onClose, onAdded }: Props) {
           onChange={(v) => setTrackNumber(v === '' ? '' : String(v))}
         />
       </div>
+
+      <TextField
+        label="Genres (comma-separated)"
+        placeholder="e.g. Soundtrack, Classical, Instrumental"
+        value={genres}
+        onChange={(e) => setGenres(e.target.value)}
+      />
     </DynamicFormDialog>
   )
 }

@@ -81,15 +81,28 @@ export default function MusicDashboardPage() {
       if (search.trim()) {
         const q = search.toLowerCase()
         const matchesAlbum =
-          album.title.toLowerCase().includes(q) || album.artist.toLowerCase().includes(q)
+          album.title.toLowerCase().includes(q) ||
+          album.artist.toLowerCase().includes(q) ||
+          album.genres?.some((g) => g.toLowerCase().includes(q))
         const matchesTrack = album.tracks.some(
-          (t) => t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q)
+          (t) =>
+            t.title.toLowerCase().includes(q) ||
+            t.artist.toLowerCase().includes(q) ||
+            t.genres?.some((g) => g.toLowerCase().includes(q)) ||
+            (t.genre && t.genre.toLowerCase().includes(q))
         )
         if (!matchesAlbum && !matchesTrack) return false
       }
 
       if (selectedGenre) {
-        if (!album.genres || !album.genres.some((g) => g.toLowerCase() === selectedGenre.toLowerCase())) {
+        const genreTarget = selectedGenre.toLowerCase()
+        const albumMatches = album.genres?.some((g) => g.toLowerCase() === genreTarget)
+        const trackMatches = album.tracks?.some(
+          (t) =>
+            t.genres?.some((g) => g.toLowerCase() === genreTarget) ||
+            (t.genre && t.genre.toLowerCase().includes(genreTarget))
+        )
+        if (!albumMatches && !trackMatches) {
           return false
         }
       }

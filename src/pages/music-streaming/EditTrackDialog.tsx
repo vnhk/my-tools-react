@@ -24,7 +24,11 @@ export function EditTrackDialog({ album, track, onClose, onUpdated }: Props) {
     track.trackNumber !== undefined ? String(track.trackNumber) : '1'
   )
   const [year, setYear] = useState<string>(track.year !== undefined ? String(track.year) : '')
-  const [genre, setGenre] = useState(track.genre || '')
+  const [genres, setGenres] = useState(
+    track.genres && track.genres.length > 0
+      ? track.genres.join(', ')
+      : track.genre || ''
+  )
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -34,12 +38,18 @@ export function EditTrackDialog({ album, track, onClose, onUpdated }: Props) {
 
     setBusy(true)
     try {
+      const genresList = genres
+        .split(/[,/]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+
       const res = await updateTrack(album.id, track.id, {
         title: title.trim(),
         artist: artist.trim(),
         trackNumber: trackNumber ? Number(trackNumber) : undefined,
         year: year ? Number(year) : undefined,
-        genre: genre.trim() || undefined,
+        genres: genresList.length > 0 ? genresList : undefined,
+        genre: genresList.length > 0 ? genresList.join(' / ') : undefined,
       })
 
       showNotification('Track updated and ID3 tags written to file', 'success')
@@ -100,9 +110,10 @@ export function EditTrackDialog({ album, track, onClose, onUpdated }: Props) {
       </div>
 
       <TextField
-        label="Genre"
-        value={genre}
-        onChange={(e) => setGenre(e.target.value)}
+        label="Genres (comma-separated)"
+        placeholder="e.g. Soundtrack, Classical, Instrumental"
+        value={genres}
+        onChange={(e) => setGenres(e.target.value)}
       />
     </DynamicFormDialog>
   )

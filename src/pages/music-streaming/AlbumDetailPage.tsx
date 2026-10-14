@@ -329,6 +329,18 @@ export default function AlbumDetailPage() {
                         </span>
                       )}
                     </span>
+                    {((track.genres && track.genres.length > 0) || track.genre) && (
+                      <div className={styles.trackGenresList}>
+                        {(track.genres && track.genres.length > 0
+                          ? track.genres
+                          : track.genre!.split(/[,/]/).map((s) => s.trim()).filter(Boolean)
+                        ).map((g) => (
+                          <span key={g} className={styles.trackGenreBadge}>
+                            {g}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </td>
 

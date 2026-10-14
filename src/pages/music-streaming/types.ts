@@ -10,6 +10,7 @@ export interface AudioTrack {
   durationSeconds?: number
   year?: number
   genre?: string
+  genres?: string[]
   filename: string
   relativePath: string
   fileSize: number
@@ -74,6 +75,7 @@ export interface UpdateTrackRequest {
   trackNumber?: number
   year?: number
   genre?: string
+  genres?: string[]
 }
 
 export interface AiEnrichRequest {

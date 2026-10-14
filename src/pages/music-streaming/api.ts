@@ -93,13 +93,15 @@ export function addTrackToAlbum(
   file: File,
   title?: string,
   artist?: string,
-  trackNumber?: number
+  trackNumber?: number,
+  genres?: string
 ) {
   const fd = new FormData()
   fd.append('file', file)
   if (title) fd.append('title', title)
   if (artist) fd.append('artist', artist)
   if (trackNumber !== undefined) fd.append('trackNumber', String(trackNumber))
+  if (genres) fd.append('genres', genres)
   return client.post<AudioTrack>(`/audio/admin/albums/${encodeURIComponent(albumId)}/tracks`, fd)
 }
 
