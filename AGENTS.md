@@ -19,6 +19,7 @@ Purpose: provide concise, actionable guidance so an AI coding agent can be immed
 - Entity-config is fetched once and cached at module level (`src/api/entityConfig.ts`). Components depend on that cache; `getEntityConfigs()` is prefetched in `src/main.tsx`.
 - Axios `paramsSerializer` removes empty/undefined values and serializes arrays as repeated query params — construct requests accordingly.
 - Auth: token in `localStorage`; `src/api/client.ts` attaches `Authorization: Bearer <token>` and on 401 removes token and redirects to `/login`.
+- **Component Size & Modularization Rule**: If any React component or frontend file (`.tsx` or `.ts`) reaches or exceeds **1000 lines**, it MUST be refactored by decomposing and extracting child views, modals, tabs, complex item rows, toolbars, and custom hooks into separate files under a co-located `components/` or `hooks/` directory and importing them back. No monolithic files over 1000 lines. See skill `.agents/skills/react-component-size-refactoring/SKILL.md`.
 
 4) Build / run / test — concrete commands
 - Dev: `npm install && npm run dev` (Vite dev server, default proxy `/api` → `https://127.0.0.1:8091`, see `vite.config.ts`).
