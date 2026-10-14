@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
 import { TextArea } from '../../components/fields/TextArea'
+import { FileField } from '../../components/fields/FileField'
 import { useNotification } from '../../components/ui/Notification'
 import { createAlbum, enrichMetadataWithAi } from './api'
 import type { AudioAlbum } from './types'
@@ -25,8 +26,7 @@ export function AddAlbumDialog({ onClose, onCreated }: Props) {
   const [genres, setGenres] = useState('')
   const [description, setDescription] = useState('')
   const [isSingle, setIsSingle] = useState(false)
-
-  const coverRef = useRef<HTMLInputElement>(null)
+  const [cover, setCover] = useState<File | null>(null)
 
   const handleAiEnrich = async () => {
     if (!title.trim() && !artist.trim()) {
@@ -75,8 +75,8 @@ export function AddAlbumDialog({ onClose, onCreated }: Props) {
       if (description.trim()) fd.append('description', description.trim())
       fd.append('isSingle', isSingle ? 'true' : 'false')
 
-      if (coverRef.current?.files?.[0]) {
-        fd.append('cover', coverRef.current.files[0])
+      if (cover) {
+        fd.append('cover', cover)
       }
 
       const res = await createAlbum(fd)
@@ -167,14 +167,16 @@ export function AddAlbumDialog({ onClose, onCreated }: Props) {
         </label>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
-        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-          Album Cover (.jpg / .png file)
-        </label>
-        <input ref={coverRef} type="file" accept="image/*" />
-        <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>
-          If no file is selected, the system will try to extract the cover from the first added MP3 file.
-        </span>
+      <div style={{ marginTop: 8 }}>
+        <FileField
+          label="Album Cover Image"
+          accept="image/*,.jpg,.jpeg,.png,.webp"
+          value={cover}
+          onChange={setCover}
+          placeholder="Click or drag & drop cover image here"
+          subText="Optional: If no cover image is uploaded, the cover will be extracted from MP3 ID3 tags"
+          showPreview
+        />
       </div>
     </DynamicFormDialog>
   )

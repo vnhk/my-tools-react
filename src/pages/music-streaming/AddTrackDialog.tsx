@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
+import { FileField } from '../../components/fields/FileField'
 import { useNotification } from '../../components/ui/Notification'
 import { addTrackToAlbum } from './api'
 import type { AudioAlbum, AudioTrack } from './types'
@@ -21,10 +22,9 @@ export function AddTrackDialog({ album, onClose, onAdded }: Props) {
   const [artist, setArtist] = useState(album.artist)
   const [trackNumber, setTrackNumber] = useState<string>(String(album.tracks.length + 1))
   const [genres, setGenres] = useState(album.genres ? album.genres.join(', ') : '')
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null)
 
   const handleSubmit = async () => {
-    const file = fileRef.current?.files?.[0]
     if (!file) {
       showNotification('Please select an audio file (.mp3, .flac, .wav, etc.)', 'error')
       return
@@ -83,11 +83,16 @@ export function AddTrackDialog({ album, onClose, onAdded }: Props) {
         from the file's ID3 tags. If filled manually, the system will <strong>update the ID3 tags in the MP3 file</strong>.
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-          Audio file * (.mp3, .flac, .wav, .m4a)
-        </label>
-        <input ref={fileRef} type="file" accept="audio/*" autoFocus />
+      <div style={{ marginBottom: 14 }}>
+        <FileField
+          label="Audio File"
+          required
+          accept="audio/*,.mp3,.flac,.wav,.m4a,.ogg"
+          value={file}
+          onChange={setFile}
+          placeholder="Click or drag & drop audio track here"
+          subText="Supported formats: MP3, FLAC, WAV, M4A, OGG"
+        />
       </div>
 
       <TextField

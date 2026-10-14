@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/fields/TextField'
+import { FileField } from '../../components/fields/FileField'
 import { useNotification } from '../../components/ui/Notification'
 import { uploadZip } from './api'
 import type { AudioAlbum } from './types'
@@ -17,10 +18,9 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
   const [autoSort, setAutoSort] = useState(true)
   const [artist, setArtist] = useState('')
   const [albumTitle, setAlbumTitle] = useState('')
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null)
 
   const handleSubmit = async () => {
-    const file = fileRef.current?.files?.[0]
     if (!file) {
       showNotification('Please select a ZIP file with audio tracks', 'error')
       return
@@ -81,11 +81,16 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
         to place each track in your library without needing a database.
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-          ZIP file with tracks *
-        </label>
-        <input ref={fileRef} type="file" accept=".zip,application/zip" autoFocus />
+      <div style={{ marginBottom: 14 }}>
+        <FileField
+          label="ZIP File with Tracks"
+          required
+          accept=".zip,application/zip"
+          value={file}
+          onChange={setFile}
+          placeholder="Click or drag & drop ZIP archive here"
+          subText="Supported format: .zip archive containing MP3, FLAC, WAV, M4A or OGG tracks"
+        />
       </div>
 
       {/* Auto-sort toggle */}

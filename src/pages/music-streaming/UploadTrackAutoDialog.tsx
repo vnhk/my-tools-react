@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
+import { FileField } from '../../components/fields/FileField'
 import { useNotification } from '../../components/ui/Notification'
 import { uploadTrackAuto } from './api'
 import type { AudioTrack } from './types'
@@ -22,10 +23,9 @@ export function UploadTrackAutoDialog({ onClose, onUploaded }: Props) {
   const [genre, setGenre] = useState('')
   const [trackNumber, setTrackNumber] = useState<string>('')
   const [isSingle, setIsSingle] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [file, setFile] = useState<File | null>(null)
 
   const handleSubmit = async () => {
-    const file = fileRef.current?.files?.[0]
     if (!file) {
       showNotification('Please select an audio file (.mp3, .flac, etc.)', 'error')
       return
@@ -86,11 +86,16 @@ export function UploadTrackAutoDialog({ onClose, onUploaded }: Props) {
         on disk. Any entered fields will overwrite the file's ID3 tags.
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-        <label style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-text-secondary)' }}>
-          Select audio file *
-        </label>
-        <input ref={fileRef} type="file" accept="audio/*" autoFocus />
+      <div style={{ marginBottom: 14 }}>
+        <FileField
+          label="Audio File"
+          required
+          accept="audio/*,.mp3,.flac,.wav,.m4a,.ogg"
+          value={file}
+          onChange={setFile}
+          placeholder="Click or drag & drop audio track here"
+          subText="Supported formats: MP3, FLAC, WAV, M4A, OGG"
+        />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
