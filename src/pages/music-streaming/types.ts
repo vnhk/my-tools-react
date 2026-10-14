@@ -130,3 +130,11 @@ export interface SavePlaylistRequest {
   filters?: PlaylistFilters
   trackMetadataIds: string[]
 }
+
+export interface AudioZipImportResult {
+  importedTracksCount: number
+  albumsCount: number
+  affectedAlbumTitles: string[]
+  primaryAlbum?: AudioAlbum
+  message?: string
+}

@@ -9,6 +9,7 @@ import type {
   AiEnrichResponse,
   AudioPlaylist,
   SavePlaylistRequest,
+  AudioZipImportResult,
 } from './types'
 
 export function appendToken(url: string): string {
@@ -140,12 +141,13 @@ export function deleteTrack(albumId: string, trackId: string) {
   )
 }
 
-export function uploadZip(file: File, artist?: string, albumTitle?: string) {
+export function uploadZip(file: File, artist?: string, albumTitle?: string, autoSort = true) {
   const fd = new FormData()
   fd.append('file', file)
   if (artist) fd.append('artist', artist)
   if (albumTitle) fd.append('albumTitle', albumTitle)
-  return client.post<AudioAlbum>('/audio/admin/upload-zip', fd)
+  fd.append('autoSort', String(autoSort))
+  return client.post<AudioZipImportResult>('/audio/admin/upload-zip', fd)
 }
 
 export function enrichMetadataWithAi(request: AiEnrichRequest) {

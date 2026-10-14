@@ -8,12 +8,13 @@ import type { AudioAlbum } from './types'
 
 interface Props {
   onClose: () => void
-  onUploaded: (album: AudioAlbum) => void
+  onUploaded: (album?: AudioAlbum) => void
 }
 
 export function UploadZipDialog({ onClose, onUploaded }: Props) {
   const { showNotification } = useNotification()
   const [busy, setBusy] = useState(false)
+  const [autoSort, setAutoSort] = useState(true)
   const [artist, setArtist] = useState('')
   const [albumTitle, setAlbumTitle] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
@@ -30,11 +31,16 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
       const res = await uploadZip(
         file,
         artist.trim() || undefined,
-        albumTitle.trim() || undefined
+        albumTitle.trim() || undefined,
+        autoSort
       )
 
-      showNotification(`Album "${res.data.title}" (${res.data.trackCount} tracks) successfully imported`, 'success')
-      onUploaded(res.data)
+      const msg = autoSort
+        ? `Successfully imported ${res.data.importedTracksCount} track(s) across ${res.data.albumsCount} album(s)!`
+        : `Album "${res.data.primaryAlbum?.title || 'Imported Album'}" (${res.data.importedTracksCount} tracks) imported!`
+
+      showNotification(msg, 'success')
+      onUploaded(res.data.primaryAlbum)
       onClose()
     } catch {
       showNotification('Failed to import ZIP archive', 'error')
@@ -46,9 +52,9 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
   return (
     <DynamicFormDialog
       open
-      title="Upload Album as ZIP Package"
+      title="Upload Audio as ZIP Package"
       onClose={onClose}
-      width="min(90vw, 540px)"
+      width="min(90vw, 560px)"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
@@ -71,8 +77,8 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
           marginBottom: 14,
         }}
       >
-        📦 The system will automatically unpack the archive, detect tracks and cover art,
-        and use MP3 tags or AI for any missing metadata. You can optionally specify custom artist or album title.
+        📦 The system unpacks the archive, detects audio tracks and covers, and reads ID3 tags
+        to place each track in your library without needing a database.
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
@@ -82,18 +88,51 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
         <input ref={fileRef} type="file" accept=".zip,application/zip" autoFocus />
       </div>
 
+      {/* Auto-sort toggle */}
+      <div style={{ marginBottom: 14 }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+            cursor: 'pointer',
+            padding: '12px 14px',
+            background: autoSort ? 'rgba(59, 130, 246, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${autoSort ? 'var(--color-primary)' : 'var(--color-border)'}`,
+            borderRadius: 'var(--radius-sm)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={autoSort}
+            onChange={(e) => setAutoSort(e.target.checked)}
+            style={{ marginTop: 2, accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+          />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--color-text-primary)' }}>
+              Auto-sort tracks by ID3 tags (Organize mixed tracks)
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, lineHeight: 1.4 }}>
+              Inspects each audio file and routes it to its respective artist and album directory based on its ID3 tags (or to Singles if no album tag is set).
+              Uncheck only if all tracks belong to a single specific album.
+            </div>
+          </div>
+        </label>
+      </div>
+
       <TextField
-        label="Artist (optional)"
+        label={autoSort ? 'Fallback Artist (optional if ID3 tag missing)' : 'Artist (optional - auto-detected)'}
         value={artist}
         onChange={(e) => setArtist(e.target.value)}
-        placeholder="leave empty for auto-detection"
+        placeholder={autoSort ? 'e.g. Various Artists' : 'leave empty for auto-detection'}
       />
 
       <TextField
-        label="Album Title (optional)"
+        label={autoSort ? "Fallback Album Title (optional - defaults to 'Singles')" : 'Album Title (optional - auto-detected)'}
         value={albumTitle}
         onChange={(e) => setAlbumTitle(e.target.value)}
-        placeholder="leave empty for auto-detection"
+        placeholder={autoSort ? 'Singles' : 'leave empty for auto-detection'}
       />
     </DynamicFormDialog>
   )
