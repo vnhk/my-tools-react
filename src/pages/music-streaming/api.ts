@@ -7,6 +7,8 @@ import type {
   UpdateTrackRequest,
   AiEnrichRequest,
   AiEnrichResponse,
+  AudioPlaylist,
+  SavePlaylistRequest,
 } from './types'
 
 export function appendToken(url: string): string {
@@ -152,4 +154,24 @@ export function enrichMetadataWithAi(request: AiEnrichRequest) {
 
 export function reloadAudioConfig() {
   return client.post('/audio/admin/reload')
+}
+
+export function fetchPlaylists() {
+  return client.get<AudioPlaylist[]>('/audio/playlists')
+}
+
+export function fetchPlaylist(id: string) {
+  return client.get<AudioPlaylist>(`/audio/playlists/${encodeURIComponent(id)}`)
+}
+
+export function savePlaylist(request: SavePlaylistRequest) {
+  return client.post<AudioPlaylist>('/audio/playlists', request)
+}
+
+export function deletePlaylist(id: string) {
+  return client.delete(`/audio/playlists/${encodeURIComponent(id)}`)
+}
+
+export function getPlaylistM3u8Url(id: string): string {
+  return appendToken(`/api/audio/playlists/${encodeURIComponent(id)}/stream`)
 }

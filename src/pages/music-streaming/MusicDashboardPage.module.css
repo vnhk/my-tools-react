@@ -319,3 +319,51 @@
   font-size: 48px;
   color: var(--color-text-tertiary);
 }
+
+/* ── View Navigation Tabs ── */
+.navTabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 2px;
+}
+
+.navTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border: 1px solid transparent;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navTab:hover {
+  color: var(--color-text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.navTabActive {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.navTabBadge {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
+}
+
+.navTabActive .navTabBadge {
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--color-primary);
+}

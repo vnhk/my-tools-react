@@ -52,11 +52,11 @@ export function AudioPlayerBar() {
 
   const [showQueue, setShowQueue] = useState(false)
 
-  if (!currentTrack || !currentAlbum) {
+  if (!currentTrack) {
     return null
   }
 
-  const coverSrc = currentAlbum.hasCover ? getCoverUrl(currentAlbum.id) : null
+  const coverSrc = currentAlbum?.hasCover ? getCoverUrl(currentAlbum.id) : null
 
   return (
     <>
@@ -65,7 +65,7 @@ export function AudioPlayerBar() {
         <div className={styles.trackInfo}>
           <div className={styles.coverThumb}>
             {coverSrc ? (
-              <img src={coverSrc} alt={currentAlbum.title} />
+              <img src={coverSrc} alt={currentAlbum?.title || currentTrack.album} />
             ) : (
               <div className={styles.coverPlaceholder}>
                 <FaMusic />
@@ -76,13 +76,22 @@ export function AudioPlayerBar() {
             <div className={styles.trackTitle} title={currentTrack.title}>
               {currentTrack.title}
             </div>
-            <Link
-              to={`/music/album/${encodeURIComponent(currentAlbum.id)}`}
-              className={styles.trackArtist}
-              title={`${currentTrack.artist} • ${currentAlbum.title}`}
-            >
-              {currentTrack.artist || currentAlbum.artist}
-            </Link>
+            {currentAlbum ? (
+              <Link
+                to={`/music/album/${encodeURIComponent(currentAlbum.id)}`}
+                className={styles.trackArtist}
+                title={`${currentTrack.artist} • ${currentAlbum.title}`}
+              >
+                {currentTrack.artist || currentAlbum.artist}
+              </Link>
+            ) : (
+              <span
+                className={styles.trackArtist}
+                title={currentTrack.artist || currentTrack.album || ''}
+              >
+                {currentTrack.artist || currentTrack.album || 'Unknown Artist'}
+              </span>
+            )}
           </div>
         </div>
 

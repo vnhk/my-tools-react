@@ -10,20 +10,23 @@ import {
   FaPlay,
   FaExclamationTriangle,
   FaList,
+  FaCompactDisc,
 } from 'react-icons/fa'
 import {
   fetchAudioSummary,
+  fetchPlaylists,
   getCoverUrl,
   reloadAudioConfig,
   getLibraryZipDownloadUrl,
   getMasterPlaylistDownloadUrl,
 } from './api'
-import type { AudioLibrarySummary } from './types'
+import type { AudioLibrarySummary, AudioPlaylist } from './types'
 import { useAudioPlayer } from './AudioPlayerContext'
 import { useNotification } from '../../components/ui/Notification'
 import { AddAlbumDialog } from './AddAlbumDialog'
 import { UploadTrackAutoDialog } from './UploadTrackAutoDialog'
 import { UploadZipDialog } from './UploadZipDialog'
+import { PlaylistsTabView } from './PlaylistsTabView'
 import styles from './MusicDashboardPage.module.css'
 
 function formatTotalDuration(seconds: number): string {
@@ -38,7 +41,9 @@ export default function MusicDashboardPage() {
   const { playTrack } = useAudioPlayer()
   const { showNotification } = useNotification()
 
+  const [activeTab, setActiveTab] = useState<'albums' | 'playlists'>('albums')
   const [summary, setSummary] = useState<AudioLibrarySummary | null>(null)
+  const [playlists, setPlaylists] = useState<AudioPlaylist[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null)
@@ -51,14 +56,23 @@ export default function MusicDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const res = await fetchAudioSummary()
-      setSummary(res.data)
+      const [sumRes, plRes] = await Promise.all([
+        fetchAudioSummary(),
+        fetchPlaylists(),
+      ])
+      setSummary(sumRes.data)
+      setPlaylists(plRes.data)
     } catch {
       showNotification('Failed to load audio library', 'error')
     } finally {
       setLoading(false)
     }
   }
+
+  const allTracks = useMemo(() => {
+    if (!summary?.albums) return []
+    return summary.albums.flatMap((a) => a.tracks || [])
+  }, [summary])
 
   useEffect(() => {
     loadData()
@@ -188,12 +202,41 @@ export default function MusicDashboardPage() {
         </div>
       )}
 
-      {/* Search & Filters */}
-      <div className={styles.searchFilterArea}>
-        <input
-          type="text"
-          className={styles.searchInput}
-          placeholder="Search by album, track or artist…"
+      {/* Navigation Tabs */}
+      <div className={styles.navTabs}>
+        <button
+          className={`${styles.navTab} ${activeTab === 'albums' ? styles.navTabActive : ''}`}
+          onClick={() => setActiveTab('albums')}
+        >
+          <FaCompactDisc />
+          <span>Albums</span>
+          {summary && <span className={styles.navTabBadge}>{summary.totalAlbums}</span>}
+        </button>
+        <button
+          className={`${styles.navTab} ${activeTab === 'playlists' ? styles.navTabActive : ''}`}
+          onClick={() => setActiveTab('playlists')}
+        >
+          <FaList />
+          <span>Playlists</span>
+          <span className={styles.navTabBadge}>{playlists.length}</span>
+        </button>
+      </div>
+
+      {activeTab === 'playlists' ? (
+        <PlaylistsTabView
+          playlists={playlists}
+          allTracks={allTracks}
+          availableGenres={summary?.genres || []}
+          onRefresh={loadData}
+        />
+      ) : (
+        <>
+          {/* Search & Filters */}
+          <div className={styles.searchFilterArea}>
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Search by album, track or artist…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -320,6 +363,8 @@ export default function MusicDashboardPage() {
             )
           })}
         </div>
+      )}
+      </>
       )}
 
       {/* Modals */}

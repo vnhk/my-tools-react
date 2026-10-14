@@ -18,6 +18,7 @@ export interface AudioTrack {
   bitrate?: number
   hasTagMismatch: boolean
   tagMismatchDetails?: string
+  metadataId?: string
 }
 
 export interface AudioAlbum {
@@ -99,4 +100,33 @@ export interface AiEnrichResponse {
   genres?: string[]
   description?: string
   tracks?: AiTrackSuggestion[]
+}
+
+export interface PlaylistFilters {
+  genres?: string[]
+  artists?: string[]
+  query?: string
+  yearFrom?: number
+  yearTo?: number
+}
+
+export interface AudioPlaylist {
+  id: string
+  name: string
+  description?: string
+  createdAt?: string
+  updatedAt?: string
+  filters?: PlaylistFilters
+  trackMetadataIds: string[]
+  tracks: AudioTrack[]
+  trackCount: number
+  totalDurationSeconds?: number
+}
+
+export interface SavePlaylistRequest {
+  id?: string
+  name: string
+  description?: string
+  filters?: PlaylistFilters
+  trackMetadataIds: string[]
 }

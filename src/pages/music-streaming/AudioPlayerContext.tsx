@@ -14,7 +14,7 @@ interface AudioPlayerContextType {
   isMuted: boolean
   repeatMode: 'off' | 'all' | 'one'
   isShuffle: boolean
-  playTrack: (track: AudioTrack, album: AudioAlbum, fullQueue?: AudioTrack[]) => void
+  playTrack: (track: AudioTrack, album: AudioAlbum | null, fullQueue?: AudioTrack[]) => void
   togglePlayPause: () => void
   nextTrack: () => void
   prevTrack: () => void
@@ -91,11 +91,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }, [volume, isMuted])
 
   // Play track handler
-  const playTrack = (track: AudioTrack, album: AudioAlbum, fullQueue?: AudioTrack[]) => {
+  const playTrack = (track: AudioTrack, album: AudioAlbum | null, fullQueue?: AudioTrack[]) => {
     setCurrentTrack(track)
     setCurrentAlbum(album)
 
-    const newQueue = fullQueue && fullQueue.length > 0 ? fullQueue : album.tracks
+    const newQueue = fullQueue && fullQueue.length > 0 ? fullQueue : (album ? album.tracks : [track])
     setQueue(newQueue)
     const idx = newQueue.findIndex((t) => t.id === track.id)
     setQueueIndex(idx >= 0 ? idx : 0)
@@ -115,13 +115,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
     // Media Session API integration
     if ('mediaSession' in navigator) {
-      const artwork = album.hasCover
+      const artwork = album?.hasCover
         ? [{ src: getCoverUrl(album.id), sizes: '512x512', type: 'image/jpeg' }]
         : []
       navigator.mediaSession.metadata = new MediaMetadata({
         title: track.title,
-        artist: track.artist || album.artist,
-        album: album.title,
+        artist: track.artist || album?.artist || '',
+        album: album?.title || track.album || '',
         artwork,
       })
     }
@@ -165,7 +165,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
 
     const nextTrk = queue[nextIdx]
-    if (nextTrk && currentAlbum) {
+    if (nextTrk) {
       setQueueIndex(nextIdx)
       playTrack(nextTrk, currentAlbum, queue)
     }
@@ -185,7 +185,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
     const prevIdx = queueIndex - 1
     const prevTrk = queue[prevIdx]
-    if (prevTrk && currentAlbum) {
+    if (prevTrk) {
       setQueueIndex(prevIdx)
       playTrack(prevTrk, currentAlbum, queue)
     }
