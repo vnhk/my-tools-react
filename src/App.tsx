@@ -30,6 +30,9 @@ import ProductionDetailsPage from "./pages/streaming-platform/ProductionDetailsP
 import VideoPlayerPage from "./pages/streaming-platform/VideoPlayerPage";
 import RemoteControlPage from "./pages/remote/RemoteControlPage";
 import StreamingLayout from "./pages/streaming-platform/StreamingLayout";
+import MusicLayout from "./pages/music-streaming/MusicLayout";
+import MusicDashboardPage from "./pages/music-streaming/MusicDashboardPage";
+import AlbumDetailPage from "./pages/music-streaming/AlbumDetailPage";
 import { FilesPage } from "./pages/files/FilesPage";
 import TvFileDisplay from "./pages/files/TvFileDisplay";
 import { ProjectListPage } from "./pages/projects/ProjectListPage";
@@ -53,6 +56,7 @@ import {
   FaHome,
   FaMicrophone,
   FaMoneyBill,
+  FaMusic,
   FaPaintBrush,
   FaPlane,
   FaShoppingCart,
@@ -204,6 +208,12 @@ const cards: HomePageCard[] = [
     route: "/streaming",
   },
   {
+    title: "Music",
+    description: "Manage and stream your music library.",
+    icon: <FaMusic />,
+    route: "/music",
+  },
+  {
     title: "Shopping",
     description: "Shop and manage your products.",
     icon: <FaShoppingCart />,
@@ -237,6 +247,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/english", label: "English", icon: <FaMicrophone /> },
   { path: "/spanish", label: "Spanish", icon: <FaFlag /> },
   { path: "/streaming", label: "Streaming", icon: <FaFilm /> },
+  { path: "/music", label: "Music", icon: <FaMusic /> },
   { path: "/canvas", label: "Canvas", icon: <FaPaintBrush /> },
   { path: "/invest-track", label: "Invest Track", icon: <FaChartLine /> },
   { path: "/spreadsheet", label: "Spreadsheet", icon: <FaTable /> },
@@ -382,6 +393,10 @@ export default function App() {
                     element={<Navigate to="/remote" replace />}
                   />
                 </Route>
+                <Route path="/music" element={<MusicLayout />}>
+                  <Route index element={<MusicDashboardPage />} />
+                  <Route path="album/:albumId" element={<AlbumDetailPage />} />
+                </Route>
                 <Route path="/english" element={<LanguageLearningLayout />}>
                   <Route index element={<Navigate to="words" replace />} />
                   <Route path="words" element={<WordListPage />} />
@@ -453,6 +468,7 @@ export default function App() {
                     item.path !== "/invest-track" &&
                     item.path !== "/cook-book" &&
                     item.path !== "/streaming" &&
+                    item.path !== "/music" &&
                     item.path !== "/projects" &&
                     item.path !== "/english" &&
                     item.path !== "/spanish" &&
