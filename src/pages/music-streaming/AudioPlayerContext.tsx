@@ -26,12 +26,17 @@ interface AudioPlayerContextType {
   addToQueue: (track: AudioTrack) => void
   removeFromQueue: (index: number) => void
   clearQueue: () => void
+  getAnalyser: () => AnalyserNode | null
 }
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null)
 
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioCtxRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null)
   const [currentAlbum, setCurrentAlbum] = useState<AudioAlbum | null>(null)
   const [queue, setQueue] = useState<AudioTrack[]>([])
@@ -47,10 +52,37 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off')
   const [isShuffle, setIsShuffle] = useState(false)
 
+  const getAnalyser = () => {
+    if (!analyserRef.current && audioRef.current) {
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+        if (AudioCtx) {
+          const ctx = new AudioCtx()
+          const analyser = ctx.createAnalyser()
+          analyser.fftSize = 64
+          analyser.smoothingTimeConstant = 0.8
+          const source = ctx.createMediaElementSource(audioRef.current)
+          source.connect(analyser)
+          analyser.connect(ctx.destination)
+          audioCtxRef.current = ctx
+          analyserRef.current = analyser
+          sourceRef.current = source
+        }
+      } catch (e) {
+        console.warn('Could not initialize Web Audio API analyser', e)
+      }
+    }
+    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume().catch(() => {})
+    }
+    return analyserRef.current
+  }
+
   // Initialize audio element
   useEffect(() => {
     const audio = new Audio()
     audio.preload = 'metadata'
+    audio.crossOrigin = 'anonymous'
     audioRef.current = audio
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime)
@@ -58,7 +90,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       setDuration(audio.duration || 0)
       if (audio.currentTime !== 0) setCurrentTime(audio.currentTime)
     }
-    const onPlay = () => setIsPlaying(true)
+    const onPlay = () => {
+      setIsPlaying(true)
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(() => {})
+      }
+    }
     const onPause = () => setIsPlaying(false)
     const onError = (e: Event) => {
       console.warn('Audio playback error', e)
@@ -288,6 +325,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         addToQueue,
         removeFromQueue,
         clearQueue,
+        getAnalyser,
       }}
     >
       {children}

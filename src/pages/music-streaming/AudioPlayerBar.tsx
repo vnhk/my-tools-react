@@ -12,9 +12,12 @@ import {
   FaListUl,
   FaMusic,
   FaTimes,
+  FaWaveSquare,
 } from 'react-icons/fa'
 import { useAudioPlayer } from './AudioPlayerContext'
 import { getCoverUrl } from './api'
+import { AudioVisualizer } from './AudioVisualizer'
+import { AudioVisualizerModal } from './AudioVisualizerModal'
 import styles from './AudioPlayerBar.module.css'
 
 function formatSeconds(secs: number): string {
@@ -51,6 +54,7 @@ export function AudioPlayerBar() {
   } = useAudioPlayer()
 
   const [showQueue, setShowQueue] = useState(false)
+  const [showVisualizer, setShowVisualizer] = useState(false)
 
   if (!currentTrack) {
     return null
@@ -92,6 +96,15 @@ export function AudioPlayerBar() {
                 {currentTrack.artist || currentTrack.album || 'Unknown Artist'}
               </span>
             )}
+          </div>
+
+          {/* Mini Live Visualizer */}
+          <div
+            className={styles.miniVisualizerWrap}
+            onClick={() => setShowVisualizer(true)}
+            title="Click to open full Visualizer"
+          >
+            <AudioVisualizer width={52} height={26} barCount={10} isPlaying={isPlaying} />
           </div>
         </div>
 
@@ -147,6 +160,15 @@ export function AudioPlayerBar() {
 
         {/* Extras / Volume (Right) */}
         <div className={styles.rightControls}>
+          <button
+            className={`${styles.controlBtn} ${showVisualizer ? styles.controlBtnActive : ''}`}
+            onClick={() => setShowVisualizer((prev) => !prev)}
+            title="Audio Visualizer (Jumping Equalizer Bars)"
+            style={{ color: showVisualizer ? 'var(--color-primary)' : undefined }}
+          >
+            <FaWaveSquare />
+          </button>
+
           <button
             className={`${styles.controlBtn} ${showQueue ? styles.controlBtnActive : ''}`}
             onClick={() => setShowQueue((prev) => !prev)}
@@ -218,6 +240,10 @@ export function AudioPlayerBar() {
             })}
           </div>
         </div>
+      )}
+
+      {showVisualizer && (
+        <AudioVisualizerModal onClose={() => setShowVisualizer(false)} />
       )}
     </>
   )
