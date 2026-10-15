@@ -141,13 +141,24 @@ export function deleteTrack(albumId: string, trackId: string) {
   )
 }
 
-export function uploadZip(file: File, artist?: string, albumTitle?: string, autoSort = true) {
+export function uploadZip(
+  file: File,
+  artist?: string,
+  albumTitle?: string,
+  autoSort = true,
+  useAi = false
+) {
   const fd = new FormData()
   fd.append('file', file)
   if (artist) fd.append('artist', artist)
   if (albumTitle) fd.append('albumTitle', albumTitle)
   fd.append('autoSort', String(autoSort))
+  fd.append('useAi', String(useAi))
   return client.post<AudioZipImportResult>('/audio/admin/upload-zip', fd)
+}
+
+export function aiEnrichAlbum(albumId: string) {
+  return client.post<AudioAlbum>(`/audio/admin/albums/${encodeURIComponent(albumId)}/ai-enrich`)
 }
 
 export function enrichMetadataWithAi(request: AiEnrichRequest) {

@@ -12,6 +12,7 @@ import {
   FaExclamationTriangle,
   FaCamera,
   FaMusic,
+  FaMagic,
 } from 'react-icons/fa'
 import {
   fetchAlbum,
@@ -23,6 +24,7 @@ import {
   getAlbumZipDownloadUrl,
   getAlbumPlaylistDownloadUrl,
   getTrackDownloadUrl,
+  aiEnrichAlbum,
 } from './api'
 import type { AudioAlbum, AudioTrack } from './types'
 import { useAudioPlayer } from './AudioPlayerContext'
@@ -58,6 +60,7 @@ export default function AlbumDetailPage() {
   const [showAddTrack, setShowAddTrack] = useState(false)
   const [editingTrack, setEditingTrack] = useState<AudioTrack | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
+  const [enrichingAi, setEnrichingAi] = useState(false)
 
   const coverInputRef = useRef<HTMLInputElement>(null)
 
@@ -130,6 +133,21 @@ export default function AlbumDetailPage() {
       await loadAlbumData()
     } catch {
       showNotification('Failed to upload cover', 'error')
+    }
+  }
+
+  const handleAiEnrich = async () => {
+    if (!album) return
+    setEnrichingAi(true)
+    try {
+      const res = await aiEnrichAlbum(album.id)
+      setAlbum(res.data)
+      showNotification('Album metadata successfully enriched with AI!', 'success')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Failed to enrich album with AI'
+      showNotification(msg, 'error')
+    } finally {
+      setEnrichingAi(false)
     }
   }
 
@@ -231,6 +249,14 @@ export default function AlbumDetailPage() {
             </button>
             <button className={styles.actionButton} onClick={() => setShowEditAlbum(true)}>
               <FaEdit /> Edit album
+            </button>
+            <button
+              className={styles.actionButton}
+              onClick={handleAiEnrich}
+              disabled={enrichingAi}
+              title="Detect genres, release year, and description with AI"
+            >
+              <FaMagic /> {enrichingAi ? 'Enriching with AI…' : 'AI Enrich'}
             </button>
             <a
               href={getAlbumZipDownloadUrl(album.id)}

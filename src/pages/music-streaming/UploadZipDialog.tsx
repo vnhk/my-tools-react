@@ -16,6 +16,7 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
   const { showNotification } = useNotification()
   const [busy, setBusy] = useState(false)
   const [autoSort, setAutoSort] = useState(true)
+  const [useAi, setUseAi] = useState(false)
   const [artist, setArtist] = useState('')
   const [albumTitle, setAlbumTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
@@ -33,7 +34,8 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
         file,
         artist.trim() || undefined,
         albumTitle.trim() || undefined,
-        autoSort
+        autoSort,
+        useAi
       )
 
       const hasFailures = res.data.failedTracks && res.data.failedTracks.length > 0
@@ -149,7 +151,7 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
             Cancel
           </Button>
           <Button variant="primary" onClick={handleSubmit} disabled={busy}>
-            {busy ? 'Extracting and analyzing…' : 'Upload and Import'}
+            {busy ? (useAi ? 'Importing & querying AI…' : 'Extracting and analyzing…') : 'Upload and Import'}
           </Button>
         </>
       }
@@ -209,6 +211,38 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
             <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, lineHeight: 1.4 }}>
               Inspects each audio file and routes it to its respective artist and album directory based on its ID3 tags (or to Singles if no album tag is set).
               Uncheck only if all tracks belong to a single specific album.
+            </div>
+          </div>
+        </label>
+      </div>
+
+      {/* AI Enrichment toggle */}
+      <div style={{ marginBottom: 14 }}>
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+            cursor: 'pointer',
+            padding: '12px 14px',
+            background: useAi ? 'rgba(168, 85, 247, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${useAi ? 'rgba(168, 85, 247, 0.5)' : 'var(--color-border)'}`,
+            borderRadius: 'var(--radius-sm)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={useAi}
+            onChange={(e) => setUseAi(e.target.checked)}
+            style={{ marginTop: 2, accentColor: '#a855f7', cursor: 'pointer' }}
+          />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              ✨ Identify genres & metadata with AI
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginTop: 3, lineHeight: 1.4 }}>
+              When enabled, AI automatically discovers genres, album names, and release info for tracks that lack ID3 tags or have unknown metadata.
             </div>
           </div>
         </label>
