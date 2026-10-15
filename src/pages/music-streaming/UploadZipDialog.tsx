@@ -5,7 +5,7 @@ import { TextField } from '../../components/fields/TextField'
 import { FileField } from '../../components/fields/FileField'
 import { useNotification } from '../../components/ui/Notification'
 import { uploadZip } from './api'
-import type { AudioAlbum } from './types'
+import type { AudioAlbum, AudioZipImportResult } from './types'
 
 interface Props {
   onClose: () => void
@@ -19,6 +19,7 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
   const [artist, setArtist] = useState('')
   const [albumTitle, setAlbumTitle] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [result, setResult] = useState<AudioZipImportResult | null>(null)
 
   const handleSubmit = async () => {
     if (!file) {
@@ -35,17 +36,24 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
         autoSort
       )
 
-      let msg = autoSort
-        ? `Successfully imported ${res.data.importedTracksCount} track(s) across ${res.data.albumsCount} album(s)!`
-        : `Album "${res.data.primaryAlbum?.title || 'Imported Album'}" (${res.data.importedTracksCount} tracks) imported!`
+      const hasFailures = res.data.failedTracks && res.data.failedTracks.length > 0
 
-      if (res.data.failedTracks && res.data.failedTracks.length > 0) {
-        msg += ` (${res.data.failedTracks.length} track(s) failed)`
+      if (hasFailures) {
+        setResult(res.data)
+        onUploaded(res.data.primaryAlbum)
+        showNotification(
+          `Import finished with ${res.data.failedTracks!.length} error(s). Review details below.`,
+          'warning'
+        )
+      } else {
+        const msg = autoSort
+          ? `Successfully imported ${res.data.importedTracksCount} track(s) across ${res.data.albumsCount} album(s)!`
+          : `Album "${res.data.primaryAlbum?.title || 'Imported Album'}" (${res.data.importedTracksCount} tracks) imported!`
+
+        showNotification(msg, 'success')
+        onUploaded(res.data.primaryAlbum)
+        onClose()
       }
-
-      showNotification(msg, res.data.failedTracks && res.data.failedTracks.length > 0 ? 'warning' : 'success')
-      onUploaded(res.data.primaryAlbum)
-      onClose()
     } catch (err: any) {
       const errorMsg =
         err?.response?.data?.message ||
@@ -55,6 +63,78 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
     } finally {
       setBusy(false)
     }
+  }
+
+  if (result) {
+    return (
+      <DynamicFormDialog
+        open
+        title="ZIP Import Summary"
+        onClose={onClose}
+        width="min(90vw, 560px)"
+        footer={
+          <Button variant="primary" onClick={onClose}>
+            Done
+          </Button>
+        }
+      >
+        <div
+          style={{
+            background: 'rgba(34, 197, 94, 0.1)',
+            border: '1px solid rgba(34, 197, 94, 0.3)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '12px 14px',
+            fontSize: 13,
+            color: 'var(--color-text-primary)',
+            marginBottom: 14,
+          }}
+        >
+          ✅ Successfully imported <strong>{result.importedTracksCount}</strong> track(s) across{' '}
+          <strong>{result.albumsCount}</strong> album(s).
+        </div>
+
+        {result.affectedAlbumTitles && result.affectedAlbumTitles.length > 0 && (
+          <div style={{ marginBottom: 14, fontSize: 12, color: 'var(--color-text-secondary)' }}>
+            <strong>Affected albums:</strong> {result.affectedAlbumTitles.slice(0, 5).join(', ')}
+            {result.affectedAlbumTitles.length > 5 && ` and ${result.affectedAlbumTitles.length - 5} more...`}
+          </div>
+        )}
+
+        {result.failedTracks && result.failedTracks.length > 0 && (
+          <div
+            style={{
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '12px 14px',
+            }}
+          >
+            <div style={{ fontWeight: 600, color: 'var(--color-error)', fontSize: 13, marginBottom: 8 }}>
+              ⚠️ Failed to import ({result.failedTracks.length} track(s)):
+            </div>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: 18,
+                fontSize: 12,
+                color: 'var(--color-text-primary)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                maxHeight: 200,
+                overflowY: 'auto',
+              }}
+            >
+              {result.failedTracks.map((failure, idx) => (
+                <li key={idx} style={{ wordBreak: 'break-word', fontFamily: 'monospace', fontSize: 11 }}>
+                  {failure}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </DynamicFormDialog>
+    )
   }
 
   return (
