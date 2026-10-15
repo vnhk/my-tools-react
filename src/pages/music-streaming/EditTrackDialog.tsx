@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { FaMagic } from 'react-icons/fa'
 import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { Button } from '../../components/ui/Button'
 import { TextField } from '../../components/fields/TextField'
 import { NumberField } from '../../components/fields/NumberField'
 import { useNotification } from '../../components/ui/Notification'
-import { updateTrack } from './api'
+import { updateTrack, aiEnrichTrack } from './api'
 import type { AudioAlbum, AudioTrack } from './types'
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
 export function EditTrackDialog({ album, track, onClose, onUpdated }: Props) {
   const { showNotification } = useNotification()
   const [busy, setBusy] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
 
   const [title, setTitle] = useState(track.title)
   const [artist, setArtist] = useState(track.artist || album.artist)
@@ -29,6 +31,26 @@ export function EditTrackDialog({ album, track, onClose, onUpdated }: Props) {
       ? track.genres.join(', ')
       : track.genre || ''
   )
+
+  const handleAiAutoFill = async () => {
+    setAiLoading(true)
+    try {
+      const res = await aiEnrichTrack(album.id, track.id)
+      if (res.data.title) setTitle(res.data.title)
+      if (res.data.artist) setArtist(res.data.artist)
+      if (res.data.year) setYear(String(res.data.year))
+      if (res.data.genres && res.data.genres.length > 0) {
+        setGenres(res.data.genres.join(', '))
+      } else if (res.data.genre) {
+        setGenres(res.data.genre)
+      }
+      showNotification('Metadata auto-filled with AI! Click Save to apply.', 'success')
+    } catch {
+      showNotification('Failed to fetch AI suggestions for track', 'error')
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -70,10 +92,18 @@ export function EditTrackDialog({ album, track, onClose, onUpdated }: Props) {
       width="min(90vw, 540px)"
       footer={
         <>
+          <Button
+            variant="ghost"
+            onClick={handleAiAutoFill}
+            disabled={busy || aiLoading}
+            style={{ marginRight: 'auto', color: '#a855f7' }}
+          >
+            <FaMagic style={{ marginRight: 6 }} /> {aiLoading ? 'Querying AI…' : 'Auto-fill with AI'}
+          </Button>
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubmit} disabled={busy}>
+          <Button variant="primary" onClick={handleSubmit} disabled={busy || aiLoading}>
             {busy ? 'Saving…' : 'Save Changes'}
           </Button>
         </>

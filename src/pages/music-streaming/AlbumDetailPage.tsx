@@ -25,6 +25,7 @@ import {
   getAlbumPlaylistDownloadUrl,
   getTrackDownloadUrl,
   aiEnrichAlbum,
+  aiEnrichTrack,
 } from './api'
 import type { AudioAlbum, AudioTrack } from './types'
 import { useAudioPlayer } from './AudioPlayerContext'
@@ -61,6 +62,7 @@ export default function AlbumDetailPage() {
   const [editingTrack, setEditingTrack] = useState<AudioTrack | null>(null)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
   const [enrichingAi, setEnrichingAi] = useState(false)
+  const [enrichingTrackId, setEnrichingTrackId] = useState<string | null>(null)
 
   const coverInputRef = useRef<HTMLInputElement>(null)
 
@@ -148,6 +150,23 @@ export default function AlbumDetailPage() {
       showNotification(msg, 'error')
     } finally {
       setEnrichingAi(false)
+    }
+  }
+
+  const handleAiEnrichTrack = async (track: AudioTrack) => {
+    if (!album) return
+    setEnrichingTrackId(track.id)
+    try {
+      const res = await aiEnrichTrack(album.id, track.id)
+      setAlbum({
+        ...album,
+        tracks: album.tracks.map((t) => (t.id === track.id ? res.data : t)),
+      })
+      showNotification(`Track "${res.data.title}" enriched with AI!`, 'success')
+    } catch (err: any) {
+      showNotification(err?.response?.data?.message || 'Failed to enrich track with AI', 'error')
+    } finally {
+      setEnrichingTrackId(null)
     }
   }
 
@@ -388,6 +407,15 @@ export default function AlbumDetailPage() {
                     >
                       <FaDownload size={12} />
                     </a>
+                    <button
+                      className={styles.iconActionBtn}
+                      onClick={() => handleAiEnrichTrack(track)}
+                      disabled={enrichingTrackId === track.id}
+                      title="Enrich track metadata & genres with AI"
+                      style={{ color: '#a855f7' }}
+                    >
+                      <FaMagic size={11} />
+                    </button>
                     <button
                       className={styles.iconActionBtn}
                       onClick={() => setEditingTrack(track)}

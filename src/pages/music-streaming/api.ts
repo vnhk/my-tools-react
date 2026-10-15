@@ -161,6 +161,12 @@ export function aiEnrichAlbum(albumId: string) {
   return client.post<AudioAlbum>(`/audio/admin/albums/${encodeURIComponent(albumId)}/ai-enrich`)
 }
 
+export function aiEnrichTrack(albumId: string, trackId: string) {
+  return client.post<AudioTrack>(
+    `/audio/admin/albums/${encodeURIComponent(albumId)}/tracks/${encodeURIComponent(trackId)}/ai-enrich`
+  )
+}
+
 export function enrichMetadataWithAi(request: AiEnrichRequest) {
   return client.post<AiEnrichResponse>('/audio/admin/enrich', request)
 }
