@@ -140,7 +140,7 @@ export default function MusicDashboardPage() {
             <FaMusic style={{ color: 'var(--color-primary)' }} />
             My Music Library
           </h1>
-          <p>Local file-based music collection without database • ID3 tags & VLC support</p>
+          <p>Local file-based music collection • ID3 tags & VLC support</p>
         </div>
 
         <div className={styles.headerActions}>

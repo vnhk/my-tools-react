@@ -135,6 +135,7 @@ export interface AudioZipImportResult {
   importedTracksCount: number
   albumsCount: number
   affectedAlbumTitles: string[]
+  failedTracks?: string[]
   primaryAlbum?: AudioAlbum
   message?: string
 }

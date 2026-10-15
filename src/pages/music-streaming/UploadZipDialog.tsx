@@ -35,15 +35,23 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
         autoSort
       )
 
-      const msg = autoSort
+      let msg = autoSort
         ? `Successfully imported ${res.data.importedTracksCount} track(s) across ${res.data.albumsCount} album(s)!`
         : `Album "${res.data.primaryAlbum?.title || 'Imported Album'}" (${res.data.importedTracksCount} tracks) imported!`
 
-      showNotification(msg, 'success')
+      if (res.data.failedTracks && res.data.failedTracks.length > 0) {
+        msg += ` (${res.data.failedTracks.length} track(s) failed)`
+      }
+
+      showNotification(msg, res.data.failedTracks && res.data.failedTracks.length > 0 ? 'warning' : 'success')
       onUploaded(res.data.primaryAlbum)
       onClose()
-    } catch {
-      showNotification('Failed to import ZIP archive', 'error')
+    } catch (err: any) {
+      const errorMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to import ZIP archive'
+      showNotification(errorMsg, 'error')
     } finally {
       setBusy(false)
     }
@@ -78,7 +86,7 @@ export function UploadZipDialog({ onClose, onUploaded }: Props) {
         }}
       >
         📦 The system unpacks the archive, detects audio tracks and covers, and reads ID3 tags
-        to place each track in your library without needing a database.
+        to automatically organize your music library.
       </div>
 
       <div style={{ marginBottom: 14 }}>
