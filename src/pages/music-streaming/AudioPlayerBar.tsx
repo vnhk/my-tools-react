@@ -13,6 +13,7 @@ import {
   FaMusic,
   FaTimes,
   FaWaveSquare,
+  FaTv,
 } from 'react-icons/fa'
 import { useAudioPlayer } from './AudioPlayerContext'
 import { getCoverUrl } from './api'
@@ -40,6 +41,8 @@ export function AudioPlayerBar() {
     isMuted,
     repeatMode,
     isShuffle,
+    isTvViewOpen,
+    toggleTvView,
     togglePlayPause,
     nextTrack,
     prevTrack,
@@ -160,6 +163,15 @@ export function AudioPlayerBar() {
 
         {/* Extras / Volume (Right) */}
         <div className={styles.rightControls}>
+          <button
+            className={`${styles.controlBtn} ${isTvViewOpen ? styles.controlBtnActive : ''}`}
+            onClick={toggleTvView}
+            title="TV Mode / Fullscreen Now Playing"
+            style={{ color: isTvViewOpen ? 'var(--color-primary)' : undefined }}
+          >
+            <FaTv />
+          </button>
+
           <button
             className={`${styles.controlBtn} ${showVisualizer ? styles.controlBtnActive : ''}`}
             onClick={() => setShowVisualizer((prev) => !prev)}

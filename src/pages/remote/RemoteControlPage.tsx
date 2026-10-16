@@ -4,14 +4,16 @@ import {REMOTE_LAST_ROOM_ID_KEY, type RemoteCommand, useRemoteControlSender} fro
 import {TextField} from '../../components/fields/TextField'
 import {Button} from '../../components/ui/Button'
 import {StreamingRemoteTab} from './StreamingRemoteTab'
+import {MusicRemoteTab} from './MusicRemoteTab'
 import {InvestTrackRemoteTab} from './InvestTrackRemoteTab'
 import {FilesRemoteTab} from './FilesRemoteTab'
 import styles from './RemoteControlPage.module.css'
 
-type App = 'streaming' | 'invest-track' | 'files'
+type App = 'streaming' | 'music' | 'invest-track' | 'files'
 
 const APP_HOME: Record<App, string> = {
     streaming: '/streaming',
+    music: '/music',
     'invest-track': '/invest-track/dashboard',
     files: '/files/tv-view',
 }
@@ -120,6 +122,12 @@ export default function RemoteControlPage() {
                             🎬 Streaming
                         </button>
                         <button
+                            className={activeApp === 'music' ? styles.tabBtnActive : styles.tabBtn}
+                            onClick={() => switchApp('music')}
+                        >
+                            🎵 Music
+                        </button>
+                        <button
                             className={activeApp === 'invest-track' ? styles.tabBtnActive : styles.tabBtn}
                             onClick={() => switchApp('invest-track')}
                         >
@@ -135,6 +143,9 @@ export default function RemoteControlPage() {
 
                     {activeApp === 'streaming' && (
                         <StreamingRemoteTab connected={connected} send={send} status={status}/>
+                    )}
+                    {activeApp === 'music' && (
+                        <MusicRemoteTab connected={connected} send={send} status={status}/>
                     )}
                     {activeApp === 'invest-track' && (
                         <InvestTrackRemoteTab

@@ -29,6 +29,16 @@ export interface RemoteCommand {
     viewerType?: string
     filename?: string
     path?: string
+    // Music remote-control payload fields
+    artist?: string
+    albumTitle?: string
+    albumId?: string
+    trackId?: string
+    coverUrl?: string
+    repeatMode?: 'off' | 'all' | 'one'
+    isShuffle?: boolean
+    visualizerMode?: 'bars' | 'mirror' | 'wave'
+    showTvView?: boolean
     // STATUS payload fields (TV -> remote)
     playing?: boolean
     currentTime?: number
@@ -49,6 +59,16 @@ export interface RemoteStatus {
     activeAudioTrack?: number
     subtitleLangs?: string[]
     activeSubtitle?: string | null
+    // Music remote status
+    artist?: string
+    albumTitle?: string
+    albumId?: string
+    trackId?: string
+    coverUrl?: string
+    repeatMode?: 'off' | 'all' | 'one'
+    isShuffle?: boolean
+    visualizerMode?: 'bars' | 'mirror' | 'wave'
+    showTvView?: boolean
 }
 
 // Room ID this browser tab (the "TV") is/would be reachable at. Generated once

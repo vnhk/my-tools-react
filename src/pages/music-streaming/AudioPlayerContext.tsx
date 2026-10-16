@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { AudioAlbum, AudioTrack } from './types'
-import { getTrackStreamUrl, getCoverUrl } from './api'
+import { getTrackStreamUrl, getCoverUrl, fetchAlbum } from './api'
+import type { VisualizerMode } from './AudioVisualizer'
+import { useIsTv } from '../../common/hooks/useIsTv'
+import { useOptionalRemoteControlContext } from '../../components/layout/RemoteControlProvider'
 
 interface AudioPlayerContextType {
   currentTrack: AudioTrack | null
@@ -14,6 +17,12 @@ interface AudioPlayerContextType {
   isMuted: boolean
   repeatMode: 'off' | 'all' | 'one'
   isShuffle: boolean
+  isTv: boolean
+  isTvViewOpen: boolean
+  setIsTvViewOpen: (open: boolean) => void
+  toggleTvView: () => void
+  visualizerMode: VisualizerMode
+  setVisualizerMode: (mode: VisualizerMode) => void
   playTrack: (track: AudioTrack, album: AudioAlbum | null, fullQueue?: AudioTrack[]) => void
   togglePlayPause: () => void
   nextTrack: () => void
@@ -51,6 +60,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [isMuted, setIsMuted] = useState(false)
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off')
   const [isShuffle, setIsShuffle] = useState(false)
+
+  const isTv = useIsTv()
+  const [isTvViewOpen, setIsTvViewOpen] = useState(false)
+  const [visualizerMode, setVisualizerMode] = useState<VisualizerMode>('bars')
+  const toggleTvView = () => setIsTvViewOpen((prev) => !prev)
+
+  const remoteContext = useOptionalRemoteControlContext()
 
   const getAnalyser = () => {
     if (!analyserRef.current && audioRef.current) {
@@ -143,7 +159,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       audioRef.current.currentTime = 0
       audioRef.current
         .play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          setIsPlaying(true)
+          if (isTv) setIsTvViewOpen(true)
+        })
         .catch((err) => {
           console.warn('Play was prevented or failed:', err)
           setIsPlaying(false)
@@ -299,6 +318,147 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     })
   }, [isPlaying, queueIndex, queue, currentAlbum])
 
+  // Heartbeat to phone remote control so it knows current track, time, cover, etc.
+  useEffect(() => {
+    if (!remoteContext) return
+
+    const interval = setInterval(() => {
+      const audio = audioRef.current
+      remoteContext.sendStatus({
+        title: currentTrack?.title ?? 'No track playing',
+        playing: isPlaying,
+        currentTime: audio ? audio.currentTime : currentTime,
+        duration: audio && isFinite(audio.duration) ? audio.duration : duration,
+        artist: currentTrack?.artist || currentAlbum?.artist || '',
+        albumTitle: currentAlbum?.title || '',
+        albumId: currentAlbum?.id || '',
+        trackId: currentTrack?.id || '',
+        coverUrl: currentAlbum?.hasCover ? getCoverUrl(currentAlbum.id) : undefined,
+        repeatMode,
+        isShuffle,
+        visualizerMode,
+        showTvView: isTvViewOpen,
+      })
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [
+    remoteContext,
+    currentTrack,
+    currentAlbum,
+    isPlaying,
+    currentTime,
+    duration,
+    repeatMode,
+    isShuffle,
+    visualizerMode,
+    isTvViewOpen,
+  ])
+
+  // Subscribe to remote commands (from phone pilot or TV remote)
+  useEffect(() => {
+    if (!remoteContext) return
+
+    return remoteContext.subscribe((cmd) => {
+      switch (cmd.action) {
+        case 'PLAY':
+          if (audioRef.current && !isPlaying) {
+            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
+          }
+          break
+        case 'PAUSE':
+          if (audioRef.current && isPlaying) {
+            audioRef.current.pause()
+            setIsPlaying(false)
+          }
+          break
+        case 'TOGGLE_PLAY':
+          togglePlayPause()
+          break
+        case 'NEXT_TRACK':
+        case 'NEXT_EPISODE':
+          nextTrack()
+          break
+        case 'PREV_TRACK':
+        case 'PREV_EPISODE':
+          prevTrack()
+          break
+        case 'SEEK':
+          if (audioRef.current && typeof cmd.relative === 'number') {
+            seekTo(Math.max(0, Math.min(duration, audioRef.current.currentTime + cmd.relative)))
+          }
+          break
+        case 'SEEK_TO':
+          if (typeof cmd.currentTime === 'number') {
+            seekTo(cmd.currentTime)
+          }
+          break
+        case 'VOLUME':
+          if (typeof cmd.relative === 'number') {
+            setVolumeState((v) => {
+              const next = Math.max(0, Math.min(1, Math.round((v + cmd.relative!) * 100) / 100))
+              return next
+            })
+          }
+          break
+        case 'TOGGLE_MUTE':
+          toggleMute()
+          break
+        case 'TOGGLE_SHUFFLE':
+          toggleShuffle()
+          break
+        case 'TOGGLE_REPEAT':
+          toggleRepeatMode()
+          break
+        case 'TOGGLE_TV_VIEW':
+        case 'FULLSCREEN':
+        case 'FULLSCREEN_PROMPT':
+          setIsTvViewOpen((prev) => !prev)
+          break
+        case 'SET_VISUALIZER_MODE':
+          if (cmd.visualizerMode === 'bars' || cmd.visualizerMode === 'mirror' || cmd.visualizerMode === 'wave') {
+            setVisualizerMode(cmd.visualizerMode)
+          }
+          break
+        case 'MUSIC_PLAY_TRACK':
+          if (cmd.albumId && cmd.trackId) {
+            fetchAlbum(cmd.albumId).then((res) => {
+              const album = res.data
+              const tr = album.tracks.find((t) => t.id === cmd.trackId)
+              if (tr) {
+                playTrack(tr, album, album.tracks)
+                if (isTv) setIsTvViewOpen(true)
+              }
+            }).catch(() => {})
+          }
+          break
+        case 'MUSIC_PLAY_ALBUM':
+          if (cmd.albumId) {
+            fetchAlbum(cmd.albumId).then((res) => {
+              const album = res.data
+              if (album.tracks && album.tracks.length > 0) {
+                playTrack(album.tracks[0], album, album.tracks)
+                if (isTv) setIsTvViewOpen(true)
+              }
+            }).catch(() => {})
+          }
+          break
+      }
+    })
+  }, [
+    remoteContext,
+    isPlaying,
+    duration,
+    togglePlayPause,
+    nextTrack,
+    prevTrack,
+    seekTo,
+    toggleMute,
+    toggleShuffle,
+    toggleRepeatMode,
+    isTv,
+  ])
+
   return (
     <AudioPlayerContext.Provider
       value={{
@@ -313,6 +473,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         isMuted,
         repeatMode,
         isShuffle,
+        isTv,
+        isTvViewOpen,
+        setIsTvViewOpen,
+        toggleTvView,
+        visualizerMode,
+        setVisualizerMode,
         playTrack,
         togglePlayPause,
         nextTrack,
