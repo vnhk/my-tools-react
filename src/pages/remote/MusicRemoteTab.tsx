@@ -29,7 +29,16 @@ export function MusicRemoteTab({ connected, send, status }: Props) {
     setLoadingAlbums(true)
     fetchAlbums()
       .then((res) => {
-        if (mounted) setAlbums(res.data)
+        if (mounted) {
+          setAlbums(res.data)
+          // Preload album covers into phone browser memory cache
+          res.data.forEach((alb) => {
+            if (alb.hasCover) {
+              const img = new Image()
+              img.src = getCoverUrl(alb.id)
+            }
+          })
+        }
       })
       .catch(() => {})
       .finally(() => {

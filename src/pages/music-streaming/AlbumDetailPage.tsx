@@ -52,10 +52,18 @@ export default function AlbumDetailPage() {
   const { albumId } = useParams<{ albumId: string }>()
   const navigate = useNavigate()
   const { showNotification } = useNotification()
-  const { currentTrack, isPlaying, playTrack, togglePlayPause } = useAudioPlayer()
+  const {
+    currentTrack,
+    isPlaying,
+    playTrack,
+    togglePlayPause,
+    getAlbumById,
+    loadLibrary,
+  } = useAudioPlayer()
 
-  const [album, setAlbum] = useState<AudioAlbum | null>(null)
-  const [loading, setLoading] = useState(true)
+  const cachedAlbum = albumId ? getAlbumById(albumId) : undefined
+  const [album, setAlbum] = useState<AudioAlbum | null>(cachedAlbum || null)
+  const [loading, setLoading] = useState(!cachedAlbum)
 
   const [showEditAlbum, setShowEditAlbum] = useState(false)
   const [showAddTrack, setShowAddTrack] = useState(false)
@@ -66,21 +74,27 @@ export default function AlbumDetailPage() {
 
   const coverInputRef = useRef<HTMLInputElement>(null)
 
-  const loadAlbumData = async () => {
+  const loadAlbumData = async (silent = Boolean(cachedAlbum)) => {
     if (!albumId) return
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       const res = await fetchAlbum(albumId)
       setAlbum(res.data)
     } catch {
-      showNotification('Album not found', 'error')
-      navigate('/music')
+      if (!cachedAlbum) {
+        showNotification('Album not found', 'error')
+        navigate('/music')
+      }
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    if (cachedAlbum) {
+      setAlbum(cachedAlbum)
+      setLoading(false)
+    }
     loadAlbumData()
   }, [albumId])
 
@@ -92,6 +106,7 @@ export default function AlbumDetailPage() {
 
     try {
       await deleteAlbum(album.id)
+      await loadLibrary(true)
       showNotification(`Album "${album.title}" deleted`, 'success')
       navigate('/music')
     } catch {
@@ -107,6 +122,7 @@ export default function AlbumDetailPage() {
 
     try {
       await deleteTrack(album.id, track.id)
+      await loadLibrary(true)
       showNotification(`Track "${track.title}" deleted`, 'success')
       await loadAlbumData()
     } catch {
@@ -118,6 +134,7 @@ export default function AlbumDetailPage() {
     if (!album) return
     try {
       await synchronizeTags(album.id)
+      await loadLibrary(true)
       showNotification('ID3 tags synchronized across all tracks', 'success')
       await loadAlbumData()
     } catch {
@@ -131,6 +148,7 @@ export default function AlbumDetailPage() {
 
     try {
       await uploadAlbumCover(album.id, file)
+      await loadLibrary(true)
       showNotification('Album cover updated', 'success')
       await loadAlbumData()
     } catch {
@@ -144,6 +162,7 @@ export default function AlbumDetailPage() {
     try {
       const res = await aiEnrichAlbum(album.id)
       setAlbum(res.data)
+      await loadLibrary(true)
       showNotification('Album metadata successfully enriched with AI!', 'success')
     } catch (err: any) {
       const msg = err?.response?.data?.message || err?.message || 'Failed to enrich album with AI'

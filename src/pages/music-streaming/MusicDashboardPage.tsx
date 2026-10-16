@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
   FaMusic,
@@ -13,14 +13,11 @@ import {
   FaCompactDisc,
 } from 'react-icons/fa'
 import {
-  fetchAudioSummary,
-  fetchPlaylists,
   getCoverUrl,
   reloadAudioConfig,
   getLibraryZipDownloadUrl,
   getMasterPlaylistDownloadUrl,
 } from './api'
-import type { AudioLibrarySummary, AudioPlaylist } from './types'
 import { useAudioPlayer } from './AudioPlayerContext'
 import { useNotification } from '../../components/ui/Notification'
 import { AddAlbumDialog } from './AddAlbumDialog'
@@ -38,13 +35,18 @@ function formatTotalDuration(seconds: number): string {
 }
 
 export default function MusicDashboardPage() {
-  const { playTrack } = useAudioPlayer()
+  const {
+    playTrack,
+    librarySummary: summary,
+    playlists,
+    isLibraryLoading,
+    libraryLoaded,
+    loadLibrary,
+  } = useAudioPlayer()
   const { showNotification } = useNotification()
 
   const [activeTab, setActiveTab] = useState<'albums' | 'playlists'>('albums')
-  const [summary, setSummary] = useState<AudioLibrarySummary | null>(null)
-  const [playlists, setPlaylists] = useState<AudioPlaylist[]>([])
-  const [loading, setLoading] = useState(true)
+  const loading = !libraryLoaded && isLibraryLoading
   const [search, setSearch] = useState('')
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null)
   const [selectedArtist, setSelectedArtist] = useState<string | null>(null)
@@ -53,19 +55,11 @@ export default function MusicDashboardPage() {
   const [showUploadTrack, setShowUploadTrack] = useState(false)
   const [showUploadZip, setShowUploadZip] = useState(false)
 
-  const loadData = async () => {
+  const loadData = async (force = true) => {
     try {
-      setLoading(true)
-      const [sumRes, plRes] = await Promise.all([
-        fetchAudioSummary(),
-        fetchPlaylists(),
-      ])
-      setSummary(sumRes.data)
-      setPlaylists(plRes.data)
+      await loadLibrary(force)
     } catch {
       showNotification('Failed to load audio library', 'error')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -73,10 +67,6 @@ export default function MusicDashboardPage() {
     if (!summary?.albums) return []
     return summary.albums.flatMap((a) => a.tracks || [])
   }, [summary])
-
-  useEffect(() => {
-    loadData()
-  }, [])
 
   const handleReload = async () => {
     try {

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
-import type { AudioAlbum, AudioTrack } from './types'
-import { getTrackStreamUrl, getCoverUrl, fetchAlbum } from './api'
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
+import type { AudioAlbum, AudioTrack, AudioLibrarySummary, AudioPlaylist } from './types'
+import { getTrackStreamUrl, getCoverUrl, fetchAlbum, fetchAudioSummary, fetchPlaylists } from './api'
 import type { VisualizerMode } from './AudioVisualizer'
 import { useIsTv } from '../../common/hooks/useIsTv'
 import { useOptionalRemoteControlContext } from '../../components/layout/RemoteControlProvider'
@@ -23,6 +23,12 @@ interface AudioPlayerContextType {
   toggleTvView: () => void
   visualizerMode: VisualizerMode
   setVisualizerMode: (mode: VisualizerMode) => void
+  librarySummary: AudioLibrarySummary | null
+  playlists: AudioPlaylist[]
+  isLibraryLoading: boolean
+  libraryLoaded: boolean
+  loadLibrary: (force?: boolean) => Promise<void>
+  getAlbumById: (albumId: string) => AudioAlbum | undefined
   playTrack: (track: AudioTrack, album: AudioAlbum | null, fullQueue?: AudioTrack[]) => void
   togglePlayPause: () => void
   nextTrack: () => void
@@ -67,6 +73,52 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const toggleTvView = () => setIsTvViewOpen((prev) => !prev)
 
   const remoteContext = useOptionalRemoteControlContext()
+
+  // In-memory library state and cover image preloader
+  const [librarySummary, setLibrarySummary] = useState<AudioLibrarySummary | null>(null)
+  const [playlists, setPlaylists] = useState<AudioPlaylist[]>([])
+  const [isLibraryLoading, setIsLibraryLoading] = useState(false)
+  const [libraryLoaded, setLibraryLoaded] = useState(false)
+  const preloadedCoversRef = useRef<Set<string>>(new Set())
+
+  const loadLibrary = useCallback(async (force = false) => {
+    if (libraryLoaded && !force) return
+    setIsLibraryLoading(true)
+    try {
+      const [sumRes, plRes] = await Promise.all([
+        fetchAudioSummary(),
+        fetchPlaylists(),
+      ])
+      const summary = sumRes.data
+      setLibrarySummary(summary)
+      setPlaylists(plRes.data)
+      setLibraryLoaded(true)
+
+      // Preload all cover images into browser Image cache in memory
+      if (summary && summary.albums) {
+        summary.albums.forEach((alb) => {
+          if (alb.hasCover && !preloadedCoversRef.current.has(alb.id)) {
+            const img = new Image()
+            img.src = getCoverUrl(alb.id)
+            preloadedCoversRef.current.add(alb.id)
+          }
+        })
+      }
+    } catch (e) {
+      console.warn('Failed to load audio library into memory', e)
+    } finally {
+      setIsLibraryLoading(false)
+    }
+  }, [libraryLoaded])
+
+  useEffect(() => {
+    loadLibrary()
+  }, [loadLibrary])
+
+  const getAlbumById = useCallback((albumId: string) => {
+    if (!librarySummary || !librarySummary.albums) return undefined
+    return librarySummary.albums.find((a) => a.id === albumId)
+  }, [librarySummary])
 
   const getAnalyser = () => {
     if (!analyserRef.current && audioRef.current) {
@@ -479,6 +531,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         toggleTvView,
         visualizerMode,
         setVisualizerMode,
+        librarySummary,
+        playlists,
+        isLibraryLoading,
+        libraryLoaded,
+        loadLibrary,
+        getAlbumById,
         playTrack,
         togglePlayPause,
         nextTrack,
