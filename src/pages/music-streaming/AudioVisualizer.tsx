@@ -81,16 +81,39 @@ export function AudioVisualizer({
 
       // Calculate target heights for each bar
       const targetHeights: number[] = []
-      const step = dataArray && dataArray.length > 0 ? Math.floor(dataArray.length / barCount) : 1
+      const totalBins = dataArray ? dataArray.length : 0
 
       for (let i = 0; i < barCount; i++) {
         let val = 0
         if (isPlaying) {
-          if (hasRealAudio && dataArray) {
-            const idx = Math.min(i * step, dataArray.length - 1)
-            val = dataArray[idx] / 255
+          if (hasRealAudio && dataArray && totalBins > 0) {
+            // Map bars logarithmically to match human pitch perception
+            // (Low bass on the left, mids in center, treble/air on the right)
+            const norm = barCount > 1 ? i / (barCount - 1) : 0
+            // Focus on musical spectrum (up to ~16-18 kHz, ignoring inaudible bins)
+            const maxBin = Math.max(1, Math.floor(totalBins * 0.85))
+            const centerBin = Math.min(
+              maxBin,
+              Math.max(0, Math.round(Math.pow(norm, 1.5) * maxBin))
+            )
+
+            // Average adjacent bins in that frequency band to capture rich dynamics
+            const span = Math.max(1, Math.floor(norm * 3))
+            const startBin = Math.max(0, centerBin - span)
+            const endBin = Math.min(totalBins - 1, centerBin + span)
+            let sum = 0
+            let count = 0
+            for (let b = startBin; b <= endBin; b++) {
+              sum += dataArray[b]
+              count++
+            }
+            const raw = count > 0 ? (sum / count) / 255 : 0
+
+            // Apply equal-loudness gain curve (high frequencies naturally carry lower amplitude than kicks)
+            const gainCompensation = 1 + Math.pow(norm, 0.75) * 0.6
+            val = Math.min(1, raw * gainCompensation)
           } else {
-            // Harmonic fallback when audio is playing
+            // Harmonic fallback when audio is playing but analyser is pending user gesture
             const harmonic1 = Math.sin(phase * 1.5 + i * 0.45)
             const harmonic2 = Math.cos(phase * 2.2 + i * 0.8)
             const harmonic3 = Math.sin(phase * 0.7 - i * 0.3)
