@@ -37,6 +37,7 @@ export interface RemoteCommand {
     coverUrl?: string
     repeatMode?: 'off' | 'all' | 'one'
     isShuffle?: boolean
+    isMixerEnabled?: boolean
     visualizerMode?: 'bars' | 'mirror' | 'wave'
     showTvView?: boolean
     // STATUS payload fields (TV -> remote)
@@ -67,6 +68,7 @@ export interface RemoteStatus {
     coverUrl?: string
     repeatMode?: 'off' | 'all' | 'one'
     isShuffle?: boolean
+    isMixerEnabled?: boolean
     visualizerMode?: 'bars' | 'mirror' | 'wave'
     showTvView?: boolean
 }

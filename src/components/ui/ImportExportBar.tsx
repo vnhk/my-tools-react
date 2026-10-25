@@ -64,12 +64,16 @@ export function ImportExportBar({exportUrl, importUrl, entityLabel, onImportSucc
                 <FaDownload/>
                 <span>Export</span>
             </button>
-            <button className={styles.btn} onClick={() => fileRef.current?.click()}
-                    title={`Import ${entityLabel} from JSON`}>
-                <FaUpload/>
-                <span>Import</span>
-            </button>
-            <input ref={fileRef} type="file" accept=".json" style={{display: 'none'}} onChange={handleFileChange}/>
+            {importUrl && (
+                <>
+                    <button className={styles.btn} onClick={() => fileRef.current?.click()}
+                            title={`Import ${entityLabel} from JSON`}>
+                        <FaUpload/>
+                        <span>Import</span>
+                    </button>
+                    <input ref={fileRef} type="file" accept=".json" style={{display: 'none'}} onChange={handleFileChange}/>
+                </>
+            )}
         </div>
     )
 }

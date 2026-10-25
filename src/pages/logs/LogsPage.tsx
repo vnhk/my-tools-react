@@ -425,7 +425,7 @@ export function LogsPage() {
                     exportUrl="/logs/export"
                     importUrl=""
                     entityLabel="Logs"
-                    filters={filters}
+                    filters={{ ...filters, ...(appName ? { appName } : {}) }}
                 />
                 <EntityFilters
                     entityName="LogEntity"

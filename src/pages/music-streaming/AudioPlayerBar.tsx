@@ -7,6 +7,7 @@ import {
   FaStepBackward,
   FaRandom,
   FaRedo,
+  FaSlidersH,
   FaVolumeUp,
   FaVolumeMute,
   FaListUl,
@@ -41,6 +42,7 @@ export function AudioPlayerBar() {
     isMuted,
     repeatMode,
     isShuffle,
+    isMixerEnabled,
     isTvViewOpen,
     toggleTvView,
     togglePlayPause,
@@ -51,6 +53,7 @@ export function AudioPlayerBar() {
     toggleMute,
     toggleRepeatMode,
     toggleShuffle,
+    toggleMixer,
     removeFromQueue,
     clearQueue,
     playTrack,
@@ -142,6 +145,17 @@ export function AudioPlayerBar() {
               <FaRedo />
               {repeatMode === 'one' && (
                 <span style={{ fontSize: 9, marginLeft: -4, fontWeight: 700 }}>1</span>
+              )}
+            </button>
+            <button
+              className={`${styles.controlBtn} ${isMixerEnabled ? styles.controlBtnActive : ''}`}
+              onClick={toggleMixer}
+              title={`Auto-Mixer (skip 10s intro & outro silence): ${isMixerEnabled ? 'ON' : 'OFF'}`}
+              style={{ position: 'relative' }}
+            >
+              <FaSlidersH />
+              {isMixerEnabled && (
+                <span className={styles.mixerBadge}>10s</span>
               )}
             </button>
           </div>

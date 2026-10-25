@@ -17,6 +17,7 @@ interface AudioPlayerContextType {
   isMuted: boolean
   repeatMode: 'off' | 'all' | 'one'
   isShuffle: boolean
+  isMixerEnabled: boolean
   isTv: boolean
   isTvViewOpen: boolean
   setIsTvViewOpen: (open: boolean) => void
@@ -38,6 +39,7 @@ interface AudioPlayerContextType {
   toggleMute: () => void
   toggleRepeatMode: () => void
   toggleShuffle: () => void
+  toggleMixer: () => void
   addToQueue: (track: AudioTrack) => void
   removeFromQueue: (index: number) => void
   clearQueue: () => void
@@ -66,6 +68,31 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   const [isMuted, setIsMuted] = useState(false)
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off')
   const [isShuffle, setIsShuffle] = useState(false)
+  const [isMixerEnabled, setIsMixerEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('music_player_mixer') === 'true'
+  })
+
+  const isMixerEnabledRef = useRef(isMixerEnabled)
+  isMixerEnabledRef.current = isMixerEnabled
+  const isTransitioningRef = useRef(false)
+  const pendingMixerStartRef = useRef(false)
+  const nextTrackRef = useRef<() => void>(() => {})
+
+  const toggleMixer = useCallback(() => {
+    setIsMixerEnabled((prev) => {
+      const next = !prev
+      localStorage.setItem('music_player_mixer', String(next))
+      if (next && audioRef.current) {
+        const cur = audioRef.current.currentTime
+        const dur = audioRef.current.duration
+        if (dur && dur > 25 && cur < 10) {
+          audioRef.current.currentTime = 10
+          setCurrentTime(10)
+        }
+      }
+      return next
+    })
+  }, [])
 
   const isTv = useIsTv()
   const [isTvViewOpen, setIsTvViewOpen] = useState(false)
@@ -153,11 +180,47 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     audio.crossOrigin = 'anonymous'
     audioRef.current = audio
 
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime)
+    const applyMixerStart = () => {
+      if (pendingMixerStartRef.current && audio.duration && audio.duration > 25) {
+        try {
+          audio.currentTime = 10
+          setCurrentTime(10)
+        } catch (e) {
+          // ignore seek error
+        }
+        pendingMixerStartRef.current = false
+      }
+    }
+
+    const onTimeUpdate = () => {
+      const cur = audio.currentTime
+      const dur = audio.duration
+      setCurrentTime(cur)
+
+      if (
+        isMixerEnabledRef.current &&
+        !isTransitioningRef.current &&
+        dur &&
+        dur > 25 &&
+        cur >= dur - 10
+      ) {
+        isTransitioningRef.current = true
+        nextTrackRef.current()
+      }
+    }
+
     const onLoadedMetadata = () => {
       setDuration(audio.duration || 0)
-      if (audio.currentTime !== 0) setCurrentTime(audio.currentTime)
+      applyMixerStart()
+      if (!pendingMixerStartRef.current && audio.currentTime !== 0) {
+        setCurrentTime(audio.currentTime)
+      }
     }
+
+    const onCanPlay = () => {
+      applyMixerStart()
+    }
+
     const onPlay = () => {
       setIsPlaying(true)
       if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
@@ -172,6 +235,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
     audio.addEventListener('timeupdate', onTimeUpdate)
     audio.addEventListener('loadedmetadata', onLoadedMetadata)
+    audio.addEventListener('canplay', onCanPlay)
     audio.addEventListener('play', onPlay)
     audio.addEventListener('pause', onPause)
     audio.addEventListener('error', onError)
@@ -179,6 +243,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate)
       audio.removeEventListener('loadedmetadata', onLoadedMetadata)
+      audio.removeEventListener('canplay', onCanPlay)
       audio.removeEventListener('play', onPlay)
       audio.removeEventListener('pause', onPause)
       audio.removeEventListener('error', onError)
@@ -205,6 +270,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const idx = newQueue.findIndex((t) => t.id === track.id)
     setQueueIndex(idx >= 0 ? idx : 0)
 
+    isTransitioningRef.current = false
+    pendingMixerStartRef.current = isMixerEnabledRef.current
+
     if (audioRef.current) {
       const streamUrl = getTrackStreamUrl(track.id)
       audioRef.current.src = streamUrl
@@ -214,6 +282,13 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         .then(() => {
           setIsPlaying(true)
           if (isTv) setIsTvViewOpen(true)
+          if (pendingMixerStartRef.current && audioRef.current && audioRef.current.duration > 25) {
+            try {
+              audioRef.current.currentTime = 10
+              setCurrentTime(10)
+            } catch (e) {}
+            pendingMixerStartRef.current = false
+          }
         })
         .catch((err) => {
           console.warn('Play was prevented or failed:', err)
@@ -252,8 +327,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (queue.length === 0 || queueIndex < 0) return
 
     if (repeatMode === 'one' && audioRef.current) {
-      audioRef.current.currentTime = 0
+      const startAt = isMixerEnabled ? 10 : 0
+      audioRef.current.currentTime = startAt
+      setCurrentTime(startAt)
       audioRef.current.play()
+      isTransitioningRef.current = false
       return
     }
 
@@ -266,7 +344,11 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         if (repeatMode === 'all') {
           nextIdx = 0
         } else {
+          if (audioRef.current) {
+            audioRef.current.pause()
+          }
           setIsPlaying(false)
+          isTransitioningRef.current = false
           return
         }
       }
@@ -279,15 +361,24 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }
 
+  nextTrackRef.current = nextTrack
+
   const prevTrack = () => {
     if (!audioRef.current) return
-    if (audioRef.current.currentTime > 3) {
-      audioRef.current.currentTime = 0
+    const restartThreshold = isMixerEnabled ? 13 : 3
+    if (audioRef.current.currentTime > restartThreshold) {
+      const startAt = isMixerEnabled ? 10 : 0
+      audioRef.current.currentTime = startAt
+      setCurrentTime(startAt)
+      isTransitioningRef.current = false
       return
     }
 
     if (queue.length === 0 || queueIndex <= 0) {
-      audioRef.current.currentTime = 0
+      const startAt = isMixerEnabled ? 10 : 0
+      audioRef.current.currentTime = startAt
+      setCurrentTime(startAt)
+      isTransitioningRef.current = false
       return
     }
 
@@ -303,6 +394,10 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (audioRef.current) {
       audioRef.current.currentTime = seconds
       setCurrentTime(seconds)
+      const dur = audioRef.current.duration || 0
+      if (dur > 25 && seconds < dur - 10) {
+        isTransitioningRef.current = false
+      }
     }
   }
 
@@ -388,6 +483,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         coverUrl: currentAlbum?.hasCover ? getCoverUrl(currentAlbum.id) : undefined,
         repeatMode,
         isShuffle,
+        isMixerEnabled,
         visualizerMode,
         showTvView: isTvViewOpen,
       })
@@ -403,6 +499,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     duration,
     repeatMode,
     isShuffle,
+    isMixerEnabled,
     visualizerMode,
     isTvViewOpen,
   ])
@@ -462,6 +559,9 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         case 'TOGGLE_REPEAT':
           toggleRepeatMode()
           break
+        case 'TOGGLE_MIXER':
+          toggleMixer()
+          break
         case 'TOGGLE_TV_VIEW':
         case 'FULLSCREEN':
         case 'FULLSCREEN_PROMPT':
@@ -508,6 +608,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     toggleMute,
     toggleShuffle,
     toggleRepeatMode,
+    toggleMixer,
     isTv,
   ])
 
@@ -525,6 +626,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         isMuted,
         repeatMode,
         isShuffle,
+        isMixerEnabled,
         isTv,
         isTvViewOpen,
         setIsTvViewOpen,
@@ -546,6 +648,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         toggleMute,
         toggleRepeatMode,
         toggleShuffle,
+        toggleMixer,
         addToQueue,
         removeFromQueue,
         clearQueue,

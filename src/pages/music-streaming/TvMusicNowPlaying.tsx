@@ -6,6 +6,7 @@ import {
   FaStepBackward,
   FaRandom,
   FaRedo,
+  FaSlidersH,
   FaVolumeUp,
   FaVolumeMute,
   FaTv,
@@ -38,6 +39,7 @@ export function TvMusicNowPlaying() {
     isMuted,
     repeatMode,
     isShuffle,
+    isMixerEnabled,
     isTvViewOpen,
     setIsTvViewOpen,
     visualizerMode,
@@ -50,6 +52,7 @@ export function TvMusicNowPlaying() {
     toggleMute,
     toggleRepeatMode,
     toggleShuffle,
+    toggleMixer,
   } = useAudioPlayer()
 
   const remoteContext = useOptionalRemoteControlContext()
@@ -106,6 +109,10 @@ export function TvMusicNowPlaying() {
           e.preventDefault()
           cycleVisualizerMode()
           break
+        case 'KeyX':
+          e.preventDefault()
+          toggleMixer()
+          break
         case 'Escape':
           e.preventDefault()
           setIsTvViewOpen(false)
@@ -127,6 +134,7 @@ export function TvMusicNowPlaying() {
     prevTrack,
     toggleMute,
     cycleVisualizerMode,
+    toggleMixer,
     setIsTvViewOpen,
   ])
 
@@ -327,6 +335,29 @@ export function TvMusicNowPlaying() {
                     <span style={{ fontSize: 10, marginLeft: -3, fontWeight: 700 }}>1</span>
                   )}
                 </button>
+
+                <button
+                  className={`${styles.ctrlBtn} ${isMixerEnabled ? styles.ctrlBtnActive : ''}`}
+                  onClick={toggleMixer}
+                  title={`Auto-Mixer (skip 10s intro & outro silence): ${isMixerEnabled ? 'ON' : 'OFF'} (X)`}
+                  style={{ position: 'relative' }}
+                >
+                  <FaSlidersH />
+                  {isMixerEnabled && (
+                    <span style={{
+                      position: 'absolute',
+                      bottom: -2,
+                      right: -3,
+                      fontSize: 8,
+                      fontWeight: 800,
+                      lineHeight: 1,
+                      background: 'var(--color-primary)',
+                      color: '#fff',
+                      padding: '1px 2px',
+                      borderRadius: 3,
+                    }}>10s</span>
+                  )}
+                </button>
               </div>
 
               {/* Volume Slider */}
@@ -372,6 +403,7 @@ export function TvMusicNowPlaying() {
             <span><kbd className={styles.kbd}>←</kbd> <kbd className={styles.kbd}>→</kbd> Seek</span>
             <span><kbd className={styles.kbd}>N</kbd> Next</span>
             <span><kbd className={styles.kbd}>V</kbd> Visualizer</span>
+            <span><kbd className={styles.kbd}>X</kbd> Auto-Mixer</span>
             <span><kbd className={styles.kbd}>Esc</kbd> Browse</span>
           </div>
         </footer>
