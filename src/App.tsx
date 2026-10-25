@@ -33,6 +33,10 @@ import StreamingLayout from "./pages/streaming-platform/StreamingLayout";
 import MusicLayout from "./pages/music-streaming/MusicLayout";
 import MusicDashboardPage from "./pages/music-streaming/MusicDashboardPage";
 import AlbumDetailPage from "./pages/music-streaming/AlbumDetailPage";
+import PhotoLibraryLayout from "./pages/photo-library/PhotoLibraryLayout";
+import { PhotoTimelinePage } from "./pages/photo-library/PhotoTimelinePage";
+import { AlbumsPage } from "./pages/photo-library/AlbumsPage";
+import { AlbumDetailPage as PhotoAlbumDetailPage } from "./pages/photo-library/AlbumDetailPage";
 import { FilesPage } from "./pages/files/FilesPage";
 import TvFileDisplay from "./pages/files/TvFileDisplay";
 import { ProjectListPage } from "./pages/projects/ProjectListPage";
@@ -54,6 +58,7 @@ import {
   FaFlag,
   FaFolder,
   FaHome,
+  FaImages,
   FaMicrophone,
   FaMoneyBill,
   FaMusic,
@@ -214,6 +219,12 @@ const cards: HomePageCard[] = [
     route: "/music",
   },
   {
+    title: "Photos",
+    description: "Browse photos, videos, and albums with tags.",
+    icon: <FaImages />,
+    route: "/photos",
+  },
+  {
     title: "Shopping",
     description: "Shop and manage your products.",
     icon: <FaShoppingCart />,
@@ -248,6 +259,7 @@ const NAV_ITEMS: NavItem[] = [
   { path: "/spanish", label: "Spanish", icon: <FaFlag /> },
   { path: "/streaming", label: "Streaming", icon: <FaFilm /> },
   { path: "/music", label: "Music", icon: <FaMusic /> },
+  { path: "/photos", label: "Photos", icon: <FaImages /> },
   { path: "/canvas", label: "Canvas", icon: <FaPaintBrush /> },
   { path: "/invest-track", label: "Invest Track", icon: <FaChartLine /> },
   { path: "/spreadsheet", label: "Spreadsheet", icon: <FaTable /> },
@@ -397,6 +409,13 @@ export default function App() {
                   <Route index element={<MusicDashboardPage />} />
                   <Route path="album/:albumId" element={<AlbumDetailPage />} />
                 </Route>
+                <Route path="/photos" element={<PhotoLibraryLayout />}>
+                  <Route index element={<PhotoTimelinePage />} />
+                  <Route path="albums" element={<AlbumsPage />} />
+                  <Route path="albums/:albumId" element={<PhotoAlbumDetailPage />} />
+                  <Route path="favorites" element={<PhotoTimelinePage favoriteOnly />} />
+                  <Route path="videos" element={<PhotoTimelinePage videoOnly />} />
+                </Route>
                 <Route path="/english" element={<LanguageLearningLayout />}>
                   <Route index element={<Navigate to="words" replace />} />
                   <Route path="words" element={<WordListPage />} />
@@ -469,6 +488,7 @@ export default function App() {
                     item.path !== "/cook-book" &&
                     item.path !== "/streaming" &&
                     item.path !== "/music" &&
+                    item.path !== "/photos" &&
                     item.path !== "/projects" &&
                     item.path !== "/english" &&
                     item.path !== "/spanish" &&
