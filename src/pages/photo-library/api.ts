@@ -15,6 +15,32 @@ export function getPhotoFileUrl(id: string): string {
   return token ? `${base}?token=${encodeURIComponent(token)}` : base
 }
 
+export function getPhotoDownloadUrl(id: string): string {
+  const token = localStorage.getItem('token')
+  const base = `/api/photos/${encodeURIComponent(id)}/file?download=true`
+  return token ? `${base}&token=${encodeURIComponent(token)}` : base
+}
+
+export function getAlbumZipDownloadUrl(albumId: string): string {
+  const token = localStorage.getItem('token')
+  const base = `/api/photos/albums/${encodeURIComponent(albumId)}/download-zip`
+  return token ? `${base}?token=${encodeURIComponent(token)}` : base
+}
+
+export async function downloadPhotosZip(ids: string[]) {
+  const response = await client.post('/photos/download-zip', ids, {
+    responseType: 'blob',
+  })
+  const url = window.URL.createObjectURL(new Blob([response.data]))
+  const link = document.createElement('a')
+  link.href = url
+  link.setAttribute('download', `photos_${Date.now()}.zip`)
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  window.URL.revokeObjectURL(url)
+}
+
 export function getPhotoThumbnailUrl(id: string): string {
   const token = localStorage.getItem('token')
   const base = `/api/photos/${encodeURIComponent(id)}/thumbnail`

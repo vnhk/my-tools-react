@@ -16,7 +16,7 @@ import {
   FaPlus,
 } from 'react-icons/fa'
 import type { PhotoItem } from './types'
-import { getPhotoFileUrl, toggleFavorite, deletePhoto, updatePhotoTags } from './api'
+import { getPhotoFileUrl, getPhotoDownloadUrl, toggleFavorite, deletePhoto, updatePhotoTags } from './api'
 import styles from './PhotoLightboxModal.module.css'
 
 interface Props {
@@ -221,7 +221,7 @@ export function PhotoLightboxModal({
           </button>
 
           <a
-            href={fileUrl}
+            href={getPhotoDownloadUrl(currentItem.id)}
             download={currentItem.filename}
             className={styles.toolBtn}
             title="Download file"

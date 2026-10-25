@@ -8,6 +8,8 @@ import {
   FaTag,
   FaTrash,
   FaTimes,
+  FaDownload,
+  FaCloudUploadAlt,
 } from 'react-icons/fa'
 import type { PhotoItem } from './types'
 import {
@@ -17,6 +19,8 @@ import {
   toggleFavorite,
   deletePhoto,
   batchUpdateTags,
+  downloadPhotosZip,
+  uploadPhoto,
 } from './api'
 import { PhotoLightboxModal } from './PhotoLightboxModal'
 import styles from './PhotoTimelinePage.module.css'
@@ -35,6 +39,45 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+
+  const handleBatchDownload = async () => {
+    if (selectedIds.size === 0) return
+    try {
+      await downloadPhotosZip(Array.from(selectedIds))
+    } catch (e) {
+      console.error('Failed to download ZIP:', e)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+  }
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragOver(false)
+    const files = e.dataTransfer.files
+    if (!files || files.length === 0) return
+
+    for (let i = 0; i < files.length; i++) {
+      try {
+        await uploadPhoto(files[i])
+      } catch (err) {
+        console.error('Failed to upload dropped file:', files[i].name, err)
+      }
+    }
+    loadData()
+  }
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -143,7 +186,33 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
   }, [tagsMap])
 
   return (
-    <div className={styles.pageContainer}>
+    <div
+      className={styles.pageContainer}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      style={{ position: 'relative' }}
+    >
+      {isDragOver && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(99, 102, 241, 0.85)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            backdropFilter: 'blur(8px)',
+            pointerEvents: 'none',
+          }}
+        >
+          <FaCloudUploadAlt size={64} />
+          <h2 style={{ margin: '16px 0 0 0', fontSize: '24px' }}>Drop photos or videos to upload</h2>
+        </div>
+      )}
       {/* Search & Tag Filter Bar */}
       <div className={styles.filterBar}>
         <div className={styles.searchRow}>
@@ -271,6 +340,10 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
       {selectedIds.size > 0 && (
         <div className={styles.floatingBar}>
           <span className={styles.batchCount}>Selected: {selectedIds.size}</span>
+          <button className={styles.batchBtn} onClick={handleBatchDownload} title="Download selected photos as ZIP archive">
+            <FaDownload />
+            <span>Download ZIP</span>
+          </button>
           <button className={styles.batchBtn} onClick={handleBatchAddTag}>
             <FaTag />
             <span>Add Tag</span>
