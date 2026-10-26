@@ -26,6 +26,9 @@ import {Checkbox} from '../../components/fields/Checkbox'
 import {useNotification} from '../../components/ui/Notification'
 import styles from './FilesPage.module.css'
 import {AxiosError} from "axios";
+import {useSearchParams} from 'react-router-dom'
+import {TrashConflictModal, TrashConflictData} from './TrashConflictModal'
+import {TrashView} from './TrashView'
 
 interface FileItem {
     id: string
@@ -163,12 +166,13 @@ function UploadDialog({currentPath, onClose, onUploaded}: {
     const [extract, setExtract] = useState(false)
     const [dragging, setDragging] = useState(false)
     const [busy, setBusy] = useState(false)
+    const [trashConflictData, setTrashConflictData] = useState<TrashConflictData | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const folderInputRef = useRef<HTMLInputElement>(null)
 
     const isZip = file?.name.toLowerCase().endsWith('.zip') ?? false
 
-    const doUpload = async () => {
+    const doUpload = async (overwriteTrash: boolean = false) => {
         const files = tab === 'file' ? (file ? [file] : []) : Array.from(folderFiles ?? [])
         if (files.length === 0) {
             showNotification('Please select a file', 'error');
@@ -179,13 +183,23 @@ function UploadDialog({currentPath, onClose, onUploaded}: {
             const fd = new FormData()
             files.forEach((f) => fd.append('files', f))
             await client.post('/files/upload', fd, {
-                params: {path: currentPath, description, extract: tab === 'file' && extract},
+                params: {
+                    path: currentPath,
+                    description,
+                    extract: tab === 'file' && extract,
+                    overwriteTrash,
+                },
             })
             showNotification('Uploaded successfully', 'success')
+            setTrashConflictData(null)
             onUploaded()
             onClose()
-        } catch {
-            showNotification('Upload failed', 'error')
+        } catch (e: any) {
+            if (e?.response?.status === 409 && e?.response?.data?.conflict) {
+                setTrashConflictData(e.response.data as TrashConflictData)
+            } else {
+                showNotification('Upload failed', 'error')
+            }
         } finally {
             setBusy(false)
         }
@@ -207,7 +221,7 @@ function UploadDialog({currentPath, onClose, onUploaded}: {
                 footer={
                     <>
                         <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                        <Button variant="primary" onClick={doUpload} disabled={busy}>Upload</Button>
+                        <Button variant="primary" onClick={() => doUpload(false)} disabled={busy}>Upload</Button>
                     </>
                 }
         >
@@ -292,6 +306,14 @@ function UploadDialog({currentPath, onClose, onUploaded}: {
                     rows={2}
                 />
             </div>
+
+            {trashConflictData && (
+                <TrashConflictModal
+                    data={trashConflictData}
+                    onCancel={() => setTrashConflictData(null)}
+                    onContinue={() => doUpload(true)}
+                />
+            )}
         </DynamicFormDialog>
     )
 }
@@ -596,6 +618,20 @@ export function FilesPage() {
     const [uploadDialog, setUploadDialog] = useState(false)
     const [syncing, setSyncing] = useState(false)
     const [calculatingFolderId, setCalculatingFolderId] = useState<string | null>(null)
+    const [searchParams, setSearchParams] = useSearchParams()
+    const isTrashView = searchParams.get('view') === 'trash'
+    const highlightId = searchParams.get('highlight')
+    const [trashCount, setTrashCount] = useState<number>(0)
+
+    const loadTrashCount = useCallback(() => {
+        client.get<any[]>('/files/trash')
+            .then((r) => setTrashCount(r.data.length))
+            .catch(() => {})
+    }, [])
+
+    useEffect(() => {
+        loadTrashCount()
+    }, [loadTrashCount])
 
     const load = useCallback((p: string) => {
         setLoading(true)
@@ -718,14 +754,15 @@ export function FilesPage() {
         }
     }
 
-    // Delete
+    // Delete (moves to trash)
     const doDelete = async () => {
         if (!deleteTarget) return
         try {
             await client.delete(`/files/${deleteTarget.id}`)
-            showNotification('Deleted', 'success')
+            showNotification('Moved to trash', 'success')
             setDeleteTarget(null)
             load(path)
+            loadTrashCount()
         } catch {
             showNotification('Delete failed', 'error')
         }
@@ -820,6 +857,21 @@ export function FilesPage() {
         return <img src={url} alt={item.filename} className={styles.tileImg} loading="lazy"/>;
     }
 
+    if (isTrashView) {
+        return (
+            <div className={styles.page}>
+                <TrashView
+                    highlightId={highlightId}
+                    onBackToFiles={() => {
+                        setSearchParams({})
+                        load(path)
+                        loadTrashCount()
+                    }}
+                />
+            </div>
+        )
+    }
+
     return (
         <div className={styles.page}>
             {/* Toolbar */}
@@ -863,6 +915,14 @@ export function FilesPage() {
                         setNewFolderDialog(true)
                     }}>
                         📁 New Folder
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        onClick={() => setSearchParams({view: 'trash'})}
+                        title="Open Trash"
+                    >
+                        <FaTrash color="var(--color-danger, #ef4444)"/>
+                        Trash {trashCount > 0 && `(${trashCount})`}
                     </Button>
                     <button className={styles.viewToggle} onClick={toggleViewMode}
                             title={viewMode === 'list' ? 'Switch to grid' : 'Switch to list'}>
