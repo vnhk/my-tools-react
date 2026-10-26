@@ -1,5 +1,6 @@
 import {Fragment, useCallback, useEffect, useRef, useState} from 'react'
 import {
+    FaCalculator,
     FaDownload,
     FaEdit,
     FaEye,
@@ -13,6 +14,7 @@ import {
     FaFolder,
     FaFolderOpen,
     FaLongArrowAltRight,
+    FaSync,
     FaTrash,
 } from 'react-icons/fa'
 import client from '../../api/client'
@@ -593,6 +595,7 @@ export function FilesPage() {
     const [pendingViewAfterUnlock, setPendingViewAfterUnlock] = useState<FileItem | null>(null)
     const [uploadDialog, setUploadDialog] = useState(false)
     const [syncing, setSyncing] = useState(false)
+    const [calculatingFolderId, setCalculatingFolderId] = useState<string | null>(null)
 
     const load = useCallback((p: string) => {
         setLoading(true)
@@ -746,6 +749,25 @@ export function FilesPage() {
             showNotification('Rename failed', 'error')
         } finally {
             setRenaming(null)
+        }
+    }
+
+    // Calculate folder size recursively
+    const handleCalculateFolderSize = async (item: FileItem) => {
+        if (!item.directory || calculatingFolderId) return
+        setCalculatingFolderId(item.id)
+        try {
+            const res = await client.post<number>(`/files/${item.id}/calculate-size`)
+            const totalSize = res.data
+            setItems((prev) =>
+                prev.map((it) => (it.id === item.id ? {...it, fileSize: totalSize} : it))
+            )
+            showNotification(`Calculated size for "${item.filename}": ${formatSize(totalSize)}`, 'success')
+        } catch (e) {
+            console.error('Failed to calculate folder size:', e)
+            showNotification(`Failed to calculate size for "${item.filename}"`, 'error')
+        } finally {
+            setCalculatingFolderId(null)
         }
     }
 
@@ -936,7 +958,28 @@ export function FilesPage() {
                                     )}
                                 </td>
                                 <td className={styles.cell} style={{textAlign: 'right'}}>
-                                    {item.directory ? '—' : formatSize(item.fileSize)}
+                                    {item.directory ? (
+                                        <span style={{display: 'inline-flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end'}}>
+                                            <span>{item.fileSize != null ? formatSize(item.fileSize) : '—'}</span>
+                                            <button
+                                                className={styles.actionBtn}
+                                                title="Calculate folder size"
+                                                disabled={calculatingFolderId === item.id}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleCalculateFolderSize(item)
+                                                }}
+                                            >
+                                                {calculatingFolderId === item.id ? (
+                                                    <FaSync className={styles.spinning} size={11} />
+                                                ) : (
+                                                    <FaCalculator size={11} />
+                                                )}
+                                            </button>
+                                        </span>
+                                    ) : (
+                                        formatSize(item.fileSize)
+                                    )}
                                 </td>
                                 <td className={styles.cell}>{formatDate(item.modificationDate)}</td>
                                 <td className={styles.cell}>
@@ -1029,6 +1072,35 @@ export function FilesPage() {
                                     <div className={styles.tileName} title={item.filename}>
                                         {item.filename}
                                     </div>
+                                    {item.directory && (
+                                        <div
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: 4,
+                                                fontSize: 11,
+                                                color: 'var(--color-text-secondary)',
+                                                marginTop: 2,
+                                                padding: '0 4px',
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <span>{item.fileSize != null ? formatSize(item.fileSize) : '—'}</span>
+                                            <button
+                                                className={styles.actionBtn}
+                                                title="Calculate folder size"
+                                                disabled={calculatingFolderId === item.id}
+                                                onClick={() => handleCalculateFolderSize(item)}
+                                                style={{padding: 2, border: 'none', background: 'none'}}
+                                            >
+                                                {calculatingFolderId === item.id ? (
+                                                    <FaSync className={styles.spinning} size={10} />
+                                                ) : (
+                                                    <FaCalculator size={10} />
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
                                     {item.encrypted && <span className={styles.encBadge}
                                                              style={{
                                                                  alignSelf: 'center',

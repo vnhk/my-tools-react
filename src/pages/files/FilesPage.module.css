@@ -424,3 +424,12 @@
   background: rgba(165,180,252,0.1);
   color: var(--color-primary);
 }
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
