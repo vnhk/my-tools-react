@@ -147,7 +147,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     return librarySummary.albums.find((a) => a.id === albumId)
   }, [librarySummary])
 
-  const getAnalyser = () => {
+  const getAnalyser = useCallback(() => {
     if (!analyserRef.current && audioRef.current) {
       try {
         const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
@@ -171,7 +171,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
       audioCtxRef.current.resume().catch(() => {})
     }
     return analyserRef.current
-  }
+  }, [])
 
   // Initialize audio element
   useEffect(() => {

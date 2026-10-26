@@ -24,6 +24,9 @@ export function AudioVisualizer({
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const { getAnalyser } = useAudioPlayer()
+  const getAnalyserRef = useRef(getAnalyser)
+  getAnalyserRef.current = getAnalyser
+
   const animFrameRef = useRef<number | null>(null)
   const prevHeightsRef = useRef<number[]>([])
   const peakCapsRef = useRef<{ y: number; speed: number }[]>([])
@@ -55,7 +58,7 @@ export function AudioVisualizer({
       animFrameRef.current = requestAnimationFrame(render)
 
       if (!analyser) {
-        analyser = getAnalyser()
+        analyser = getAnalyserRef.current()
         if (analyser) {
           dataArray = new Uint8Array(analyser.frequencyBinCount)
         }
@@ -125,12 +128,13 @@ export function AudioVisualizer({
         targetHeights.push(val)
       }
 
-      // Smooth interpolation
+      // Smooth interpolation with snappy attack and smooth natural decay
       for (let i = 0; i < barCount; i++) {
         const target = targetHeights[i] * (height - 4)
-        const prev = prevHeightsRef.current[i] || 2
-        // Lerp
-        const current = prev + (target - prev) * 0.25
+        const prev = prevHeightsRef.current[i] ?? 2
+        // Snappy rise (0.45) so beats hit with instant impact, smooth fall (0.20) for visual elegance
+        const factor = target > prev ? 0.45 : 0.20
+        const current = prev + (target - prev) * factor
         prevHeightsRef.current[i] = current
 
         // Update peak caps
@@ -164,7 +168,7 @@ export function AudioVisualizer({
         cancelAnimationFrame(animFrameRef.current)
       }
     }
-  }, [width, height, barCount, mode, isPlaying, getAnalyser, accentColor])
+  }, [width, height, barCount, mode, isPlaying, accentColor])
 
   return <canvas ref={canvasRef} className={className} />
 }

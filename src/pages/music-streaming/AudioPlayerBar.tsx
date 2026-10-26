@@ -13,13 +13,11 @@ import {
   FaListUl,
   FaMusic,
   FaTimes,
-  FaWaveSquare,
   FaTv,
 } from 'react-icons/fa'
 import { useAudioPlayer } from './AudioPlayerContext'
 import { getCoverUrl } from './api'
 import { AudioVisualizer } from './AudioVisualizer'
-import { AudioVisualizerModal } from './AudioVisualizerModal'
 import styles from './AudioPlayerBar.module.css'
 
 function formatSeconds(secs: number): string {
@@ -60,7 +58,6 @@ export function AudioPlayerBar() {
   } = useAudioPlayer()
 
   const [showQueue, setShowQueue] = useState(false)
-  const [showVisualizer, setShowVisualizer] = useState(false)
 
   if (!currentTrack) {
     return null
@@ -107,10 +104,15 @@ export function AudioPlayerBar() {
           {/* Mini Live Visualizer */}
           <div
             className={styles.miniVisualizerWrap}
-            onClick={() => setShowVisualizer(true)}
-            title="Click to open full Visualizer"
+            onClick={toggleTvView}
+            title="Click to open Fullscreen / TV View"
           >
-            <AudioVisualizer width={52} height={26} barCount={10} isPlaying={isPlaying} />
+            <AudioVisualizer
+              width={52}
+              height={26}
+              barCount={10}
+              isPlaying={isPlaying && !isTvViewOpen}
+            />
           </div>
         </div>
 
@@ -180,19 +182,10 @@ export function AudioPlayerBar() {
           <button
             className={`${styles.controlBtn} ${isTvViewOpen ? styles.controlBtnActive : ''}`}
             onClick={toggleTvView}
-            title="TV Mode / Fullscreen Now Playing"
+            title="TV Mode / Fullscreen Visualizer (V)"
             style={{ color: isTvViewOpen ? 'var(--color-primary)' : undefined }}
           >
             <FaTv />
-          </button>
-
-          <button
-            className={`${styles.controlBtn} ${showVisualizer ? styles.controlBtnActive : ''}`}
-            onClick={() => setShowVisualizer((prev) => !prev)}
-            title="Audio Visualizer (Jumping Equalizer Bars)"
-            style={{ color: showVisualizer ? 'var(--color-primary)' : undefined }}
-          >
-            <FaWaveSquare />
           </button>
 
           <button
@@ -266,10 +259,6 @@ export function AudioPlayerBar() {
             })}
           </div>
         </div>
-      )}
-
-      {showVisualizer && (
-        <AudioVisualizerModal onClose={() => setShowVisualizer(false)} />
       )}
     </>
   )

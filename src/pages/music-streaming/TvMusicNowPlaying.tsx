@@ -262,8 +262,8 @@ export function TvMusicNowPlaying() {
             <div className={styles.visualizerContainer}>
               <AudioVisualizer
                 width={560}
-                height={100}
-                barCount={36}
+                height={120}
+                barCount={32}
                 mode={visualizerMode}
                 isPlaying={isPlaying}
               />
