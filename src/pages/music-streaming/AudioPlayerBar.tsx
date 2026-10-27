@@ -41,6 +41,7 @@ export function AudioPlayerBar() {
     repeatMode,
     isShuffle,
     isMixerEnabled,
+    isCrossfading,
     isTvViewOpen,
     toggleTvView,
     togglePlayPause,
@@ -152,12 +153,14 @@ export function AudioPlayerBar() {
             <button
               className={`${styles.controlBtn} ${isMixerEnabled ? styles.controlBtnActive : ''}`}
               onClick={toggleMixer}
-              title={`Auto-Mixer (skip 10s intro & outro silence): ${isMixerEnabled ? 'ON' : 'OFF'}`}
+              title={`DJ Auto-Mixer (10s Dual-Deck Crossfade & Bass Filter): ${isMixerEnabled ? 'ON' : 'OFF'}`}
               style={{ position: 'relative' }}
             >
               <FaSlidersH />
               {isMixerEnabled && (
-                <span className={styles.mixerBadge}>10s</span>
+                <span className={styles.mixerBadge}>
+                  {isCrossfading ? 'MIX' : '10s'}
+                </span>
               )}
             </button>
           </div>

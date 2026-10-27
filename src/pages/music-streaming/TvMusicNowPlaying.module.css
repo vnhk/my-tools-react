@@ -262,6 +262,30 @@
   letter-spacing: 0.04em;
 }
 
+.djBadge {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(139, 92, 246, 0.25));
+  border: 1px solid rgba(236, 72, 153, 0.4);
+  color: #f472b6;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  animation: djPulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes djPulse {
+  0% {
+    box-shadow: 0 0 8px rgba(236, 72, 153, 0.2);
+    transform: scale(1);
+  }
+  100% {
+    box-shadow: 0 0 16px rgba(236, 72, 153, 0.5);
+    transform: scale(1.04);
+  }
+}
+
 /* ══ Live Visualizer in TV View ═══════════════════════════════════ */
 .visualizerContainer {
   margin-top: 8px;

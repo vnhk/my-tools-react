@@ -4,6 +4,7 @@ import { getTrackStreamUrl, getCoverUrl, fetchAlbum, fetchAudioSummary, fetchPla
 import type { VisualizerMode } from './AudioVisualizer'
 import { useIsTv } from '../../common/hooks/useIsTv'
 import { useOptionalRemoteControlContext } from '../../components/layout/RemoteControlProvider'
+import { pickHarmonicCandidate } from './harmonicMixing'
 
 interface AudioPlayerContextType {
   currentTrack: AudioTrack | null
@@ -11,6 +12,7 @@ interface AudioPlayerContextType {
   queue: AudioTrack[]
   queueIndex: number
   isPlaying: boolean
+  isCrossfading: boolean
   currentTime: number
   duration: number
   volume: number
@@ -48,17 +50,30 @@ interface AudioPlayerContextType {
 
 const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null)
 
+interface DeckNode {
+  id: 'A' | 'B'
+  audio: HTMLAudioElement
+  source: MediaElementAudioSourceNode | null
+  filter: BiquadFilterNode | null
+  gain: GainNode | null
+}
+
 export function AudioPlayerProvider({ children }: { children: React.ReactNode }) {
+  // Dual-deck DJ audio engine
+  const deckARef = useRef<DeckNode | null>(null)
+  const deckBRef = useRef<DeckNode | null>(null)
+  const activeDeckRef = useRef<'A' | 'B'>('A')
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioCtxRef = useRef<AudioContext | null>(null)
+  const masterGainRef = useRef<GainNode | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
 
   const [currentTrack, setCurrentTrack] = useState<AudioTrack | null>(null)
   const [currentAlbum, setCurrentAlbum] = useState<AudioAlbum | null>(null)
   const [queue, setQueue] = useState<AudioTrack[]>([])
   const [queueIndex, setQueueIndex] = useState<number>(-1)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isCrossfading, setIsCrossfading] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolumeState] = useState<number>(() => {
@@ -72,27 +87,26 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     return localStorage.getItem('music_player_mixer') === 'true'
   })
 
+  // Synchronized refs for fresh values inside event handlers
+  const currentTrackRef = useRef(currentTrack)
+  currentTrackRef.current = currentTrack
+  const currentAlbumRef = useRef(currentAlbum)
+  currentAlbumRef.current = currentAlbum
+  const queueRef = useRef(queue)
+  queueRef.current = queue
+  const queueIndexRef = useRef(queueIndex)
+  queueIndexRef.current = queueIndex
   const isMixerEnabledRef = useRef(isMixerEnabled)
   isMixerEnabledRef.current = isMixerEnabled
-  const isTransitioningRef = useRef(false)
-  const pendingMixerStartRef = useRef(false)
-  const nextTrackRef = useRef<() => void>(() => {})
+  const repeatModeRef = useRef(repeatMode)
+  repeatModeRef.current = repeatMode
+  const isShuffleRef = useRef(isShuffle)
+  isShuffleRef.current = isShuffle
 
-  const toggleMixer = useCallback(() => {
-    setIsMixerEnabled((prev) => {
-      const next = !prev
-      localStorage.setItem('music_player_mixer', String(next))
-      if (next && audioRef.current) {
-        const cur = audioRef.current.currentTime
-        const dur = audioRef.current.duration
-        if (dur && dur > 25 && cur < 10) {
-          audioRef.current.currentTime = 10
-          setCurrentTime(10)
-        }
-      }
-      return next
-    })
-  }, [])
+  const isTransitioningRef = useRef(false)
+  const crossfadeTimerRef = useRef<number | null>(null)
+  const nextTrackRef = useRef<() => void>(() => {})
+  const startCrossfadeRef = useRef<() => void>(() => {})
 
   const isTv = useIsTv()
   const [isTvViewOpen, setIsTvViewOpen] = useState(false)
@@ -147,120 +161,364 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     return librarySummary.albums.find((a) => a.id === albumId)
   }, [librarySummary])
 
-  const getAnalyser = useCallback(() => {
-    if (!analyserRef.current && audioRef.current) {
-      try {
-        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-        if (AudioCtx) {
-          const ctx = new AudioCtx()
-          const analyser = ctx.createAnalyser()
-          analyser.fftSize = 128
-          analyser.smoothingTimeConstant = 0.78
-          const source = ctx.createMediaElementSource(audioRef.current)
-          source.connect(analyser)
-          analyser.connect(ctx.destination)
-          audioCtxRef.current = ctx
-          analyserRef.current = analyser
-          sourceRef.current = source
-        }
-      } catch (e) {
-        console.warn('Could not initialize Web Audio API analyser', e)
+  // Initialize Web Audio graph for Dual Decks, DJ filter, and Analyser
+  const initAudioGraph = useCallback(() => {
+    if (audioCtxRef.current) return audioCtxRef.current
+
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      if (!AudioCtx) return null
+
+      const ctx = new AudioCtx()
+      const masterGain = ctx.createGain()
+      masterGain.gain.value = isMuted ? 0 : volume
+
+      const analyser = ctx.createAnalyser()
+      analyser.fftSize = 128
+      analyser.smoothingTimeConstant = 0.78
+
+      masterGain.connect(analyser)
+      analyser.connect(ctx.destination)
+
+      audioCtxRef.current = ctx
+      masterGainRef.current = masterGain
+      analyserRef.current = analyser
+
+      // Deck A routing: sourceA -> filterA (High-pass) -> gainA -> masterGain
+      if (deckARef.current && !deckARef.current.source) {
+        const sourceA = ctx.createMediaElementSource(deckARef.current.audio)
+        const filterA = ctx.createBiquadFilter()
+        filterA.type = 'highpass'
+        filterA.frequency.value = 20
+        const gainA = ctx.createGain()
+        gainA.gain.value = activeDeckRef.current === 'A' ? 1.0 : 0.0
+
+        sourceA.connect(filterA)
+        filterA.connect(gainA)
+        gainA.connect(masterGain)
+
+        deckARef.current.source = sourceA
+        deckARef.current.filter = filterA
+        deckARef.current.gain = gainA
       }
+
+      // Deck B routing: sourceB -> filterB (High-pass) -> gainB -> masterGain
+      if (deckBRef.current && !deckBRef.current.source) {
+        const sourceB = ctx.createMediaElementSource(deckBRef.current.audio)
+        const filterB = ctx.createBiquadFilter()
+        filterB.type = 'highpass'
+        filterB.frequency.value = 20
+        const gainB = ctx.createGain()
+        gainB.gain.value = activeDeckRef.current === 'B' ? 1.0 : 0.0
+
+        sourceB.connect(filterB)
+        filterB.connect(gainB)
+        gainB.connect(masterGain)
+
+        deckBRef.current.source = sourceB
+        deckBRef.current.filter = filterB
+        deckBRef.current.gain = gainB
+      }
+
+      return ctx
+    } catch (e) {
+      console.warn('Could not initialize Web Audio API graph', e)
+      return null
     }
+  }, [isMuted, volume])
+
+  const getAnalyser = useCallback(() => {
+    initAudioGraph()
     if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume().catch(() => {})
     }
     return analyserRef.current
-  }, [])
+  }, [initAudioGraph])
 
-  // Initialize audio element
-  useEffect(() => {
-    const audio = new Audio()
-    audio.preload = 'metadata'
-    audio.crossOrigin = 'anonymous'
-    audioRef.current = audio
+  // Pick candidate for next track (using harmonic genre/style matching in shuffle/mixer)
+  const pickNextTrackCandidate = useCallback((): {
+    track: AudioTrack
+    album: AudioAlbum | null
+    index: number
+  } | null => {
+    const currentQ = queueRef.current
+    const currentIdx = queueIndexRef.current
+    const curTrack = currentTrackRef.current
+    const curAlbum = currentAlbumRef.current
+    const shuffle = isShuffleRef.current
+    const repeat = repeatModeRef.current
 
-    const applyMixerStart = () => {
-      if (pendingMixerStartRef.current && audio.duration && audio.duration > 25) {
-        try {
-          audio.currentTime = 10
-          setCurrentTime(10)
-        } catch (e) {
-          // ignore seek error
+    if (currentQ.length === 0 || currentIdx < 0) return null
+
+    if (repeat === 'one' && curTrack) {
+      return { track: curTrack, album: curAlbum, index: currentIdx }
+    }
+
+    let nextIdx: number
+
+    if (shuffle) {
+      // Harmonic & genre matching from queue candidates
+      const candidates = currentQ
+        .map((trk, idx) => ({ track: trk, originalIndex: idx }))
+        .filter((item) => item.originalIndex !== currentIdx)
+
+      if (curTrack && candidates.length > 0) {
+        const chosen = pickHarmonicCandidate(curTrack, candidates)
+        nextIdx = chosen !== null ? chosen : Math.floor(Math.random() * currentQ.length)
+      } else {
+        nextIdx = Math.floor(Math.random() * currentQ.length)
+      }
+    } else {
+      nextIdx = currentIdx + 1
+      if (nextIdx >= currentQ.length) {
+        if (repeat === 'all') {
+          nextIdx = 0
+        } else {
+          return null // Reached end of queue
         }
-        pendingMixerStartRef.current = false
       }
     }
 
-    const onTimeUpdate = () => {
-      const cur = audio.currentTime
-      const dur = audio.duration
-      setCurrentTime(cur)
+    const nextTrack = currentQ[nextIdx]
+    if (!nextTrack) return null
 
-      if (
-        isMixerEnabledRef.current &&
-        !isTransitioningRef.current &&
-        dur &&
-        dur > 25 &&
-        cur >= dur - 10
-      ) {
-        isTransitioningRef.current = true
-        nextTrackRef.current()
+    const nextAlbum = curAlbum?.tracks.some((t) => t.id === nextTrack.id)
+      ? curAlbum
+      : getAlbumById(nextTrack.album) || null
+
+    return { track: nextTrack, album: nextAlbum, index: nextIdx }
+  }, [getAlbumById])
+
+  // DJ Crossfade Engine: smoothly crossfades outgoing & incoming tracks with high-pass bass filter sweep
+  const startCrossfade = useCallback(() => {
+    if (isTransitioningRef.current) return
+
+    const nextItem = pickNextTrackCandidate()
+    if (!nextItem) return // No next track available, let current track finish naturally
+
+    isTransitioningRef.current = true
+    setIsCrossfading(true)
+
+    const ctx = initAudioGraph()
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {})
+    }
+
+    const outgoingId = activeDeckRef.current
+    const incomingId: 'A' | 'B' = outgoingId === 'A' ? 'B' : 'A'
+
+    const outDeck = outgoingId === 'A' ? deckARef.current! : deckBRef.current!
+    const inDeck = incomingId === 'A' ? deckARef.current! : deckBRef.current!
+
+    const { track: nextTrk, album: nextAlb, index: nextIdx } = nextItem
+
+    const CROSSFADE_TIME = 10 // 10s smooth mix
+
+    // Start incoming song from second 10 if track is long enough (>25s)
+    const startOffset = nextTrk.durationSeconds && nextTrk.durationSeconds > 25 ? 10 : 0
+    const streamUrl = getTrackStreamUrl(nextTrk.id)
+
+    inDeck.audio.src = streamUrl
+    inDeck.audio.currentTime = startOffset
+
+    if (ctx && outDeck.gain && inDeck.gain) {
+      const now = ctx.currentTime
+
+      // 1. Outgoing Deck: Fade out volume 1.0 -> 0.0
+      outDeck.gain.gain.cancelScheduledValues(now)
+      outDeck.gain.gain.setValueAtTime(1.0, now)
+      outDeck.gain.gain.linearRampToValueAtTime(0.0, now + CROSSFADE_TIME)
+
+      // 2. Outgoing Deck: DJ High-Pass Filter sweep 20Hz -> 600Hz
+      // Eliminates low bass/kick from the outgoing song so it doesn't clash with incoming bass!
+      if (outDeck.filter) {
+        outDeck.filter.frequency.cancelScheduledValues(now)
+        outDeck.filter.frequency.setValueAtTime(20, now)
+        outDeck.filter.frequency.exponentialRampToValueAtTime(600, now + CROSSFADE_TIME)
+      }
+
+      // 3. Incoming Deck: Fade in volume 0.0 -> 1.0
+      inDeck.gain.gain.cancelScheduledValues(now)
+      inDeck.gain.gain.setValueAtTime(0.0, now)
+      inDeck.gain.gain.linearRampToValueAtTime(1.0, now + CROSSFADE_TIME)
+
+      // 4. Incoming Deck: Full transparent bass range
+      if (inDeck.filter) {
+        inDeck.filter.frequency.cancelScheduledValues(now)
+        inDeck.filter.frequency.setValueAtTime(20, now)
       }
     }
 
-    const onLoadedMetadata = () => {
-      setDuration(audio.duration || 0)
-      applyMixerStart()
-      if (!pendingMixerStartRef.current && audio.currentTime !== 0) {
-        setCurrentTime(audio.currentTime)
+    // Start playing incoming deck simultaneously
+    inDeck.audio
+      .play()
+      .then(() => {
+        setIsPlaying(true)
+      })
+      .catch((err) => {
+        console.warn('Incoming deck play error:', err)
+      })
+
+    // Switch active deck pointer so UI instantly tracks the incoming track
+    activeDeckRef.current = incomingId
+    audioRef.current = inDeck.audio
+    setCurrentTrack(nextTrk)
+    setCurrentAlbum(nextAlb)
+    setQueueIndex(nextIdx)
+
+    // Update MediaSession
+    if ('mediaSession' in navigator) {
+      const artwork = nextAlb?.hasCover
+        ? [{ src: getCoverUrl(nextAlb.id), sizes: '512x512', type: 'image/jpeg' }]
+        : []
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: nextTrk.title,
+        artist: nextTrk.artist || nextAlb?.artist || '',
+        album: nextAlb?.title || nextTrk.album || '',
+        artwork,
+      })
+    }
+
+    // Schedule cleanup after crossfade duration
+    if (crossfadeTimerRef.current) {
+      clearTimeout(crossfadeTimerRef.current)
+    }
+    crossfadeTimerRef.current = window.setTimeout(() => {
+      outDeck.audio.pause()
+      outDeck.audio.src = ''
+
+      if (ctx && outDeck.gain) {
+        outDeck.gain.gain.setValueAtTime(1.0, ctx.currentTime)
+      }
+      if (ctx && outDeck.filter) {
+        outDeck.filter.frequency.setValueAtTime(20, ctx.currentTime)
+      }
+
+      isTransitioningRef.current = false
+      setIsCrossfading(false)
+    }, CROSSFADE_TIME * 1000)
+  }, [initAudioGraph, pickNextTrackCandidate])
+
+  startCrossfadeRef.current = startCrossfade
+
+  // Initialize Dual Audio elements and bind listeners
+  useEffect(() => {
+    const audioA = new Audio()
+    audioA.preload = 'metadata'
+    audioA.crossOrigin = 'anonymous'
+
+    const audioB = new Audio()
+    audioB.preload = 'metadata'
+    audioB.crossOrigin = 'anonymous'
+
+    deckARef.current = { id: 'A', audio: audioA, source: null, filter: null, gain: null }
+    deckBRef.current = { id: 'B', audio: audioB, source: null, filter: null, gain: null }
+    activeDeckRef.current = 'A'
+    audioRef.current = audioA
+
+    const bindDeckEvents = (deckAudio: HTMLAudioElement, deckId: 'A' | 'B') => {
+      const onTimeUpdate = () => {
+        if (activeDeckRef.current !== deckId) return
+        const cur = deckAudio.currentTime
+        const dur = deckAudio.duration
+        setCurrentTime(cur)
+
+        // DJ Auto-Mixer: trigger crossfade 10s before the song ends
+        const CROSSFADE_TIME = 10
+        if (
+          isMixerEnabledRef.current &&
+          !isTransitioningRef.current &&
+          dur &&
+          dur > 25 &&
+          cur >= dur - CROSSFADE_TIME
+        ) {
+          startCrossfadeRef.current()
+        }
+      }
+
+      const onLoadedMetadata = () => {
+        if (activeDeckRef.current === deckId) {
+          setDuration(deckAudio.duration || 0)
+        }
+      }
+
+      const onPlay = () => {
+        setIsPlaying(true)
+        if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume().catch(() => {})
+        }
+      }
+
+      const onPause = () => {
+        const otherAudio = deckId === 'A' ? audioB : audioA
+        if (deckAudio.paused && otherAudio.paused) {
+          setIsPlaying(false)
+        }
+      }
+
+      const onEnded = () => {
+        if (activeDeckRef.current === deckId && !isTransitioningRef.current) {
+          nextTrackRef.current()
+        }
+      }
+
+      const onError = (e: Event) => {
+        console.warn(`Deck ${deckId} error:`, e)
+        if (activeDeckRef.current === deckId && !isTransitioningRef.current) {
+          setIsPlaying(false)
+        }
+      }
+
+      deckAudio.addEventListener('timeupdate', onTimeUpdate)
+      deckAudio.addEventListener('loadedmetadata', onLoadedMetadata)
+      deckAudio.addEventListener('play', onPlay)
+      deckAudio.addEventListener('pause', onPause)
+      deckAudio.addEventListener('ended', onEnded)
+      deckAudio.addEventListener('error', onError)
+
+      return () => {
+        deckAudio.removeEventListener('timeupdate', onTimeUpdate)
+        deckAudio.removeEventListener('loadedmetadata', onLoadedMetadata)
+        deckAudio.removeEventListener('play', onPlay)
+        deckAudio.removeEventListener('pause', onPause)
+        deckAudio.removeEventListener('ended', onEnded)
+        deckAudio.removeEventListener('error', onError)
+        deckAudio.pause()
+        deckAudio.src = ''
       }
     }
 
-    const onCanPlay = () => {
-      applyMixerStart()
-    }
-
-    const onPlay = () => {
-      setIsPlaying(true)
-      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume().catch(() => {})
-      }
-    }
-    const onPause = () => setIsPlaying(false)
-    const onError = (e: Event) => {
-      console.warn('Audio playback error', e)
-      setIsPlaying(false)
-    }
-
-    audio.addEventListener('timeupdate', onTimeUpdate)
-    audio.addEventListener('loadedmetadata', onLoadedMetadata)
-    audio.addEventListener('canplay', onCanPlay)
-    audio.addEventListener('play', onPlay)
-    audio.addEventListener('pause', onPause)
-    audio.addEventListener('error', onError)
+    const cleanA = bindDeckEvents(audioA, 'A')
+    const cleanB = bindDeckEvents(audioB, 'B')
 
     return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate)
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-      audio.removeEventListener('canplay', onCanPlay)
-      audio.removeEventListener('play', onPlay)
-      audio.removeEventListener('pause', onPause)
-      audio.removeEventListener('error', onError)
-      audio.pause()
-      audio.src = ''
+      cleanA()
+      cleanB()
     }
   }, [])
 
-  // Sync volume with audio element
+  // Sync master volume with Web Audio masterGain node & fallback audio elements
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = isMuted ? 0 : volume
+    const targetVol = isMuted ? 0 : volume
+    if (masterGainRef.current && audioCtxRef.current) {
+      masterGainRef.current.gain.setValueAtTime(targetVol, audioCtxRef.current.currentTime)
+    } else {
+      if (deckARef.current?.audio) deckARef.current.audio.volume = targetVol
+      if (deckBRef.current?.audio) deckBRef.current.audio.volume = targetVol
     }
     localStorage.setItem('music_player_volume', String(volume))
   }, [volume, isMuted])
 
-  // Play track handler
+  // Toggle Auto-Mixer
+  const toggleMixer = useCallback(() => {
+    setIsMixerEnabled((prev) => {
+      const next = !prev
+      localStorage.setItem('music_player_mixer', String(next))
+      return next
+    })
+  }, [])
+
+  // Play track immediately
   const playTrack = (track: AudioTrack, album: AudioAlbum | null, fullQueue?: AudioTrack[]) => {
     setCurrentTrack(track)
     setCurrentAlbum(album)
@@ -270,25 +528,45 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     const idx = newQueue.findIndex((t) => t.id === track.id)
     setQueueIndex(idx >= 0 ? idx : 0)
 
+    // Cancel any running crossfade
+    if (crossfadeTimerRef.current) {
+      clearTimeout(crossfadeTimerRef.current)
+      crossfadeTimerRef.current = null
+    }
     isTransitioningRef.current = false
-    pendingMixerStartRef.current = isMixerEnabledRef.current
+    setIsCrossfading(false)
 
-    if (audioRef.current) {
+    // Stop inactive deck
+    const inactiveDeck = activeDeckRef.current === 'A' ? deckBRef.current : deckARef.current
+    if (inactiveDeck) {
+      inactiveDeck.audio.pause()
+      inactiveDeck.audio.src = ''
+    }
+
+    const activeDeck = activeDeckRef.current === 'A' ? deckARef.current : deckBRef.current
+    if (activeDeck) {
+      const ctx = initAudioGraph()
+      if (ctx) {
+        if (ctx.state === 'suspended') ctx.resume().catch(() => {})
+        const now = ctx.currentTime
+        if (activeDeck.gain) {
+          activeDeck.gain.gain.cancelScheduledValues(now)
+          activeDeck.gain.gain.setValueAtTime(1.0, now)
+        }
+        if (activeDeck.filter) {
+          activeDeck.filter.frequency.cancelScheduledValues(now)
+          activeDeck.filter.frequency.setValueAtTime(20, now)
+        }
+      }
+
       const streamUrl = getTrackStreamUrl(track.id)
-      audioRef.current.src = streamUrl
-      audioRef.current.currentTime = 0
-      audioRef.current
+      activeDeck.audio.src = streamUrl
+      activeDeck.audio.currentTime = 0
+      activeDeck.audio
         .play()
         .then(() => {
           setIsPlaying(true)
           if (isTv) setIsTvViewOpen(true)
-          if (pendingMixerStartRef.current && audioRef.current && audioRef.current.duration > 25) {
-            try {
-              audioRef.current.currentTime = 10
-              setCurrentTime(10)
-            } catch (e) {}
-            pendingMixerStartRef.current = false
-          }
         })
         .catch((err) => {
           console.warn('Play was prevented or failed:', err)
@@ -311,92 +589,112 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
   }
 
   const togglePlayPause = () => {
-    if (!audioRef.current || !currentTrack) return
+    const activeDeck = activeDeckRef.current === 'A' ? deckARef.current : deckBRef.current
+    if (!activeDeck || !currentTrack) return
+
     if (isPlaying) {
-      audioRef.current.pause()
+      deckARef.current?.audio.pause()
+      deckBRef.current?.audio.pause()
       setIsPlaying(false)
     } else {
-      audioRef.current
+      initAudioGraph()
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(() => {})
+      }
+      activeDeck.audio
         .play()
         .then(() => setIsPlaying(true))
         .catch((err) => console.warn('Play error:', err))
+
+      // If paused during crossfade, resume secondary deck as well
+      if (isTransitioningRef.current) {
+        const inactiveDeck = activeDeckRef.current === 'A' ? deckBRef.current : deckARef.current
+        if (inactiveDeck && inactiveDeck.audio.src) {
+          inactiveDeck.audio.play().catch(() => {})
+        }
+      }
     }
   }
 
   const nextTrack = () => {
-    if (queue.length === 0 || queueIndex < 0) return
+    if (crossfadeTimerRef.current) {
+      clearTimeout(crossfadeTimerRef.current)
+      crossfadeTimerRef.current = null
+    }
+    isTransitioningRef.current = false
+    setIsCrossfading(false)
 
-    if (repeatMode === 'one' && audioRef.current) {
-      const startAt = isMixerEnabled ? 10 : 0
-      audioRef.current.currentTime = startAt
-      setCurrentTime(startAt)
-      audioRef.current.play()
-      isTransitioningRef.current = false
-      return
+    const inactiveDeck = activeDeckRef.current === 'A' ? deckBRef.current : deckARef.current
+    if (inactiveDeck) {
+      inactiveDeck.audio.pause()
+      inactiveDeck.audio.src = ''
     }
 
-    let nextIdx: number
-    if (isShuffle) {
-      nextIdx = Math.floor(Math.random() * queue.length)
+    const nextItem = pickNextTrackCandidate()
+    if (nextItem) {
+      playTrack(nextItem.track, nextItem.album, queueRef.current)
     } else {
-      nextIdx = queueIndex + 1
-      if (nextIdx >= queue.length) {
-        if (repeatMode === 'all') {
-          nextIdx = 0
-        } else {
-          if (audioRef.current) {
-            audioRef.current.pause()
-          }
-          setIsPlaying(false)
-          isTransitioningRef.current = false
-          return
-        }
-      }
-    }
-
-    const nextTrk = queue[nextIdx]
-    if (nextTrk) {
-      setQueueIndex(nextIdx)
-      playTrack(nextTrk, currentAlbum, queue)
+      const activeDeck = activeDeckRef.current === 'A' ? deckARef.current : deckBRef.current
+      if (activeDeck) activeDeck.audio.pause()
+      setIsPlaying(false)
     }
   }
 
   nextTrackRef.current = nextTrack
 
   const prevTrack = () => {
-    if (!audioRef.current) return
-    const restartThreshold = isMixerEnabled ? 13 : 3
-    if (audioRef.current.currentTime > restartThreshold) {
-      const startAt = isMixerEnabled ? 10 : 0
-      audioRef.current.currentTime = startAt
-      setCurrentTime(startAt)
-      isTransitioningRef.current = false
+    if (crossfadeTimerRef.current) {
+      clearTimeout(crossfadeTimerRef.current)
+      crossfadeTimerRef.current = null
+    }
+    isTransitioningRef.current = false
+    setIsCrossfading(false)
+
+    const activeAudio = activeDeckRef.current === 'A' ? deckARef.current?.audio : deckBRef.current?.audio
+    if (activeAudio && activeAudio.currentTime > 3) {
+      activeAudio.currentTime = 0
+      setCurrentTime(0)
       return
     }
 
-    if (queue.length === 0 || queueIndex <= 0) {
-      const startAt = isMixerEnabled ? 10 : 0
-      audioRef.current.currentTime = startAt
-      setCurrentTime(startAt)
-      isTransitioningRef.current = false
+    const q = queueRef.current
+    const qIdx = queueIndexRef.current
+    if (q.length === 0 || qIdx <= 0) {
+      if (activeAudio) {
+        activeAudio.currentTime = 0
+        setCurrentTime(0)
+      }
       return
     }
 
-    const prevIdx = queueIndex - 1
-    const prevTrk = queue[prevIdx]
+    const prevIdx = qIdx - 1
+    const prevTrk = q[prevIdx]
     if (prevTrk) {
-      setQueueIndex(prevIdx)
-      playTrack(prevTrk, currentAlbum, queue)
+      playTrack(prevTrk, currentAlbumRef.current, q)
     }
   }
 
   const seekTo = (seconds: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = seconds
+    const activeAudio = activeDeckRef.current === 'A' ? deckARef.current?.audio : deckBRef.current?.audio
+    if (activeAudio) {
+      activeAudio.currentTime = seconds
       setCurrentTime(seconds)
-      const dur = audioRef.current.duration || 0
+      const dur = activeAudio.duration || 0
       if (dur > 25 && seconds < dur - 10) {
-        isTransitioningRef.current = false
+        // If user seeks backwards before the transition window, cancel crossfade
+        if (isTransitioningRef.current) {
+          if (crossfadeTimerRef.current) {
+            clearTimeout(crossfadeTimerRef.current)
+            crossfadeTimerRef.current = null
+          }
+          isTransitioningRef.current = false
+          setIsCrossfading(false)
+          const inactiveDeck = activeDeckRef.current === 'A' ? deckBRef.current : deckARef.current
+          if (inactiveDeck) {
+            inactiveDeck.audio.pause()
+            inactiveDeck.audio.src = ''
+          }
+        }
       }
     }
   }
@@ -442,17 +740,6 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     }
   }
 
-  // Handle onEnded
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    const handleEnded = () => {
-      nextTrack()
-    }
-    audio.addEventListener('ended', handleEnded)
-    return () => audio.removeEventListener('ended', handleEnded)
-  }, [queue, queueIndex, repeatMode, isShuffle, currentAlbum])
-
   // Setup MediaSession action handlers
   useEffect(() => {
     if (!('mediaSession' in navigator)) return
@@ -470,12 +757,12 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!remoteContext) return
 
     const interval = setInterval(() => {
-      const audio = audioRef.current
+      const activeAudio = activeDeckRef.current === 'A' ? deckARef.current?.audio : deckBRef.current?.audio
       remoteContext.sendStatus({
         title: currentTrack?.title ?? 'No track playing',
         playing: isPlaying,
-        currentTime: audio ? audio.currentTime : currentTime,
-        duration: audio && isFinite(audio.duration) ? audio.duration : duration,
+        currentTime: activeAudio ? activeAudio.currentTime : currentTime,
+        duration: activeAudio && isFinite(activeAudio.duration) ? activeAudio.duration : duration,
         artist: currentTrack?.artist || currentAlbum?.artist || '',
         albumTitle: currentAlbum?.title || '',
         albumId: currentAlbum?.id || '',
@@ -509,15 +796,16 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     if (!remoteContext) return
 
     return remoteContext.subscribe((cmd) => {
+      const activeAudio = activeDeckRef.current === 'A' ? deckARef.current?.audio : deckBRef.current?.audio
       switch (cmd.action) {
         case 'PLAY':
-          if (audioRef.current && !isPlaying) {
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
+          if (activeAudio && !isPlaying) {
+            activeAudio.play().then(() => setIsPlaying(true)).catch(() => {})
           }
           break
         case 'PAUSE':
-          if (audioRef.current && isPlaying) {
-            audioRef.current.pause()
+          if (activeAudio && isPlaying) {
+            activeAudio.pause()
             setIsPlaying(false)
           }
           break
@@ -533,8 +821,8 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
           prevTrack()
           break
         case 'SEEK':
-          if (audioRef.current && typeof cmd.relative === 'number') {
-            seekTo(Math.max(0, Math.min(duration, audioRef.current.currentTime + cmd.relative)))
+          if (activeAudio && typeof cmd.relative === 'number') {
+            seekTo(Math.max(0, Math.min(duration, activeAudio.currentTime + cmd.relative)))
           }
           break
         case 'SEEK_TO':
@@ -620,6 +908,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
         queue,
         queueIndex,
         isPlaying,
+        isCrossfading,
         currentTime,
         duration,
         volume,

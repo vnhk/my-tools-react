@@ -40,6 +40,7 @@ export function TvMusicNowPlaying() {
     repeatMode,
     isShuffle,
     isMixerEnabled,
+    isCrossfading,
     isTvViewOpen,
     setIsTvViewOpen,
     visualizerMode,
@@ -256,6 +257,11 @@ export function TvMusicNowPlaying() {
                   {queueIndex + 1} / {queue.length}
                 </span>
               )}
+              {isCrossfading && (
+                <span className={styles.djBadge}>
+                  🎛️ DJ Crossfade
+                </span>
+              )}
             </div>
 
             {/* Live Center-Stage Audio Visualizer */}
@@ -339,7 +345,7 @@ export function TvMusicNowPlaying() {
                 <button
                   className={`${styles.ctrlBtn} ${isMixerEnabled ? styles.ctrlBtnActive : ''}`}
                   onClick={toggleMixer}
-                  title={`Auto-Mixer (skip 10s intro & outro silence): ${isMixerEnabled ? 'ON' : 'OFF'} (X)`}
+                  title={`DJ Auto-Mixer (10s Dual-Deck Crossfade & Bass Filter): ${isMixerEnabled ? 'ON' : 'OFF'} (X)`}
                   style={{ position: 'relative' }}
                 >
                   <FaSlidersH />
@@ -351,11 +357,11 @@ export function TvMusicNowPlaying() {
                       fontSize: 8,
                       fontWeight: 800,
                       lineHeight: 1,
-                      background: 'var(--color-primary)',
+                      background: isCrossfading ? 'linear-gradient(135deg, #ec4899, #8b5cf6)' : 'var(--color-primary)',
                       color: '#fff',
-                      padding: '1px 2px',
+                      padding: '1px 3px',
                       borderRadius: 3,
-                    }}>10s</span>
+                    }}>{isCrossfading ? 'MIX' : '10s'}</span>
                   )}
                 </button>
               </div>
