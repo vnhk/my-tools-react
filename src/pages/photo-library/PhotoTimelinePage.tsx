@@ -15,7 +15,6 @@ import type { PhotoItem } from './types'
 import {
   fetchPhotos,
   fetchTags,
-  getPhotoThumbnailUrl,
   toggleFavorite,
   deletePhoto,
   batchUpdateTags,
@@ -23,6 +22,7 @@ import {
   uploadPhoto,
 } from './api'
 import { PhotoLightboxModal } from './PhotoLightboxModal'
+import { PhotoCardImage } from './PhotoCardImage'
 import styles from './PhotoTimelinePage.module.css'
 
 interface Props {
@@ -288,11 +288,9 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
                     className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
                     onClick={() => handleCardClick(photo)}
                   >
-                    <img
-                      src={getPhotoThumbnailUrl(photo.id)}
-                      alt={photo.filename}
+                    <PhotoCardImage
+                      photo={photo}
                       className={styles.thumbImg}
-                      loading="lazy"
                     />
 
                     <div className={styles.overlayTop}>

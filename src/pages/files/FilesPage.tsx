@@ -29,6 +29,7 @@ import {AxiosError} from "axios";
 import {useSearchParams} from 'react-router-dom'
 import {TrashConflictModal, TrashConflictData} from './TrashConflictModal'
 import {TrashView} from './TrashView'
+import {isHeicFormat, convertHeicToJpegUrl, captureVideoThumbnail} from '../../utils/mediaUtils'
 
 interface FileItem {
     id: string
@@ -41,12 +42,12 @@ interface FileItem {
     modificationDate: string | null
 }
 
-const IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'])
+const IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic', 'heif'])
 const VIDEO_EXT = new Set(['mp4', 'webm', 'mov', 'mkv'])
 const TEXT_EXT = new Set(['txt', 'md', 'json', 'xml', 'csv', 'log', 'yaml', 'yml', 'vtt', 'srt'])
 const PDF_EXT = new Set(['pdf'])
 
-export function useSecureFileUrl(fileId: string | undefined, maxSize: number | null, scale: boolean | null = true) {
+export function useSecureFileUrl(fileId: string | undefined, maxSize: number | null, scale: boolean | null = true, filename?: string) {
     const [url, setUrl] = useState<string | undefined>(undefined)
     const [error, setError] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -55,6 +56,7 @@ export function useSecureFileUrl(fileId: string | undefined, maxSize: number | n
         if (!fileId) return
 
         let objectUrl: string | null = null
+        let cancelled = false
 
         async function load() {
             setLoading(true)
@@ -63,24 +65,39 @@ export function useSecureFileUrl(fileId: string | undefined, maxSize: number | n
                     responseType: 'blob'
                 })
 
-                objectUrl = URL.createObjectURL(res.data)
-                setUrl(objectUrl)
-                setError(false)
+                if (cancelled) return
+
+                const blob: Blob = res.data
+                const isHeic = isHeicFormat(filename) || blob.type === 'image/heic' || blob.type === 'image/heif'
+                if (isHeic) {
+                    objectUrl = await convertHeicToJpegUrl(blob, `${fileId}_${maxSize}_${scale}`)
+                } else {
+                    objectUrl = URL.createObjectURL(blob)
+                }
+
+                if (!cancelled) {
+                    setUrl(objectUrl)
+                    setError(false)
+                }
             } catch (e) {
                 console.error('Failed to load thumbnail:', e)
-                setError(true)
-                setUrl(undefined)
+                if (!cancelled) {
+                    setError(true)
+                    setUrl(undefined)
+                }
             } finally {
-                setLoading(false)
+                if (!cancelled) {
+                    setLoading(false)
+                }
             }
         }
 
         load()
 
         return () => {
-            if (objectUrl) URL.revokeObjectURL(objectUrl)
+            cancelled = true
         }
-    }, [fileId])
+    }, [fileId, filename, maxSize, scale])
 
     return {url, error, loading}
 }
@@ -466,7 +483,8 @@ function FileViewerDialog({item, onClose, onUnlockNeeded}: {
     const {url: secureUrl} = useSecureFileUrl(
         vtype === 'image' ? item.id : undefined,
         1000,
-        false
+        false,
+        item.filename
     )
 
     const [streamUrl, setStreamUrl] = useState<string>()
@@ -853,8 +871,27 @@ export function FilesPage() {
 
 
     function SecureImageForGridThumbnail({item}: { item: FileItem }) {
-        const {url} = useSecureFileUrl(item.id, 65, true);
+        const {url} = useSecureFileUrl(item.id, 65, true, item.filename);
         return <img src={url} alt={item.filename} className={styles.tileImg} loading="lazy"/>;
+    }
+
+    function SecureVideoForGridThumbnail({item}: { item: FileItem }) {
+        const [thumbUrl, setThumbUrl] = useState<string>()
+        useEffect(() => {
+            let active = true
+            createStreamUrl(item.id)
+                .then(url => captureVideoThumbnail(url))
+                .then(dataUrl => {
+                    if (active) setThumbUrl(dataUrl)
+                })
+                .catch(() => {})
+            return () => { active = false }
+        }, [item.id])
+
+        if (!thumbUrl) {
+            return <FileIcon item={item} size={32}/>
+        }
+        return <img src={thumbUrl} alt={item.filename} className={styles.tileImg} loading="lazy"/>;
     }
 
     if (isTrashView) {
@@ -1102,6 +1139,7 @@ export function FilesPage() {
                         {filtered.map((item) => {
                             const ext = (item.extension ?? '').toLowerCase()
                             const isImage = IMAGE_EXT.has(ext)
+                            const isVideo = VIDEO_EXT.has(ext)
                             return (
                                 <div
                                     key={item.id}
@@ -1125,6 +1163,8 @@ export function FilesPage() {
                                     <div className={styles.tileThumb}>
                                         {isImage && !item.encrypted ? (
                                             <SecureImageForGridThumbnail key={item.id} item={item}/>
+                                        ) : isVideo && !item.encrypted ? (
+                                            <SecureVideoForGridThumbnail key={item.id} item={item}/>
                                         ) : (
                                             <FileIcon item={item} size={32}/>
                                         )}

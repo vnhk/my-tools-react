@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fa'
 import type { PhotoItem } from './types'
 import { getPhotoFileUrl, getPhotoDownloadUrl, toggleFavorite, deletePhoto, updatePhotoTags } from './api'
+import { isHeicFormat, convertHeicToJpegUrl } from '../../utils/mediaUtils'
 import styles from './PhotoLightboxModal.module.css'
 
 interface Props {
@@ -64,9 +65,39 @@ export function PhotoLightboxModal({
   const [showInfo, setShowInfo] = useState(false)
   const [isSlideshow, setIsSlideshow] = useState(false)
   const [newTagInput, setNewTagInput] = useState('')
+  const [displayUrl, setDisplayUrl] = useState<string>(() => getPhotoFileUrl(items[initialIndex]?.id ?? ''))
+  const [converting, setConverting] = useState(false)
   const slideshowTimerRef = useRef<number | null>(null)
 
   const currentItem = items[currentIndex]
+
+  useEffect(() => {
+    if (!currentItem) return
+    const rawUrl = getPhotoFileUrl(currentItem.id)
+    setDisplayUrl(rawUrl)
+    setConverting(false)
+
+    if (currentItem.mediaType === 'PHOTO' && isHeicFormat(currentItem.filename)) {
+      setConverting(true)
+      const token = localStorage.getItem('token')
+      fetch(rawUrl, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to load HEIC')
+          return res.blob()
+        })
+        .then((blob) => convertHeicToJpegUrl(blob, currentItem.id))
+        .then((jpegUrl) => {
+          setDisplayUrl(jpegUrl)
+          setConverting(false)
+        })
+        .catch((err) => {
+          console.error('HEIC conversion failed in lightbox:', err)
+          setConverting(false)
+        })
+    }
+  }, [currentItem?.id, currentItem?.filename, currentItem?.mediaType])
 
   const handleNext = useCallback(() => {
     setZoom(1)
@@ -286,10 +317,14 @@ export function PhotoLightboxModal({
               autoPlay
               playsInline
             />
+          ) : converting ? (
+            <div style={{ color: 'white', textAlign: 'center', padding: '2rem' }}>
+              Converting HEIC image…
+            </div>
           ) : (
             <img
               className={styles.image}
-              src={fileUrl}
+              src={displayUrl}
               alt={currentItem.filename}
             />
           )}
