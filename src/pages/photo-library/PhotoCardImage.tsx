@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { PhotoItem } from './types'
 import { getPhotoThumbnailUrl, getPhotoFileUrl } from './api'
+import { thumbnailQueue } from './thumbnailQueue'
 import {
   isHeicFormat,
   isSafariOrApple,
@@ -21,32 +22,63 @@ export function PhotoCardImage({ photo, className }: Props) {
   const [failed, setFailed] = useState(false)
   const [loading, setLoading] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const slotAcquired = useRef(false)
+  const safetyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const isHeic = isHeicFormat(photo.filename)
   const isVideo = photo.mediaType === 'VIDEO'
   const isSafari = isSafariOrApple()
 
+  const releaseSlot = useCallback(() => {
+    if (safetyTimeoutRef.current) {
+      clearTimeout(safetyTimeoutRef.current)
+      safetyTimeoutRef.current = null
+    }
+    if (slotAcquired.current) {
+      slotAcquired.current = false
+      thumbnailQueue.release()
+    }
+  }, [])
+
   // Only request resources when the card actually enters the viewport (rootMargin 200px)
+  // Loads via concurrency queue (max 6 parallel requests) to avoid flooding backend
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
+
+    let cancelQueue: (() => void) | null = null
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting) {
           setIsVisible(true)
-          setSrc(getPhotoThumbnailUrl(photo.id))
           observer.disconnect()
+          cancelQueue = thumbnailQueue.enqueue(photo.id, () => {
+            slotAcquired.current = true
+            setSrc(getPhotoThumbnailUrl(photo.id))
+            safetyTimeoutRef.current = setTimeout(() => {
+              releaseSlot()
+            }, 8000)
+          })
         }
       },
       { rootMargin: '200px' }
     )
 
     observer.observe(el)
-    return () => observer.disconnect()
-  }, [photo.id])
+    return () => {
+      observer.disconnect()
+      if (cancelQueue) cancelQueue()
+      releaseSlot()
+    }
+  }, [photo.id, releaseSlot])
+
+  const handleLoad = () => {
+    releaseSlot()
+  }
 
   const handleFallback = async () => {
+    releaseSlot()
     if (loading) return
     setLoading(true)
 
@@ -145,6 +177,7 @@ export function PhotoCardImage({ photo, className }: Props) {
             display: 'block',
           }}
           loading="lazy"
+          onLoad={handleLoad}
           onError={handleFallback}
         />
       )}

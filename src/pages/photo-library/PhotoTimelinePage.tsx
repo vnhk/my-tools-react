@@ -111,8 +111,8 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
     return () => window.removeEventListener('photos-updated', handleUpdate)
   }, [loadData])
 
-  const INITIAL_CHUNK_SIZE = 40
-  const CHUNK_STEP = 30
+  const INITIAL_CHUNK_SIZE = 24
+  const CHUNK_STEP = 24
   const [visibleCount, setVisibleCount] = useState(INITIAL_CHUNK_SIZE)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
