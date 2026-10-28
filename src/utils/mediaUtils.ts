@@ -117,8 +117,17 @@ export function captureVideoThumbnail(videoUrl: string, seekTime: number = 1): P
       }
     }, 8000)
 
+    video.onerror = () => {
+      if (!isDone) {
+        isDone = true
+        clearTimeout(timer)
+        cleanup()
+        reject(new Error('Video playback/load error'))
+      }
+    }
+
     video.onloadeddata = () => {
-      video.currentTime = Math.min(seekTime, (video.duration || 1) / 2)
+      video.currentTime = Math.min(seekTime, (video.duration || 1) / 4) || 0.1
     }
 
     video.onseeked = () => {
