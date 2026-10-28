@@ -17,7 +17,7 @@ import {
 } from 'react-icons/fa'
 import type { PhotoItem } from './types'
 import { getPhotoFileUrl, getPhotoDownloadUrl, toggleFavorite, deletePhoto, updatePhotoTags } from './api'
-import { isHeicFormat, convertHeicToJpegUrl } from '../../utils/mediaUtils'
+import { isHeicFormat, isSafariOrApple, convertHeicToJpegUrl } from '../../utils/mediaUtils'
 import styles from './PhotoLightboxModal.module.css'
 
 interface Props {
@@ -78,6 +78,13 @@ export function PhotoLightboxModal({
     setConverting(false)
 
     if (currentItem.mediaType === 'PHOTO' && isHeicFormat(currentItem.filename)) {
+      if (isSafariOrApple()) {
+        // Safari renders HEIC natively with zero conversion needed
+        setDisplayUrl(rawUrl)
+        setConverting(false)
+        return
+      }
+
       setConverting(true)
       const token = localStorage.getItem('token')
       fetch(rawUrl, {
@@ -89,11 +96,17 @@ export function PhotoLightboxModal({
         })
         .then((blob) => convertHeicToJpegUrl(blob, currentItem.id))
         .then((jpegUrl) => {
-          setDisplayUrl(jpegUrl)
+          if (jpegUrl) {
+            setDisplayUrl(jpegUrl)
+          } else {
+            // Fallback to raw URL
+            setDisplayUrl(rawUrl)
+          }
           setConverting(false)
         })
         .catch((err) => {
-          console.error('HEIC conversion failed in lightbox:', err)
+          console.warn('HEIC conversion failed in lightbox, falling back to raw:', err)
+          setDisplayUrl(rawUrl)
           setConverting(false)
         })
     }

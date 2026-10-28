@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import {
   FaSearch,
   FaHeart,
@@ -111,10 +111,37 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
     return () => window.removeEventListener('photos-updated', handleUpdate)
   }, [loadData])
 
-  // Group photos by Month / Year
+  const INITIAL_CHUNK_SIZE = 40
+  const CHUNK_STEP = 30
+  const [visibleCount, setVisibleCount] = useState(INITIAL_CHUNK_SIZE)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_CHUNK_SIZE)
+  }, [albumId, selectedTag, videoOnly, favoriteOnly, searchQuery])
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + CHUNK_STEP, photos.length))
+        }
+      },
+      { rootMargin: '300px' }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [photos.length])
+
+  // Group photos by Month / Year (only up to visibleCount to prevent flooding backend)
   const groupedPhotos = useMemo(() => {
     const groups: { [key: string]: PhotoItem[] } = {}
-    photos.forEach((photo) => {
+    const visiblePhotos = photos.slice(0, visibleCount)
+    visiblePhotos.forEach((photo) => {
       let groupKey = 'Undated'
       if (photo.dateTaken) {
         try {
@@ -129,7 +156,7 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
       groups[groupKey].push(photo)
     })
     return groups
-  }, [photos])
+  }, [photos, visibleCount])
 
   const handleToggleSelect = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
@@ -332,6 +359,24 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
             </div>
           </section>
         ))
+      )}
+
+      {/* Infinite scroll sentinel */}
+      {visibleCount < photos.length && (
+        <div
+          ref={sentinelRef}
+          style={{
+            height: 40,
+            margin: '24px 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-text-tertiary, #9ca3af)',
+            fontSize: 'var(--font-size-sm, 13px)',
+          }}
+        >
+          Loading more photos ({visibleCount} of {photos.length})…
+        </div>
       )}
 
       {/* Floating Batch Actions Bar */}

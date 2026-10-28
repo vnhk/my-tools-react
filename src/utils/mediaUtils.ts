@@ -3,8 +3,17 @@ import heic2any from 'heic2any'
 // In-memory caches to prevent repeated conversions and memory bloat
 const heicBlobUrlCache = new Map<string, string>()
 const videoThumbnailCache = new Map<string, string>()
-const pendingHeicConversions = new Map<string, Promise<string>>()
+const pendingHeicConversions = new Map<string, Promise<string | null>>()
 const pendingVideoCaptures = new Map<string, Promise<string>>()
+
+export function isSafariOrApple(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent.toLowerCase()
+  return (
+    (ua.includes('safari') && !ua.includes('chrome') && !ua.includes('android')) ||
+    (/macintosh|iphone|ipad|ipod/.test(ua) && typeof document !== 'undefined' && 'ontouchend' in document)
+  )
+}
 
 export function isHeicFormat(filenameOrUrl?: string | null): boolean {
   if (!filenameOrUrl) return false
@@ -27,9 +36,9 @@ export function isVideoFormat(filenameOrUrl?: string | null): boolean {
 
 /**
  * Converts a HEIC Blob to a JPEG Object URL using client-side WebAssembly heic2any.
- * Results are cached in memory so subsequent views are instantaneous.
+ * If running on Safari (which supports HEIC natively) or if conversion fails, handles it gracefully.
  */
-export async function convertHeicToJpegUrl(blob: Blob, cacheKey?: string): Promise<string> {
+export async function convertHeicToJpegUrl(blob: Blob, cacheKey?: string): Promise<string | null> {
   const key = cacheKey || (blob instanceof File ? `${blob.name}_${blob.size}_${blob.lastModified}` : null)
   if (key && heicBlobUrlCache.has(key)) {
     return heicBlobUrlCache.get(key)!
@@ -53,9 +62,8 @@ export async function convertHeicToJpegUrl(blob: Blob, cacheKey?: string): Promi
       }
       return url
     } catch (err) {
-      console.error('HEIC conversion failed:', err)
-      // Fallback: try raw blob object URL (e.g. on Safari with native HEIC support)
-      return URL.createObjectURL(blob)
+      console.warn('HEIC conversion via libheif failed (e.g. newer Apple HDR format):', err)
+      return null
     } finally {
       if (key) {
         pendingHeicConversions.delete(key)
@@ -154,4 +162,26 @@ export function captureVideoThumbnail(videoUrl: string, seekTime: number = 1): P
 
   pendingVideoCaptures.set(videoUrl, promise)
   return promise
+}
+
+/**
+ * Asynchronously persists a client-captured thumbnail to the backend disk cache (.thumbnails/{id}.jpg).
+ * Fire-and-forget: does not block the UI.
+ */
+export async function persistThumbnailToServer(photoId: string, dataUrl: string) {
+  try {
+    const res = await fetch(dataUrl)
+    const blob = await res.blob()
+    const token = localStorage.getItem('token')
+    await fetch(`/api/photos/${encodeURIComponent(photoId)}/thumbnail`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: blob,
+    })
+  } catch {
+    // Non-critical background save failure
+  }
 }

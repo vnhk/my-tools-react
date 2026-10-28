@@ -76,7 +76,7 @@ export function useSecureFileUrl(fileId: string | undefined, maxSize: number | n
                 }
 
                 if (!cancelled) {
-                    setUrl(objectUrl)
+                    setUrl(objectUrl ?? undefined)
                     setError(false)
                 }
             } catch (e) {
