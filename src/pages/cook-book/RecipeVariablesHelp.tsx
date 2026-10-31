@@ -40,11 +40,11 @@ export const RecipeVariablesHelp: React.FC = () => {
                             you can reference any ingredient using variable placeholders in curly brackets:
                         </p>
                         <div className={styles.codeExample}>
-                            <code>Dodaj &#123;ingredient1&#125; obranych i pokrojonych w kostkę ziemniaków oraz &#123;ingredient2&#125; soli.</code>
+                            <code>Oczyść &#123;ingredient1&#125; z żyłek. W misce połącz &#123;ingredient2&#125; i &#123;ingredient3&#125;.</code>
                         </div>
                         <p>
-                            When reading the recipe, each variable is automatically replaced with its
-                            <strong> dynamically scaled quantity and unit</strong> (for example: &quot;400 g&quot; at 1x scale, &quot;200 g&quot; at 0.5x scale, or &quot;800 g&quot; at 2x scale).
+                            When reading the recipe, each variable <code>&#123;ingredientX&#125;</code> is automatically replaced with its
+                            <strong> dynamically scaled quantity, unit, and ingredient name</strong> (for example: &quot;400 g Ziemniaki&quot; or &quot;100 g Śmietanka&quot;).
                         </p>
                     </div>
 
@@ -55,29 +55,29 @@ export const RecipeVariablesHelp: React.FC = () => {
                                 <tr>
                                     <th>Variable Format</th>
                                     <th>Description</th>
-                                    <th>Example Output (at 2x)</th>
+                                    <th>Example Output</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td><code>&#123;name&#125;</code></td>
-                                    <td>Scaled quantity + unit (default)</td>
-                                    <td><strong>400 g</strong> / <strong>2 tbsp</strong></td>
+                                    <td>Scaled quantity + unit + name (default)</td>
+                                    <td><strong>100 g Śmietanka</strong> / <strong>400 g Kurczak</strong></td>
                                 </tr>
                                 <tr>
-                                    <td><code>&#123;name.qty&#125;</code></td>
-                                    <td>Scaled numeric quantity only</td>
-                                    <td><strong>400</strong></td>
+                                    <td><code>&#123;name.quantity&#125;</code> / <code>&#123;name.qty&#125;</code></td>
+                                    <td>Scaled quantity and unit only</td>
+                                    <td><strong>100 g</strong> / <strong>2 tbsp</strong></td>
                                 </tr>
                                 <tr>
                                     <td><code>&#123;name.name&#125;</code></td>
-                                    <td>Ingredient name</td>
-                                    <td><strong>Wheat Flour</strong></td>
+                                    <td>Ingredient name only</td>
+                                    <td><strong>Śmietanka</strong> / <strong>Kurczak</strong></td>
                                 </tr>
                                 <tr>
-                                    <td><code>&#123;name.full&#125;</code></td>
-                                    <td>Full format: quantity + unit + name</td>
-                                    <td><strong>400 g Wheat Flour</strong></td>
+                                    <td><code>&#123;name.num&#125;</code></td>
+                                    <td>Scaled numeric value only (no unit)</td>
+                                    <td><strong>100</strong></td>
                                 </tr>
                             </tbody>
                         </table>

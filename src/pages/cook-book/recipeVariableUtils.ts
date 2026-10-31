@@ -96,9 +96,9 @@ export function interpolateInstructionVariables(
 
     const varMap = buildVariableMap(ingredients)
 
-    // Match variables: {key} or {key.modifier} where modifier is qty, name, full
+    // Match variables: {key} or {key.modifier} where modifier is name, qty, quantity, full, num
     // Supports alphanumeric, underscores, hyphens, and unicode characters (e.g. Polish letters)
-    const regex = /\{([a-zA-Z0-9_\-\u00C0-\u024F]+)(?:\.(qty|quantity|name|full))?\}/g
+    const regex = /\{([a-zA-Z0-9_\-\u00C0-\u024F]+)(?:\.(qty|quantity|name|full|num|val|number))?\}/g
 
     return htmlOrText.replace(regex, (match, rawKey: string, modifier?: string) => {
         const normalizedKey = normalizeVarKey(rawKey)
@@ -123,21 +123,17 @@ export function interpolateInstructionVariables(
         // Determine replacement text based on modifier
         let displayText = ''
         const mod = modifier?.toLowerCase()
+        const qtyUnit = scaledQtyStr ? (unit ? `${scaledQtyStr} ${unit}` : scaledQtyStr) : ''
 
-        if (mod === 'qty' || mod === 'quantity') {
-            displayText = scaledQtyStr || '—'
-        } else if (mod === 'name') {
+        if (mod === 'name') {
             displayText = ingName
-        } else if (mod === 'full') {
-            const qtyUnit = scaledQtyStr ? (unit ? `${scaledQtyStr} ${unit}` : scaledQtyStr) : ''
-            displayText = qtyUnit ? `${qtyUnit} ${ingName}` : ingName
+        } else if (mod === 'qty' || mod === 'quantity') {
+            displayText = qtyUnit || scaledQtyStr || '—'
+        } else if (mod === 'num' || mod === 'val' || mod === 'number') {
+            displayText = scaledQtyStr || '—'
         } else {
-            // Default modifier: scaled quantity + unit (or just quantity if unit is empty)
-            if (scaledQtyStr) {
-                displayText = unit ? `${scaledQtyStr} ${unit}` : scaledQtyStr
-            } else {
-                displayText = ingName
-            }
+            // Default modifier {name}: scaled quantity + unit + ingredient name (e.g. "100 g Śmietanka")
+            displayText = qtyUnit ? `${qtyUnit} ${ingName}` : ingName
         }
 
         const baseQtyDisplay = baseQty != null
