@@ -327,3 +327,107 @@
   transition: color 0.1s;
 }
 .starActive { color: var(--color-warning, #f59e0b); }
+
+/* ── Dynamic Ingredient Variables ── */
+:global(.recipe-ingredient-var) {
+  display: inline-block;
+  padding: 1px 6px;
+  margin: 0 2px;
+  background: rgba(99, 102, 241, 0.16);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  border-radius: 4px;
+  color: #818cf8;
+  font-weight: 600;
+  cursor: help;
+  transition: all 0.15s;
+}
+:global(.recipe-ingredient-var:hover) {
+  background: rgba(99, 102, 241, 0.28);
+  border-color: #a5b4fc;
+}
+
+.varPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 2px 7px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 4px;
+  color: #818cf8;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+.varPill:hover {
+  background: rgba(99, 102, 241, 0.22);
+  border-color: #818cf8;
+}
+
+.copyIcon {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.scaledQty {
+  color: #818cf8;
+  font-weight: 600;
+}
+.baseQtyMuted {
+  font-size: 10px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.45));
+  margin-left: 4px;
+}
+
+.editRiBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.editRiBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-primary);
+}
+
+.varToolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  border-radius: 6px;
+}
+.varToolbarTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+.varChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.varChip {
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-family: monospace;
+  color: #a5b4fc;
+  cursor: pointer;
+}
+.varChip:hover {
+  background: rgba(99, 102, 241, 0.25);
+  border-color: #818cf8;
+  color: #fff;
+}
+

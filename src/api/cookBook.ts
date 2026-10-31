@@ -25,6 +25,7 @@ export interface RecipeIngredientDto {
     optional: boolean | null
     category: string | null
     originalText: string | null
+    variableName?: string | null
 }
 
 export interface RecipeDto {
@@ -113,6 +114,9 @@ export const recipesApi = {
 
     addIngredient: (id: string, data: Record<string, unknown>) =>
         client.post<RecipeIngredientDto>(`/cook-book/recipes/${id}/ingredients`, data),
+
+    updateIngredient: (id: string, riId: string, data: Record<string, unknown>) =>
+        client.put<RecipeIngredientDto>(`/cook-book/recipes/${id}/ingredients/${riId}`, data),
 
     removeIngredient: (id: string, riId: string) =>
         client.delete(`/cook-book/recipes/${id}/ingredients/${riId}`),

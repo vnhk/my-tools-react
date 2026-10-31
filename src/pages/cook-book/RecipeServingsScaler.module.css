@@ -1,0 +1,174 @@
+.scalerContainer {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.04));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+    border-radius: 12px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+
+.scalerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.scalerTitleGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.icon {
+    font-size: 20px;
+}
+
+.scalerTitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-text-primary, #fff);
+}
+
+.scalerSubtitle {
+    font-size: 11px;
+    color: var(--color-text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.resetBtn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.15));
+    border-radius: 6px;
+    color: var(--color-warning, #f59e0b);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.resetBtn:hover {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: var(--color-warning, #f59e0b);
+}
+
+.scalerControls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.stepperGroup {
+    display: inline-flex;
+    align-items: center;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.16));
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.stepBtn {
+    background: none;
+    border: none;
+    color: var(--color-text-primary, #fff);
+    font-size: 16px;
+    font-weight: bold;
+    width: 34px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.stepBtn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.stepBtn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.inputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 8px;
+    border-left: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+}
+
+.servingsInput {
+    background: transparent;
+    border: none;
+    color: var(--color-text-primary, #fff);
+    font-size: 14px;
+    font-weight: 700;
+    width: 44px;
+    text-align: center;
+    outline: none;
+}
+
+.servingsUnit {
+    font-size: 12px;
+    color: var(--color-text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.multiplierBadge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.badgeLabel {
+    color: var(--color-text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.badgeValue {
+    color: var(--color-primary, #818cf8);
+}
+
+.baseLabel {
+    font-size: 11px;
+    color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+.presets {
+    display: flex;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.presetBtn {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+    border-radius: 6px;
+    color: var(--color-text-secondary, rgba(255, 255, 255, 0.8));
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.presetBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.presetActive {
+    background: var(--color-primary, #6366f1);
+    border-color: var(--color-primary, #6366f1);
+    color: #fff;
+}

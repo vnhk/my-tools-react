@@ -3,8 +3,6 @@ import {useNavigate, useParams} from 'react-router-dom'
 import {useNotification} from '../../components/ui/Notification'
 import {
     type CartDto,
-    type IngredientDto,
-    ingredientsApi,
     type RecipeDto,
     type RecipeIngredientDto,
     recipesApi,
@@ -13,6 +11,14 @@ import {
     unitsApi,
 } from '../../api/cookBook'
 import {CustomSelect} from '../../components/fields/CustomSelect'
+import {IngredientDialog} from './IngredientDialog'
+import {RecipeServingsScaler} from './RecipeServingsScaler'
+import {RecipeVariablesHelp} from './RecipeVariablesHelp'
+import {
+    formatScaledQuantity,
+    getPrimaryVariableName,
+    interpolateInstructionVariables,
+} from './recipeVariableUtils'
 import styles from './RecipeDetailPage.module.css'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -21,9 +27,9 @@ function Stars({rating, count}: { rating: number | null; count: number | null })
     const n = Math.round(rating ?? 0)
     return (
         <span className={styles.stars} title={`${(rating ?? 0).toFixed(1)} (${count ?? 0} ratings)`}>
-      {'★'.repeat(n)}{'☆'.repeat(5 - n)}
+            {'★'.repeat(n)}{'☆'.repeat(5 - n)}
             {rating != null && <span className={styles.ratingNum}> {rating.toFixed(1)} ({count ?? 0})</span>}
-    </span>
+        </span>
     )
 }
 
@@ -31,23 +37,28 @@ function InlineText({label, value, onSave}: { label: string; value: string | nul
     const [editing, setEditing] = useState(false)
     const [draft, setDraft] = useState(value ?? '')
     const save = () => {
-        onSave(draft);
+        onSave(draft)
         setEditing(false)
     }
     return editing ? (
         <div className={styles.inlineEdit}>
             <span className={styles.fieldLabel}>{label}</span>
-            <input className={styles.inlineInput} value={draft} onChange={e => setDraft(e.target.value)}
-                   onKeyDown={e => {
-                       if (e.key === 'Enter') save();
-                       if (e.key === 'Escape') setEditing(false)
-                   }} autoFocus/>
+            <input
+                className={styles.inlineInput}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onKeyDown={e => {
+                    if (e.key === 'Enter') save()
+                    if (e.key === 'Escape') setEditing(false)
+                }}
+                autoFocus
+            />
             <button className={`${styles.btn} ${styles.success}`} onClick={save}>Save</button>
             <button className={styles.btn} onClick={() => setEditing(false)}>Cancel</button>
         </div>
     ) : (
         <div className={styles.inlineView} onClick={() => {
-            setDraft(value ?? '');
+            setDraft(value ?? '')
             setEditing(true)
         }}>
             <span className={styles.fieldLabel}>{label}</span>
@@ -62,154 +73,35 @@ function InlineNumber({label, value, onSave, suffix = ''}: {
     const [editing, setEditing] = useState(false)
     const [draft, setDraft] = useState(String(value ?? ''))
     const save = () => {
-        onSave(draft === '' ? null : Number(draft));
+        onSave(draft === '' ? null : Number(draft))
         setEditing(false)
     }
     return editing ? (
         <div className={styles.inlineEdit}>
             <span className={styles.fieldLabel}>{label}</span>
-            <input className={styles.inlineInput} type="number" value={draft}
-                   onChange={e => setDraft(e.target.value)}
-                   onKeyDown={e => {
-                       if (e.key === 'Enter') save();
-                       if (e.key === 'Escape') setEditing(false)
-                   }} autoFocus/>
+            <input
+                className={styles.inlineInput}
+                type="number"
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                onKeyDown={e => {
+                    if (e.key === 'Enter') save()
+                    if (e.key === 'Escape') setEditing(false)
+                }}
+                autoFocus
+            />
             {suffix && <span className={styles.suffix}>{suffix}</span>}
             <button className={`${styles.btn} ${styles.success}`} onClick={save}>Save</button>
             <button className={styles.btn} onClick={() => setEditing(false)}>Cancel</button>
         </div>
     ) : (
         <div className={styles.inlineView} onClick={() => {
-            setDraft(String(value ?? ''));
+            setDraft(String(value ?? ''))
             setEditing(true)
         }}>
             <span className={styles.fieldLabel}>{label}</span>
             <span className={styles.fieldValue}>{value != null ? `${value}${suffix}` :
                 <em className={styles.empty}>—</em>}</span>
-        </div>
-    )
-}
-
-// ── AddIngredient dialog ──────────────────────────────────────────────────────
-
-function AddIngredientDialog({recipeId, existingCategories, units, onAdded, onClose}: {
-    recipeId: string
-    existingCategories: string[]
-    units: UnitOption[]
-    onAdded: () => void
-    onClose: () => void
-}) {
-    const {showError} = useNotification()
-    const [ingSearch, setIngSearch] = useState('')
-    const [suggestions, setSuggestions] = useState<IngredientDto[]>([])
-    const [selectedIng, setSelectedIng] = useState<IngredientDto | null>(null)
-    const [qty, setQty] = useState('')
-    const [unit, setUnit] = useState('GRAM')
-    const [category, setCategory] = useState('')
-    const [originalText, setOriginalText] = useState('')
-    const [optional, setOptional] = useState(false)
-    const debounce = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-    useEffect(() => {
-        if (debounce.current) clearTimeout(debounce.current)
-        debounce.current = setTimeout(() => {
-            ingredientsApi.list({
-                page: 0,
-                size: 50,
-                sort: "name",
-                direction: "desc",
-                name: ingSearch
-            }).then(r => setSuggestions(r.data.content))
-                .catch(() => {
-                })
-        }, 200)
-    }, [ingSearch])
-
-    const handleAdd = () => {
-        const name = selectedIng?.name ?? ingSearch.trim()
-        if (!name) {
-            showError('Enter ingredient name');
-            return
-        }
-        recipesApi.addIngredient(recipeId, {
-            ingredientId: selectedIng?.id ?? null,
-            ingredientName: name,
-            quantity: qty !== '' ? Number(qty) : null,
-            unit: unit || null,
-            category: category || null,
-            originalText: originalText || null,
-            optional,
-        })
-            .then(() => {
-                onAdded();
-                onClose()
-            })
-            .catch(() => showError('Failed to add ingredient'))
-    }
-
-    return (
-        <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.dialog} onClick={e => e.stopPropagation()}>
-                <div className={styles.dialogHeader}>
-                    <span className={styles.dialogTitle}>Add Ingredient</span>
-                    <button className={styles.closeBtn} onClick={onClose}>×</button>
-                </div>
-                <div className={styles.dialogBody}>
-                    <label className={styles.dialogLabel}>Ingredient</label>
-                    <input className={styles.dialogInput} value={ingSearch} onChange={e => {
-                        setIngSearch(e.target.value);
-                        setSelectedIng(null)
-                    }}
-                           placeholder="Type to search..."/>
-                    {suggestions.length > 0 && !selectedIng && (
-                        <div className={styles.suggestions}>
-                            {suggestions.map(s => (
-                                <div key={s.id} className={styles.suggestion}
-                                     onClick={() => {
-                                         setSelectedIng(s);
-                                         setIngSearch(s.name);
-                                         setSuggestions([])
-                                     }}>
-                                    {s.icon && <span>{s.icon} </span>}{s.name}
-                                    {s.category && <span className={styles.suggCat}> · {s.category}</span>}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    <div className={styles.dialogRow}>
-                        <div className={styles.dialogField}>
-                            <label className={styles.dialogLabel}>Quantity</label>
-                            <input className={styles.dialogInput} type="number" value={qty}
-                                   onChange={e => setQty(e.target.value)}/>
-                        </div>
-                        <div className={styles.dialogField}>
-                            <label className={styles.dialogLabel}>Unit</label>
-                            <CustomSelect
-                                className={styles.dialogSelect}
-                                options={units.map(u => ({value: u.value, label: u.label}))}
-                                value={unit}
-                                onChange={setUnit}
-                            />
-                        </div>
-                    </div>
-                    <label className={styles.dialogLabel}>Category (e.g., Na ciasto)</label>
-                    <input className={styles.dialogInput} value={category} onChange={e => setCategory(e.target.value)}
-                           list="cats" placeholder="Optional grouping"/>
-                    <datalist id="cats">{existingCategories.map(c => <option key={c} value={c}/>)}</datalist>
-                    <label className={styles.dialogLabel}>Original text</label>
-                    <input className={styles.dialogInput} value={originalText}
-                           onChange={e => setOriginalText(e.target.value)}
-                           placeholder="e.g., 2 szklanki mąki pszennej"/>
-                    <label className={styles.checkLabel}>
-                        <input type="checkbox" checked={optional} onChange={e => setOptional(e.target.checked)}/>
-                        Optional ingredient
-                    </label>
-                </div>
-                <div className={styles.dialogFooter}>
-                    <button className={`${styles.btn} ${styles.primary}`} onClick={handleAdd}>Add</button>
-                    <button className={styles.btn} onClick={onClose}>Cancel</button>
-                </div>
-            </div>
         </div>
     )
 }
@@ -225,22 +117,21 @@ function AddToCartDialog({recipeId, onClose}: { recipeId: string; onClose: () =>
     useEffect(() => {
         shoppingCartsApi.getAll()
             .then(r => {
-                const active = r.data.filter(c => !c.archived);
-                setCarts(active);
+                const active = r.data.filter(c => !c.archived)
+                setCarts(active)
                 if (active.length) setCartId(active[0].id)
             })
-            .catch(() => {
-            })
+            .catch(() => {})
     }, [])
 
     const handleAdd = () => {
         if (!cartId) {
-            showError('Select a cart');
+            showError('Select a cart')
             return
         }
         shoppingCartsApi.addRecipe(cartId, recipeId, Number(multiplier) || 1)
             .then(() => {
-                showSuccess('Added to cart');
+                showSuccess('Added to cart')
                 onClose()
             })
             .catch(() => showError('Failed'))
@@ -262,8 +153,14 @@ function AddToCartDialog({recipeId, onClose}: { recipeId: string; onClose: () =>
                         onChange={setCartId}
                     />
                     <label className={styles.dialogLabel}>Servings multiplier</label>
-                    <input className={styles.dialogInput} type="number" min="0.1" step="0.5" value={multiplier}
-                           onChange={e => setMultiplier(e.target.value)}/>
+                    <input
+                        className={styles.dialogInput}
+                        type="number"
+                        min="0.1"
+                        step="0.5"
+                        value={multiplier}
+                        onChange={e => setMultiplier(e.target.value)}
+                    />
                 </div>
                 <div className={styles.dialogFooter}>
                     <button className={`${styles.btn} ${styles.primary}`} onClick={handleAdd}>Add</button>
@@ -284,8 +181,8 @@ function RateDialog({recipeId, onRated, onClose}: { recipeId: string; onRated: (
     const handleRate = () => {
         recipesApi.rate(recipeId, rating, comment || undefined)
             .then(() => {
-                showSuccess('Rating added');
-                onRated();
+                showSuccess('Rating added')
+                onRated()
                 onClose()
             })
             .catch(() => showError('Failed to rate'))
@@ -302,13 +199,22 @@ function RateDialog({recipeId, onRated, onClose}: { recipeId: string; onRated: (
                     <label className={styles.dialogLabel}>Rating (1–5)</label>
                     <div className={styles.starPicker}>
                         {[1, 2, 3, 4, 5].map(n => (
-                            <button key={n} className={`${styles.starBtn} ${n <= rating ? styles.starActive : ''}`}
-                                    onClick={() => setRating(n)}>★</button>
+                            <button
+                                key={n}
+                                className={`${styles.starBtn} ${n <= rating ? styles.starActive : ''}`}
+                                onClick={() => setRating(n)}
+                            >
+                                ★
+                            </button>
                         ))}
                     </div>
                     <label className={styles.dialogLabel}>Comment (optional)</label>
-                    <textarea className={styles.dialogTextarea} rows={3} value={comment}
-                              onChange={e => setComment(e.target.value)}/>
+                    <textarea
+                        className={styles.dialogTextarea}
+                        rows={3}
+                        value={comment}
+                        onChange={e => setComment(e.target.value)}
+                    />
                 </div>
                 <div className={styles.dialogFooter}>
                     <button className={`${styles.btn} ${styles.primary}`} onClick={handleRate}>Submit</button>
@@ -324,7 +230,7 @@ function RateDialog({recipeId, onRated, onClose}: { recipeId: string; onRated: (
 export function RecipeDetailPage() {
     const {id} = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const {showError} = useNotification()
+    const {showSuccess, showError} = useNotification()
     const [recipe, setRecipe] = useState<RecipeDto | null>(null)
     const [loading, setLoading] = useState(true)
     const [units, setUnits] = useState<UnitOption[]>([])
@@ -332,14 +238,17 @@ export function RecipeDetailPage() {
     const [editingInstruction, setEditingInstruction] = useState(false)
     const [instructionDraft, setInstructionDraft] = useState('')
     const [showAddIng, setShowAddIng] = useState(false)
+    const [editingIngredient, setEditingIngredient] = useState<RecipeIngredientDto | null>(null)
     const [showAddCart, setShowAddCart] = useState(false)
     const [showRate, setShowRate] = useState(false)
+    const [currentServings, setCurrentServings] = useState<number>(4)
+    const instructionTextareaRef = useRef<HTMLTextAreaElement | null>(null)
 
     const isNew = id === 'new'
 
     const load = () => {
         if (isNew) {
-            setLoading(false);
+            setLoading(false)
             setRecipe({
                 id: '',
                 name: '',
@@ -357,23 +266,25 @@ export function RecipeDetailPage() {
                 requiredEquipment: null,
                 mainImageUrl: null,
                 sourceUrl: null,
-                ingredients: []
-            });
+                ingredients: [],
+            })
+            setCurrentServings(4)
             return
         }
         setLoading(true)
         recipesApi.getById(id!)
-            .then(r => setRecipe(r.data))
+            .then(r => {
+                setRecipe(r.data)
+                setCurrentServings(r.data.servings && r.data.servings > 0 ? r.data.servings : 4)
+            })
             .catch(() => showError('Failed to load recipe'))
             .finally(() => setLoading(false))
     }
 
     useEffect(() => {
         load()
-        unitsApi.getAll().then(r => setUnits(r.data)).catch(() => {
-        })
-        recipesApi.getTags().then(r => setTags(r.data)).catch(() => {
-        })
+        unitsApi.getAll().then(r => setUnits(r.data)).catch(() => {})
+        recipesApi.getTags().then(r => setTags(r.data)).catch(() => {})
     }, [id])
 
     const patch = async (fields: Partial<RecipeDto>) => {
@@ -381,7 +292,7 @@ export function RecipeDetailPage() {
         if (isNew) {
             const updated = {...recipe, ...fields}
             if (!updated.name?.trim()) {
-                showError('Name is required');
+                showError('Name is required')
                 return
             }
             const res = await recipesApi.create(updated).catch(() => null)
@@ -413,6 +324,43 @@ export function RecipeDetailPage() {
         setEditingInstruction(false)
     }
 
+    const copyVariableTag = (varName: string) => {
+        const tag = `{${varName}}`
+        navigator.clipboard.writeText(tag).then(() => {
+            showSuccess(`Copied ${tag} to clipboard!`)
+        }).catch(() => {
+            showError(`Failed to copy ${tag}`)
+        })
+    }
+
+    const insertVariable = (varName: string) => {
+        const textarea = instructionTextareaRef.current
+        const tag = `{${varName}}`
+        if (!textarea) {
+            setInstructionDraft(prev => prev + ' ' + tag)
+            return
+        }
+        const start = textarea.selectionStart
+        const end = textarea.selectionEnd
+        const text = instructionDraft
+        const before = text.substring(0, start)
+        const after = text.substring(end)
+        const nextDraft = before + tag + after
+        setInstructionDraft(nextDraft)
+        setTimeout(() => {
+            textarea.focus()
+            textarea.setSelectionRange(start + tag.length, start + tag.length)
+        }, 0)
+    }
+
+    const baseServings = recipe?.servings && recipe.servings > 0 ? recipe.servings : 1
+    const scaleMultiplier = currentServings / baseServings
+    const isScaled = Math.abs(scaleMultiplier - 1.0) > 0.001
+
+    const handleResetServings = () => {
+        setCurrentServings(recipe?.servings && recipe.servings > 0 ? recipe.servings : 4)
+    }
+
     const existingCategories = [...new Set((recipe?.ingredients ?? []).map(r => r.category).filter(Boolean) as string[])]
 
     if (loading) return <div className={styles.state}>Loading...</div>
@@ -424,14 +372,17 @@ export function RecipeDetailPage() {
                 <button className={styles.backBtn} onClick={() => navigate('/cook-book/recipes')}>← Back</button>
                 <div style={{flex: 1}}/>
                 {!isNew && <>
-                    <button className={`${styles.btn} ${recipe.favorite ? styles.favActive : ''}`}
-                            onClick={handleToggleFav}>
+                    <button
+                        className={`${styles.btn} ${recipe.favorite ? styles.favActive : ''}`}
+                        onClick={handleToggleFav}
+                    >
                         {recipe.favorite ? '★ Favorite' : '☆ Favorite'}
                     </button>
-                    <button className={`${styles.btn} ${styles.primary}`} onClick={() => setShowRate(true)}>Rate
+                    <button className={`${styles.btn} ${styles.primary}`} onClick={() => setShowRate(true)}>
+                        Rate
                     </button>
-                    <button className={`${styles.btn} ${styles.success}`} onClick={() => setShowAddCart(true)}>Add to
-                        Cart
+                    <button className={`${styles.btn} ${styles.success}`} onClick={() => setShowAddCart(true)}>
+                        Add to Cart
                     </button>
                     <button className={`${styles.btn} ${styles.danger}`} onClick={handleDelete}>Delete</button>
                 </>}
@@ -465,29 +416,41 @@ export function RecipeDetailPage() {
 
                 {/* Metadata */}
                 <div className={`${styles.card} ${styles.metaGrid}`}>
-                    <InlineNumber label="Prep Time" value={recipe.prepTime} suffix=" min"
-                                  onSave={v => patch({prepTime: v})}/>
-                    <InlineNumber label="Cook Time" value={recipe.cookTime} suffix=" min"
-                                  onSave={v => patch({cookTime: v})}/>
+                    <InlineNumber label="Prep Time" value={recipe.prepTime} suffix=" min" onSave={v => patch({prepTime: v})}/>
+                    <InlineNumber label="Cook Time" value={recipe.cookTime} suffix=" min" onSave={v => patch({cookTime: v})}/>
                     <div className={styles.inlineView}>
                         <span className={styles.fieldLabel}>Total Time</span>
-                        <span
-                            className={styles.fieldValue}>{recipe.totalTime != null ? `${recipe.totalTime} min` : '—'}</span>
+                        <span className={styles.fieldValue}>{recipe.totalTime != null ? `${recipe.totalTime} min` : '—'}</span>
                     </div>
-                    <InlineNumber label="Servings" value={recipe.servings} onSave={v => patch({servings: v})}/>
-                    <InlineNumber label="Calories" value={recipe.totalCalories} suffix=" kcal"
-                                  onSave={v => patch({totalCalories: v})}/>
-                    <InlineText label="Equipment" value={recipe.requiredEquipment}
-                                onSave={v => patch({requiredEquipment: v})}/>
+                    <InlineNumber label="Base Servings" value={recipe.servings} onSave={v => patch({servings: v})}/>
+                    <InlineNumber label="Calories" value={recipe.totalCalories} suffix=" kcal" onSave={v => patch({totalCalories: v})}/>
+                    <InlineText label="Equipment" value={recipe.requiredEquipment} onSave={v => patch({requiredEquipment: v})}/>
                 </div>
+
+                {/* Dynamic Servings & Quantity Scaler */}
+                {!isNew && (
+                    <RecipeServingsScaler
+                        baseServings={recipe.servings}
+                        currentServings={currentServings}
+                        onChangeServings={setCurrentServings}
+                        onReset={handleResetServings}
+                    />
+                )}
 
                 {/* Ingredients */}
                 {!isNew && (
                     <div className={styles.card}>
                         <div className={styles.sectionHeader}>
-                            <span className={styles.sectionTitle}>Ingredients</span>
-                            <button className={`${styles.btn} ${styles.primary}`} onClick={() => setShowAddIng(true)}>+
-                                Add
+                            <span className={styles.sectionTitle}>
+                                Ingredients
+                                {isScaled && (
+                                    <span style={{fontSize: 11, fontWeight: 'normal', color: 'var(--color-primary)', marginLeft: 8}}>
+                                        (Scaled {Number(scaleMultiplier.toFixed(2))}x)
+                                    </span>
+                                )}
+                            </span>
+                            <button className={`${styles.btn} ${styles.primary}`} onClick={() => setShowAddIng(true)}>
+                                + Add
                             </button>
                         </div>
                         {recipe.ingredients.length === 0
@@ -498,31 +461,66 @@ export function RecipeDetailPage() {
                                     <tr>
                                         <th>Qty</th>
                                         <th>Ingredient</th>
+                                        <th>Variable</th>
                                         <th>Original</th>
+                                        <th></th>
                                         <th></th>
                                         <th></th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {recipe.ingredients.map(ri => (
-                                        <tr key={ri.id} className={ri.optional ? styles.optionalRow : ''}>
-                                            <td className={styles.qtyCell}>
-                                                {ri.quantity != null ? `${ri.quantity} ${ri.unitDisplayName ?? ''}` : '—'}
-                                            </td>
-                                            <td>
-                                                {ri.ingredientIcon && <span>{ri.ingredientIcon} </span>}
-                                                {ri.ingredientName}
-                                                {ri.category && <span className={styles.cat}> · {ri.category}</span>}
-                                            </td>
-                                            <td className={styles.origCell}>{ri.originalText ?? ''}</td>
-                                            <td>{ri.optional && <span className={styles.optBadge}>optional</span>}</td>
-                                            <td>
-                                                <button className={styles.removeBtn}
-                                                        onClick={() => handleRemoveIng(ri)}>×
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {recipe.ingredients.map((ri, idx) => {
+                                        const primaryVar = getPrimaryVariableName(ri, idx + 1)
+                                        const scaledQtyStr = formatScaledQuantity(ri.quantity, scaleMultiplier)
+                                        return (
+                                            <tr key={ri.id} className={ri.optional ? styles.optionalRow : ''}>
+                                                <td className={styles.qtyCell}>
+                                                    <span className={isScaled ? styles.scaledQty : ''}>
+                                                        {scaledQtyStr} {ri.unitDisplayName ?? ''}
+                                                    </span>
+                                                    {isScaled && ri.quantity != null && (
+                                                        <span className={styles.baseQtyMuted} title="Original base quantity">
+                                                            (base: {ri.quantity})
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td>
+                                                    {ri.ingredientIcon && <span>{ri.ingredientIcon} </span>}
+                                                    {ri.ingredientName}
+                                                    {ri.category && <span className={styles.cat}> · {ri.category}</span>}
+                                                </td>
+                                                <td>
+                                                    <span
+                                                        className={styles.varPill}
+                                                        onClick={() => copyVariableTag(primaryVar)}
+                                                        title={`Click to copy {${primaryVar}} to clipboard`}
+                                                    >
+                                                        &#123;{primaryVar}&#125; <span className={styles.copyIcon}>📋</span>
+                                                    </span>
+                                                </td>
+                                                <td className={styles.origCell}>{ri.originalText ?? ''}</td>
+                                                <td>{ri.optional && <span className={styles.optBadge}>optional</span>}</td>
+                                                <td>
+                                                    <button
+                                                        className={styles.editRiBtn}
+                                                        title="Edit ingredient & variable"
+                                                        onClick={() => setEditingIngredient(ri)}
+                                                    >
+                                                        ✎
+                                                    </button>
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className={styles.removeBtn}
+                                                        title="Remove ingredient"
+                                                        onClick={() => handleRemoveIng(ri)}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )
+                                    })}
                                     </tbody>
                                 </table>
                             )
@@ -535,42 +533,91 @@ export function RecipeDetailPage() {
                     <div className={styles.sectionHeader}>
                         <span className={styles.sectionTitle}>Instructions</span>
                         {!editingInstruction && (
-                            <button className={`${styles.btn} ${styles.primary}`}
-                                    onClick={() => {
-                                        setInstructionDraft(recipe.instruction ?? '');
-                                        setEditingInstruction(true)
-                                    }}>
+                            <button
+                                className={`${styles.btn} ${styles.primary}`}
+                                onClick={() => {
+                                    setInstructionDraft(recipe.instruction ?? '')
+                                    setEditingInstruction(true)
+                                }}
+                            >
                                 Edit
                             </button>
                         )}
                     </div>
                     {editingInstruction ? (
                         <>
-              <textarea className={styles.instructionEditor} value={instructionDraft}
-                        onChange={e => setInstructionDraft(e.target.value)} rows={16}/>
+                            {recipe.ingredients.length > 0 && (
+                                <div className={styles.varToolbar}>
+                                    <div className={styles.varToolbarTitle}>
+                                        Click to insert ingredient variable at cursor:
+                                    </div>
+                                    <div className={styles.varChips}>
+                                        {recipe.ingredients.map((ri, idx) => {
+                                            const v = getPrimaryVariableName(ri, idx + 1)
+                                            return (
+                                                <button
+                                                    key={ri.id}
+                                                    type="button"
+                                                    className={styles.varChip}
+                                                    onClick={() => insertVariable(v)}
+                                                    title={`${ri.ingredientName} (${ri.quantity ?? ''} ${ri.unitDisplayName ?? ''})`}
+                                                >
+                                                    + &#123;{v}&#125; ({ri.ingredientName})
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                            <textarea
+                                ref={instructionTextareaRef}
+                                className={styles.instructionEditor}
+                                value={instructionDraft}
+                                onChange={e => setInstructionDraft(e.target.value)}
+                                rows={16}
+                                placeholder="Write recipe steps with variables, e.g.: Dodaj {ingredient1} mąki i wymieszaj z {ingredient2} masła..."
+                            />
                             <div className={styles.editorActions}>
-                                <button className={`${styles.btn} ${styles.success}`} onClick={saveInstruction}>Save
+                                <button className={`${styles.btn} ${styles.success}`} onClick={saveInstruction}>
+                                    Save
                                 </button>
-                                <button className={styles.btn} onClick={() => setEditingInstruction(false)}>Cancel
+                                <button className={styles.btn} onClick={() => setEditingInstruction(false)}>
+                                    Cancel
                                 </button>
                             </div>
                         </>
                     ) : (
                         recipe.instruction
-                            ? <div className={styles.instructionView}
-                                   dangerouslySetInnerHTML={{__html: recipe.instruction}}/>
+                            ? <div
+                                className={styles.instructionView}
+                                dangerouslySetInnerHTML={{
+                                    __html: interpolateInstructionVariables(
+                                        recipe.instruction,
+                                        recipe.ingredients,
+                                        scaleMultiplier
+                                    )
+                                }}
+                            />
                             : <div className={styles.emptyMsg}>No instructions yet. Click Edit to add.</div>
                     )}
                 </div>
+
+                {/* How Dynamic Scaling & Variables Work - English Help Guide */}
+                <RecipeVariablesHelp />
             </div>
 
-            {showAddIng && recipe && !isNew && (
-                <AddIngredientDialog
+            {(showAddIng || editingIngredient) && recipe && !isNew && (
+                <IngredientDialog
                     recipeId={recipe.id}
                     existingCategories={existingCategories}
                     units={units}
-                    onAdded={load}
-                    onClose={() => setShowAddIng(false)}
+                    editingIngredient={editingIngredient}
+                    defaultIndex={(recipe.ingredients?.length ?? 0) + 1}
+                    onSaved={load}
+                    onClose={() => {
+                        setShowAddIng(false)
+                        setEditingIngredient(null)
+                    }}
                 />
             )}
             {showAddCart && recipe && !isNew && (
@@ -598,7 +645,7 @@ function TagEditor({value, allTags, onSave}: { value: string[]; allTags: string[
 
     if (!editing) return (
         <div className={styles.tagRow} onClick={() => {
-            setDraft(value);
+            setDraft(value)
             setEditing(true)
         }}>
             {value.length === 0
@@ -613,27 +660,33 @@ function TagEditor({value, allTags, onSave}: { value: string[]; allTags: string[
             <div className={styles.tagRow}>
                 {draft.map(t => (
                     <span key={t} className={styles.tag}>
-            {t}
-                        <button className={styles.tagRemove}
-                                onClick={() => setDraft(d => d.filter(x => x !== t))}>×</button>
-          </span>
+                        {t}
+                        <button className={styles.tagRemove} onClick={() => setDraft(d => d.filter(x => x !== t))}>×</button>
+                    </span>
                 ))}
             </div>
-            <input className={styles.tagInput} value={input} onChange={e => setInput(e.target.value)}
-                   onKeyDown={e => {
-                       if (e.key === 'Enter' || e.key === ',') {
-                           e.preventDefault();
-                           addTag(input)
-                       }
-                   }}
-                   list="all-tags" placeholder="Add tag, Enter to confirm"/>
-            <datalist id="all-tags">{allTags.filter(t => !draft.includes(t)).map(t => <option key={t}
-                                                                                              value={t}/>)}</datalist>
+            <input
+                className={styles.tagInput}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ',') {
+                        e.preventDefault()
+                        addTag(input)
+                    }
+                }}
+                list="all-tags"
+                placeholder="Add tag, Enter to confirm"
+            />
+            <datalist id="all-tags">
+                {allTags.filter(t => !draft.includes(t)).map(t => <option key={t} value={t}/>)}
+            </datalist>
             <div style={{display: 'flex', gap: 6, marginTop: 4}}>
                 <button className={`${styles.btn} ${styles.success}`} onClick={() => {
-                    onSave(draft);
+                    onSave(draft)
                     setEditing(false)
-                }}>Save
+                }}>
+                    Save
                 </button>
                 <button className={styles.btn} onClick={() => setEditing(false)}>Cancel</button>
             </div>

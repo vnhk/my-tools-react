@@ -1,0 +1,114 @@
+.helpContainer {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.03));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.helpHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    cursor: pointer;
+    user-select: none;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.helpHeader:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-primary, #fff);
+}
+
+.infoIcon {
+    font-size: 15px;
+}
+
+.toggleBtn {
+    background: none;
+    border: none;
+    color: var(--color-primary, #818cf8);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.helpBody {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+    font-size: 12px;
+    color: var(--color-text-secondary, rgba(255, 255, 255, 0.8));
+    line-height: 1.6;
+}
+
+.section h4 {
+    margin: 0 0 4px 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-primary, #fff);
+}
+
+.section p {
+    margin: 0 0 4px 0;
+}
+
+.highlight {
+    background: rgba(99, 102, 241, 0.1);
+    border-left: 3px solid var(--color-primary, #6366f1);
+    padding: 6px 10px;
+    border-radius: 0 6px 6px 0;
+    font-size: 11px;
+    color: var(--color-text-primary, #fff);
+    margin-top: 4px;
+}
+
+.codeExample {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    font-family: monospace;
+    font-size: 12px;
+    color: #a5b4fc;
+    overflow-x: auto;
+}
+
+.syntaxTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 6px;
+    font-size: 11px;
+}
+
+.syntaxTable th,
+.syntaxTable td {
+    padding: 6px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+}
+
+.syntaxTable th {
+    color: var(--color-text-primary, #fff);
+    font-weight: 600;
+}
+
+.syntaxTable code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+    color: #818cf8;
+}
