@@ -54,28 +54,63 @@ export function getPrimaryVariableName(ri: RecipeIngredientDto, index1Based: num
 export function buildVariableMap(ingredients: RecipeIngredientDto[]): Map<string, ResolvedIngredient> {
     const map = new Map<string, ResolvedIngredient>()
 
+    // Pass 1: Explicit variableName on ingredients (e.g. 'ingredient1', 'maka', etc.)
+    // These have highest priority and must never be overwritten by positional fallbacks.
     ingredients.forEach((ri, idx) => {
-        const index1Based = idx + 1
-        const primary = getPrimaryVariableName(ri, index1Based)
-        const unit = ri.unitDisplayName || ri.unit || ''
-
-        const resolved: ResolvedIngredient = {
-            ingredient: ri,
-            index: index1Based,
-            primaryVariable: primary,
-            baseQuantity: ri.quantity,
-            unitDisplayName: unit,
+        const explicitVar = ri.variableName?.trim()
+        if (explicitVar) {
+            const unit = ri.unitDisplayName || ri.unit || ''
+            const resolved: ResolvedIngredient = {
+                ingredient: ri,
+                index: idx + 1,
+                primaryVariable: explicitVar,
+                baseQuantity: ri.quantity,
+                unitDisplayName: unit,
+            }
+            map.set(normalizeVarKey(explicitVar), resolved)
         }
+    })
 
-        // 1. Alias by primary variable (e.g. 'flour' or 'ingredient1')
-        map.set(normalizeVarKey(primary), resolved)
+    // Pass 2: Ingredients WITHOUT explicit variableName
+    // Assign fallback 'ingredientN' only if the key is not already taken by an explicit variable.
+    ingredients.forEach((ri, idx) => {
+        const explicitVar = ri.variableName?.trim()
+        if (!explicitVar) {
+            const unit = ri.unitDisplayName || ri.unit || ''
+            let n = idx + 1
+            while (map.has(`ingredient${n}`)) {
+                n++
+            }
+            const fallbackKey = `ingredient${n}`
+            const resolved: ResolvedIngredient = {
+                ingredient: ri,
+                index: idx + 1,
+                primaryVariable: fallbackKey,
+                baseQuantity: ri.quantity,
+                unitDisplayName: unit,
+            }
+            map.set(fallbackKey, resolved)
+        }
+    })
 
-        // 2. Default fallback alias by position: 'ingredient1', 'ingredient2', ...
-        map.set(`ingredient${index1Based}`, resolved)
-
-        // 3. Normalized ingredient name alias (e.g. 'mąka pszenna' or 'sugar')
+    // Pass 3: Ingredient name aliases (e.g. 'cukier', 'jogurt naturalny')
+    // Only map if key is not already claimed.
+    ingredients.forEach((ri, idx) => {
         if (ri.ingredientName) {
-            map.set(normalizeVarKey(ri.ingredientName), resolved)
+            const nameKey = normalizeVarKey(ri.ingredientName)
+            if (!map.has(nameKey)) {
+                const explicitVar = ri.variableName?.trim()
+                const primary = explicitVar || `ingredient${idx + 1}`
+                const unit = ri.unitDisplayName || ri.unit || ''
+                const resolved: ResolvedIngredient = {
+                    ingredient: ri,
+                    index: idx + 1,
+                    primaryVariable: primary,
+                    baseQuantity: ri.quantity,
+                    unitDisplayName: unit,
+                }
+                map.set(nameKey, resolved)
+            }
         }
     })
 
