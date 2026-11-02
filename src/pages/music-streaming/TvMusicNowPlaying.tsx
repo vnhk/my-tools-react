@@ -1,18 +1,5 @@
-import { useEffect, useCallback } from 'react'
-import {
-  FaPlay,
-  FaPause,
-  FaStepForward,
-  FaStepBackward,
-  FaRandom,
-  FaRedo,
-  FaSlidersH,
-  FaVolumeUp,
-  FaVolumeMute,
-  FaTv,
-  FaMusic,
-  FaCompress,
-} from 'react-icons/fa'
+import { useEffect, useCallback, useState, useRef } from 'react'
+import { FaMusic, FaCompress } from 'react-icons/fa'
 import { useAudioPlayer } from './AudioPlayerContext'
 import { AudioVisualizer } from './AudioVisualizer'
 import { getCoverUrl } from './api'
@@ -30,16 +17,13 @@ export function TvMusicNowPlaying() {
   const {
     currentTrack,
     currentAlbum,
+    librarySummary,
     queue,
     queueIndex,
     isPlaying,
     currentTime,
     duration,
     volume,
-    isMuted,
-    repeatMode,
-    isShuffle,
-    isMixerEnabled,
     isCrossfading,
     isTvViewOpen,
     setIsTvViewOpen,
@@ -51,8 +35,6 @@ export function TvMusicNowPlaying() {
     seekTo,
     setVolume,
     toggleMute,
-    toggleRepeatMode,
-    toggleShuffle,
     toggleMixer,
   } = useAudioPlayer()
 
@@ -64,6 +46,32 @@ export function TvMusicNowPlaying() {
     else if (visualizerMode === 'mirror') setVisualizerMode('wave')
     else setVisualizerMode('bars')
   }, [visualizerMode, setVisualizerMode])
+
+  // Auto-hide mouse cursor and floating close button after 3s of inactivity on TV
+  const [isIdle, setIsIdle] = useState(true)
+  const idleTimerRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!isTvViewOpen) return
+
+    const handleMouseMove = () => {
+      setIsIdle(false)
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+      idleTimerRef.current = window.setTimeout(() => {
+        setIsIdle(true)
+      }, 3000)
+    }
+
+    idleTimerRef.current = window.setTimeout(() => {
+      setIsIdle(true)
+    }, 3000)
+
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    }
+  }, [isTvViewOpen])
 
   // TV remote & keyboard shortcut handling
   useEffect(() => {
@@ -143,11 +151,24 @@ export function TvMusicNowPlaying() {
     return null
   }
 
-  const coverUrl = currentAlbum?.hasCover ? getCoverUrl(currentAlbum.id) : null
-  const nextTrackItem = queueIndex >= 0 && queueIndex + 1 < queue.length ? queue[queueIndex + 1] : null
+  // Resolve album metadata and cover even when playing from a mixed playlist
+  const effectiveAlbum =
+    currentAlbum ||
+    (currentTrack
+      ? librarySummary?.albums.find(
+          (a) =>
+            a.tracks?.some((t) => t.id === currentTrack.id) ||
+            a.id === currentTrack.album ||
+            a.title === currentTrack.album
+        )
+      : null)
+
+  const coverUrl = effectiveAlbum?.hasCover ? getCoverUrl(effectiveAlbum.id) : null
+  const nextTrackItem =
+    queueIndex >= 0 && queueIndex + 1 < queue.length ? queue[queueIndex + 1] : null
 
   return (
-    <div className={styles.tvOverlay}>
+    <div className={`${styles.tvOverlay} ${isIdle ? styles.idleCursor : ''}`}>
       {/* Dynamic blurred ambient album art background */}
       {coverUrl ? (
         <div
@@ -166,57 +187,26 @@ export function TvMusicNowPlaying() {
       {/* Radial vignette overlay */}
       <div className={styles.vignette} />
 
+      {/* Floating Header (only visible on desktop mouse movement, never clutters TV) */}
+      <header className={`${styles.floatingHeader} ${!isIdle ? styles.headerVisible : ''}`}>
+        {remoteContext?.roomId && (
+          <div className={styles.remoteBadge}>
+            📱 Room {remoteContext.roomId}
+          </div>
+        )}
+        <button
+          className={styles.floatingCloseBtn}
+          onClick={() => setIsTvViewOpen(false)}
+          title="Exit Fullscreen (Esc)"
+        >
+          <FaCompress />
+        </button>
+      </header>
+
+      {/* Clean, centered TV Stage */}
       <div className={styles.content}>
-        {/* Top Bar */}
-        <header className={styles.topBar}>
-          <div className={styles.tvBadge}>
-            <FaTv className={styles.tvBadgeIcon} />
-            <span>Music TV Mode</span>
-            {remoteContext?.roomId && (
-              <span className={styles.remoteBadge} title="Paired remote control Room ID">
-                📱 Room {remoteContext.roomId}
-              </span>
-            )}
-          </div>
-
-          <div className={styles.topControls}>
-            {/* Visualizer Mode Switch */}
-            <div className={styles.modeSwitch}>
-              <button
-                className={`${styles.modeBtn} ${visualizerMode === 'bars' ? styles.modeBtnActive : ''}`}
-                onClick={() => setVisualizerMode('bars')}
-              >
-                Equalizer
-              </button>
-              <button
-                className={`${styles.modeBtn} ${visualizerMode === 'mirror' ? styles.modeBtnActive : ''}`}
-                onClick={() => setVisualizerMode('mirror')}
-              >
-                Mirror
-              </button>
-              <button
-                className={`${styles.modeBtn} ${visualizerMode === 'wave' ? styles.modeBtnActive : ''}`}
-                onClick={() => setVisualizerMode('wave')}
-              >
-                Wave
-              </button>
-            </div>
-
-            {/* Minimize / Back to Library */}
-            <button
-              className={styles.minimizeBtn}
-              onClick={() => setIsTvViewOpen(false)}
-              title="Minimize to browse library (Esc)"
-            >
-              <FaCompress />
-              <span>Browse Library</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Center Stage: Album Art & Track Details & Visualizer */}
         <main className={styles.centerStage}>
-          {/* Album Cover Art */}
+          {/* Album Cover Art / Poster */}
           <div className={styles.coverWrap}>
             {coverUrl ? (
               <img
@@ -235,18 +225,18 @@ export function TvMusicNowPlaying() {
           <div className={styles.trackDetails}>
             <div className={styles.title}>{currentTrack.title}</div>
             <div className={styles.artist}>
-              {currentTrack.artist || currentAlbum?.artist || 'Unknown Artist'}
+              {currentTrack.artist || effectiveAlbum?.artist || 'Unknown Artist'}
             </div>
 
             <div className={styles.albumMeta}>
-              {currentAlbum?.title && (
+              {(effectiveAlbum?.title || currentTrack.album) && (
                 <span className={styles.albumTitle}>
-                  {currentAlbum.title}
+                  {effectiveAlbum?.title || currentTrack.album}
                 </span>
               )}
-              {(currentAlbum?.releaseYear || currentTrack.year) && (
+              {(effectiveAlbum?.releaseYear || currentTrack.year) && (
                 <span className={styles.tag}>
-                  {currentAlbum?.releaseYear || currentTrack.year}
+                  {effectiveAlbum?.releaseYear || currentTrack.year}
                 </span>
               )}
               {currentTrack.genre && (
@@ -275,144 +265,50 @@ export function TvMusicNowPlaying() {
               />
             </div>
 
-            {/* Seek Bar & Progress Row */}
+            {/* Sleek TV Progress Bar & Times */}
             <div className={styles.progressSection}>
               <div className={styles.progressRow}>
                 <span className={styles.timeLabel}>
                   {formatSeconds(currentTime)}
                 </span>
-                <input
-                  type="range"
-                  className={styles.progressBar}
-                  min={0}
-                  max={duration || 100}
-                  step={0.5}
-                  value={currentTime}
-                  onChange={(e) => seekTo(Number(e.target.value))}
-                />
+                <div
+                  className={styles.progressTrack}
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect()
+                    const clickX = e.clientX - rect.left
+                    const pct = Math.max(0, Math.min(1, clickX / rect.width))
+                    seekTo(pct * (duration || 0))
+                  }}
+                  title="Click to seek"
+                >
+                  <div
+                    className={styles.progressFill}
+                    style={{
+                      width: `${Math.min(
+                        100,
+                        Math.max(0, duration ? (currentTime / duration) * 100 : 0)
+                      )}%`,
+                    }}
+                  />
+                </div>
                 <span className={styles.timeLabel}>
                   {formatSeconds(duration)}
                 </span>
               </div>
             </div>
 
-            {/* Playback Controls Row */}
-            <div className={styles.playbackRow}>
-              <div className={styles.mainControls}>
-                <button
-                  className={`${styles.ctrlBtn} ${isShuffle ? styles.ctrlBtnActive : ''}`}
-                  onClick={toggleShuffle}
-                  title="Shuffle"
-                >
-                  <FaRandom />
-                </button>
-
-                <button
-                  className={styles.ctrlBtn}
-                  onClick={prevTrack}
-                  title="Previous track (P)"
-                >
-                  <FaStepBackward />
-                </button>
-
-                <button
-                  className={styles.playPauseBtn}
-                  onClick={togglePlayPause}
-                  title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-                >
-                  {isPlaying ? <FaPause /> : <FaPlay style={{ marginLeft: 3 }} />}
-                </button>
-
-                <button
-                  className={styles.ctrlBtn}
-                  onClick={nextTrack}
-                  title="Next track (N)"
-                >
-                  <FaStepForward />
-                </button>
-
-                <button
-                  className={`${styles.ctrlBtn} ${repeatMode !== 'off' ? styles.ctrlBtnActive : ''}`}
-                  onClick={toggleRepeatMode}
-                  title={`Repeat: ${repeatMode}`}
-                >
-                  <FaRedo />
-                  {repeatMode === 'one' && (
-                    <span style={{ fontSize: 10, marginLeft: -3, fontWeight: 700 }}>1</span>
-                  )}
-                </button>
-
-                <button
-                  className={`${styles.ctrlBtn} ${isMixerEnabled ? styles.ctrlBtnActive : ''}`}
-                  onClick={toggleMixer}
-                  title={`DJ Auto-Mixer (10s Dual-Deck Crossfade & Bass Filter): ${isMixerEnabled ? 'ON' : 'OFF'} (X)`}
-                  style={{ position: 'relative' }}
-                >
-                  <FaSlidersH />
-                  {isMixerEnabled && (
-                    <span style={{
-                      position: 'absolute',
-                      bottom: -2,
-                      right: -3,
-                      fontSize: 8,
-                      fontWeight: 800,
-                      lineHeight: 1,
-                      background: isCrossfading ? 'linear-gradient(135deg, #ec4899, #8b5cf6)' : 'var(--color-primary)',
-                      color: '#fff',
-                      padding: '1px 3px',
-                      borderRadius: 3,
-                    }}>{isCrossfading ? 'MIX' : '10s'}</span>
-                  )}
-                </button>
+            {/* Subtle Up Next Preview (clean typography, no buttons) */}
+            {nextTrackItem && (
+              <div className={styles.upNextHint}>
+                <span className={styles.upNextLabel}>Up Next:</span>{' '}
+                <span className={styles.upNextTitle}>{nextTrackItem.title}</span>
+                <span className={styles.upNextArtist}>
+                  {' '}• {nextTrackItem.artist || effectiveAlbum?.artist || 'Unknown Artist'}
+                </span>
               </div>
-
-              {/* Volume Slider */}
-              <div className={styles.volumeBox}>
-                <button className={styles.ctrlBtn} onClick={toggleMute} title="Mute (M)">
-                  {isMuted || volume === 0 ? <FaVolumeMute /> : <FaVolumeUp />}
-                </button>
-                <input
-                  type="range"
-                  className={styles.volSlider}
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={isMuted ? 0 : volume}
-                  onChange={(e) => setVolume(Number(e.target.value))}
-                  title={`Volume ${Math.round(volume * 100)}%`}
-                />
-              </div>
-            </div>
+            )}
           </div>
         </main>
-
-        {/* Bottom Bar: Up Next Preview & Shortcuts */}
-        <footer className={styles.bottomBar}>
-          {nextTrackItem ? (
-            <div className={styles.upNextCard}>
-              <span className={styles.upNextLabel}>
-                <FaStepForward /> Up Next:
-              </span>
-              <span className={styles.upNextTitle}>
-                {nextTrackItem.title}
-              </span>
-              <span>
-                • {nextTrackItem.artist || currentAlbum?.artist || 'Unknown Artist'}
-              </span>
-            </div>
-          ) : (
-            <div />
-          )}
-
-          <div className={styles.shortcutsHint}>
-            <span><kbd className={styles.kbd}>Space</kbd> Play/Pause</span>
-            <span><kbd className={styles.kbd}>←</kbd> <kbd className={styles.kbd}>→</kbd> Seek</span>
-            <span><kbd className={styles.kbd}>N</kbd> Next</span>
-            <span><kbd className={styles.kbd}>V</kbd> Visualizer</span>
-            <span><kbd className={styles.kbd}>X</kbd> Auto-Mixer</span>
-            <span><kbd className={styles.kbd}>Esc</kbd> Browse</span>
-          </div>
-        </footer>
       </div>
     </div>
   )

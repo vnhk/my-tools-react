@@ -34,6 +34,7 @@ export interface RemoteCommand {
     albumTitle?: string
     albumId?: string
     trackId?: string
+    playlistId?: string
     coverUrl?: string
     repeatMode?: 'off' | 'all' | 'one'
     isShuffle?: boolean

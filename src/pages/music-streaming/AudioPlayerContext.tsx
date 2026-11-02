@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react'
 import type { AudioAlbum, AudioTrack, AudioLibrarySummary, AudioPlaylist } from './types'
-import { getTrackStreamUrl, getCoverUrl, fetchAlbum, fetchAudioSummary, fetchPlaylists } from './api'
+import { getTrackStreamUrl, getCoverUrl, fetchAlbum, fetchPlaylist, fetchAudioSummary, fetchPlaylists } from './api'
 import type { VisualizerMode } from './AudioVisualizer'
 import { useIsTv } from '../../common/hooks/useIsTv'
 import { useOptionalRemoteControlContext } from '../../components/layout/RemoteControlProvider'
@@ -758,16 +758,27 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
 
     const interval = setInterval(() => {
       const activeAudio = activeDeckRef.current === 'A' ? deckARef.current?.audio : deckBRef.current?.audio
+      const effectiveAlbum =
+        currentAlbum ||
+        (currentTrack
+          ? librarySummary?.albums.find(
+              (a) =>
+                a.tracks?.some((t) => t.id === currentTrack.id) ||
+                a.id === currentTrack.album ||
+                a.title === currentTrack.album
+            )
+          : null)
+
       remoteContext.sendStatus({
         title: currentTrack?.title ?? 'No track playing',
         playing: isPlaying,
         currentTime: activeAudio ? activeAudio.currentTime : currentTime,
         duration: activeAudio && isFinite(activeAudio.duration) ? activeAudio.duration : duration,
-        artist: currentTrack?.artist || currentAlbum?.artist || '',
-        albumTitle: currentAlbum?.title || '',
-        albumId: currentAlbum?.id || '',
+        artist: currentTrack?.artist || effectiveAlbum?.artist || '',
+        albumTitle: effectiveAlbum?.title || currentTrack?.album || '',
+        albumId: effectiveAlbum?.id || '',
         trackId: currentTrack?.id || '',
-        coverUrl: currentAlbum?.hasCover ? getCoverUrl(currentAlbum.id) : undefined,
+        coverUrl: effectiveAlbum?.hasCover ? getCoverUrl(effectiveAlbum.id) : undefined,
         repeatMode,
         isShuffle,
         isMixerEnabled,
@@ -781,6 +792,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     remoteContext,
     currentTrack,
     currentAlbum,
+    librarySummary,
     isPlaying,
     currentTime,
     duration,
@@ -883,6 +895,48 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
             }).catch(() => {})
           }
           break
+        case 'MUSIC_PLAY_PLAYLIST':
+          if (cmd.playlistId) {
+            const plInMemory = playlists.find((p) => p.id === cmd.playlistId)
+            if (plInMemory && plInMemory.tracks && plInMemory.tracks.length > 0) {
+              playTrack(plInMemory.tracks[0], null, plInMemory.tracks)
+              if (isTv) setIsTvViewOpen(true)
+            } else {
+              fetchPlaylist(cmd.playlistId as string)
+                .then((res) => {
+                  const pl = res.data
+                  if (pl.tracks && pl.tracks.length > 0) {
+                    playTrack(pl.tracks[0], null, pl.tracks)
+                    if (isTv) setIsTvViewOpen(true)
+                  }
+                })
+                .catch(() => {})
+            }
+          }
+          break
+        case 'MUSIC_PLAY_PLAYLIST_TRACK':
+          if (cmd.playlistId && cmd.trackId) {
+            const plInMemory = playlists.find((p) => p.id === cmd.playlistId)
+            if (plInMemory && plInMemory.tracks && plInMemory.tracks.length > 0) {
+              const trk = plInMemory.tracks.find((t) => t.id === cmd.trackId)
+              if (trk) {
+                playTrack(trk, null, plInMemory.tracks)
+                if (isTv) setIsTvViewOpen(true)
+              }
+            } else {
+              fetchPlaylist(cmd.playlistId as string)
+                .then((res) => {
+                  const pl = res.data
+                  const trk = pl.tracks?.find((t) => t.id === cmd.trackId)
+                  if (trk) {
+                    playTrack(trk, null, pl.tracks)
+                    if (isTv) setIsTvViewOpen(true)
+                  }
+                })
+                .catch(() => {})
+            }
+          }
+          break
       }
     })
   }, [
@@ -898,6 +952,7 @@ export function AudioPlayerProvider({ children }: { children: React.ReactNode })
     toggleRepeatMode,
     toggleMixer,
     isTv,
+    playlists,
   ])
 
   return (

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { RemoteStatus } from '../../common/hooks/useRemoteControl'
-import { fetchAlbums, getCoverUrl } from '../music-streaming/api'
-import type { AudioAlbum } from '../music-streaming/types'
+import { fetchAlbums, fetchPlaylists, getCoverUrl } from '../music-streaming/api'
+import type { AudioAlbum, AudioPlaylist } from '../music-streaming/types'
 import styles from './RemoteControlPage.module.css'
 
 function fmtTime(secs: number) {
@@ -20,13 +20,19 @@ interface Props {
 export function MusicRemoteTab({ connected, send, status }: Props) {
   const [scrubTime, setScrubTime] = useState<number | null>(null)
   const [albums, setAlbums] = useState<AudioAlbum[]>([])
+  const [playlists, setPlaylists] = useState<AudioPlaylist[]>([])
   const [loadingAlbums, setLoadingAlbums] = useState(false)
+  const [loadingPlaylists, setLoadingPlaylists] = useState(false)
+  const [browseTab, setBrowseTab] = useState<'albums' | 'playlists'>('albums')
   const [query, setQuery] = useState('')
   const [expandedAlbumId, setExpandedAlbumId] = useState<string | null>(null)
+  const [expandedPlaylistId, setExpandedPlaylistId] = useState<string | null>(null)
 
   useEffect(() => {
     let mounted = true
     setLoadingAlbums(true)
+    setLoadingPlaylists(true)
+
     fetchAlbums()
       .then((res) => {
         if (mounted) {
@@ -43,6 +49,17 @@ export function MusicRemoteTab({ connected, send, status }: Props) {
       .catch(() => {})
       .finally(() => {
         if (mounted) setLoadingAlbums(false)
+      })
+
+    fetchPlaylists()
+      .then((res) => {
+        if (mounted) {
+          setPlaylists(res.data)
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setLoadingPlaylists(false)
       })
 
     return () => {
@@ -66,6 +83,22 @@ export function MusicRemoteTab({ connected, send, status }: Props) {
       .slice(0, 20)
   }, [albums, normalizedQuery])
 
+  const filteredPlaylists = useMemo(() => {
+    if (!normalizedQuery) return playlists
+
+    return playlists.filter((pl) => {
+      const matchName = pl.name.toLowerCase().includes(normalizedQuery)
+      const matchDesc = pl.description?.toLowerCase().includes(normalizedQuery)
+      const matchGenre = pl.filters?.genres?.some((g) => g.toLowerCase().includes(normalizedQuery))
+      const matchTracks = pl.tracks?.some(
+        (t) =>
+          t.title.toLowerCase().includes(normalizedQuery) ||
+          t.artist?.toLowerCase().includes(normalizedQuery)
+      )
+      return matchName || matchDesc || matchGenre || matchTracks
+    })
+  }, [playlists, normalizedQuery])
+
   const seekTo = (time: number) => {
     if (!connected) return
     send('SEEK_TO', { currentTime: time })
@@ -79,6 +112,16 @@ export function MusicRemoteTab({ connected, send, status }: Props) {
   const playTrackOnTv = (albumId: string, trackId: string) => {
     if (!connected) return
     send('MUSIC_PLAY_TRACK', { albumId, trackId })
+  }
+
+  const playPlaylistOnTv = (playlistId: string) => {
+    if (!connected) return
+    send('MUSIC_PLAY_PLAYLIST', { playlistId })
+  }
+
+  const playPlaylistTrackOnTv = (playlistId: string, trackId: string) => {
+    if (!connected) return
+    send('MUSIC_PLAY_PLAYLIST_TRACK', { playlistId, trackId })
   }
 
   const btn = (
@@ -274,111 +317,228 @@ export function MusicRemoteTab({ connected, send, status }: Props) {
           <label className={styles.searchLabel}>Browse & Play on TV</label>
         </div>
 
+        {/* Tab switcher: Albums vs Playlists */}
+        <div style={{ display: 'flex', gap: 8, marginTop: 4, marginBottom: 8 }}>
+          <button
+            className={browseTab === 'albums' ? styles.filterToggleActive : styles.filterToggle}
+            onClick={() => {
+              setBrowseTab('albums')
+              setExpandedAlbumId(null)
+              setExpandedPlaylistId(null)
+            }}
+          >
+            💿 Albums ({albums.length})
+          </button>
+          <button
+            className={browseTab === 'playlists' ? styles.filterToggleActive : styles.filterToggle}
+            onClick={() => {
+              setBrowseTab('playlists')
+              setExpandedAlbumId(null)
+              setExpandedPlaylistId(null)
+            }}
+          >
+            📋 Playlists ({playlists.length})
+          </button>
+        </div>
+
         <input
           type="search"
           className={styles.searchInput}
-          placeholder={loadingAlbums ? 'Loading library…' : 'Search albums, songs, artists…'}
+          placeholder={
+            browseTab === 'albums'
+              ? (loadingAlbums ? 'Loading albums…' : 'Search albums, songs, artists…')
+              : (loadingPlaylists ? 'Loading playlists…' : 'Search playlists, songs…')
+          }
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
 
-        <div className={styles.results} style={{ marginTop: 8 }}>
-          {filteredAlbums.length === 0 && !loadingAlbums && (
-            <div className={styles.noResults}>No albums found</div>
-          )}
+        {/* Albums Tab */}
+        {browseTab === 'albums' && (
+          <div className={styles.results} style={{ marginTop: 8 }}>
+            {filteredAlbums.length === 0 && !loadingAlbums && (
+              <div className={styles.noResults}>No albums found</div>
+            )}
 
-          {filteredAlbums.map((alb) => {
-            const isExpanded = expandedAlbumId === alb.id
-            const albCover = alb.hasCover ? getCoverUrl(alb.id) : null
+            {filteredAlbums.map((alb) => {
+              const isExpanded = expandedAlbumId === alb.id
+              const albCover = alb.hasCover ? getCoverUrl(alb.id) : null
 
-            return (
-              <div key={alb.id} className={styles.resultItem}>
-                <div className={styles.resultRow}>
-                  {albCover ? (
-                    <img
-                      src={albCover}
-                      alt={alb.title}
-                      style={{
-                        width: 44,
-                        height: 44,
-                        borderRadius: 6,
-                        objectFit: 'cover',
-                        marginRight: 10,
-                        flexShrink: 0,
-                      }}
-                    />
-                  ) : (
+              return (
+                <div key={alb.id} className={styles.resultItem}>
+                  <div className={styles.resultRow}>
+                    {albCover ? (
+                      <img
+                        src={albCover}
+                        alt={alb.title}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 6,
+                          objectFit: 'cover',
+                          marginRight: 10,
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 6,
+                          background: '#312e81',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 18,
+                          marginRight: 10,
+                          flexShrink: 0,
+                        }}
+                      >
+                        💿
+                      </div>
+                    )}
+
+                    <div className={styles.resultInfo}>
+                      <div className={styles.resultTitle}>{alb.title}</div>
+                      <div className={styles.resultMeta}>
+                        {alb.artist} {alb.releaseYear ? `· ${alb.releaseYear}` : ''} · {alb.trackCount} tracks
+                      </div>
+                    </div>
+
+                    <div className={styles.resultActions}>
+                      <button
+                        className={`${styles.resultBtn} ${styles.playBtn}`}
+                        disabled={!connected}
+                        onClick={() => playAlbumOnTv(alb.id)}
+                        title="Play entire album on TV"
+                      >
+                        ▶ Play
+                      </button>
+                      {alb.tracks && alb.tracks.length > 0 && (
+                        <button
+                          className={isExpanded ? styles.resultBtnActive : styles.resultBtn}
+                          onClick={() =>
+                            setExpandedAlbumId(isExpanded ? null : alb.id)
+                          }
+                          title="Show tracks"
+                        >
+                          {isExpanded ? '▲' : 'Tracks ▾'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {isExpanded && alb.tracks && (
+                    <div className={styles.episodesPanel}>
+                      <div className={styles.episodeList}>
+                        {alb.tracks.map((trk, idx) => (
+                          <button
+                            key={trk.id}
+                            className={styles.episodeItem}
+                            disabled={!connected}
+                            onClick={() => playTrackOnTv(alb.id, trk.id)}
+                          >
+                            <span className={styles.epName}>
+                              {idx + 1}. {trk.title}
+                            </span>
+                            <span>▶</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Playlists Tab */}
+        {browseTab === 'playlists' && (
+          <div className={styles.results} style={{ marginTop: 8 }}>
+            {filteredPlaylists.length === 0 && !loadingPlaylists && (
+              <div className={styles.noResults}>No playlists found</div>
+            )}
+
+            {filteredPlaylists.map((pl) => {
+              const isExpanded = expandedPlaylistId === pl.id
+              const trackCount = pl.tracks?.length || pl.trackCount || 0
+
+              return (
+                <div key={pl.id} className={styles.resultItem}>
+                  <div className={styles.resultRow}>
                     <div
                       style={{
                         width: 44,
                         height: 44,
                         borderRadius: 6,
-                        background: '#312e81',
+                        background: 'linear-gradient(135deg, #a855f7, #ec4899)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 18,
+                        fontSize: 20,
                         marginRight: 10,
                         flexShrink: 0,
                       }}
                     >
-                      💿
+                      📋
+                    </div>
+
+                    <div className={styles.resultInfo}>
+                      <div className={styles.resultTitle}>{pl.name}</div>
+                      <div className={styles.resultMeta}>
+                        {trackCount} tracks{pl.description ? ` · ${pl.description}` : ''}
+                      </div>
+                    </div>
+
+                    <div className={styles.resultActions}>
+                      <button
+                        className={`${styles.resultBtn} ${styles.playBtn}`}
+                        disabled={!connected || trackCount === 0}
+                        onClick={() => playPlaylistOnTv(pl.id)}
+                        title="Play entire playlist on TV"
+                      >
+                        ▶ Play
+                      </button>
+                      {pl.tracks && pl.tracks.length > 0 && (
+                        <button
+                          className={isExpanded ? styles.resultBtnActive : styles.resultBtn}
+                          onClick={() =>
+                            setExpandedPlaylistId(isExpanded ? null : pl.id)
+                          }
+                          title="Show tracks"
+                        >
+                          {isExpanded ? '▲' : 'Tracks ▾'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {isExpanded && pl.tracks && (
+                    <div className={styles.episodesPanel}>
+                      <div className={styles.episodeList}>
+                        {pl.tracks.map((trk, idx) => (
+                          <button
+                            key={`${trk.id}-${idx}`}
+                            className={styles.episodeItem}
+                            disabled={!connected}
+                            onClick={() => playPlaylistTrackOnTv(pl.id, trk.id)}
+                          >
+                            <span className={styles.epName}>
+                              {idx + 1}. {trk.title} {trk.artist ? `· ${trk.artist}` : ''}
+                            </span>
+                            <span>▶</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
-
-                  <div className={styles.resultInfo}>
-                    <div className={styles.resultTitle}>{alb.title}</div>
-                    <div className={styles.resultMeta}>
-                      {alb.artist} {alb.releaseYear ? `· ${alb.releaseYear}` : ''} · {alb.trackCount} tracks
-                    </div>
-                  </div>
-
-                  <div className={styles.resultActions}>
-                    <button
-                      className={`${styles.resultBtn} ${styles.playBtn}`}
-                      disabled={!connected}
-                      onClick={() => playAlbumOnTv(alb.id)}
-                      title="Play entire album on TV"
-                    >
-                      ▶ Play
-                    </button>
-                    {alb.tracks && alb.tracks.length > 0 && (
-                      <button
-                        className={isExpanded ? styles.resultBtnActive : styles.resultBtn}
-                        onClick={() =>
-                          setExpandedAlbumId(isExpanded ? null : alb.id)
-                        }
-                        title="Show tracks"
-                      >
-                        {isExpanded ? '▲' : 'Tracks ▾'}
-                      </button>
-                    )}
-                  </div>
                 </div>
-
-                {isExpanded && alb.tracks && (
-                  <div className={styles.episodesPanel}>
-                    <div className={styles.episodeList}>
-                      {alb.tracks.map((trk, idx) => (
-                        <button
-                          key={trk.id}
-                          className={styles.episodeItem}
-                          disabled={!connected}
-                          onClick={() => playTrackOnTv(alb.id, trk.id)}
-                        >
-                          <span className={styles.epName}>
-                            {idx + 1}. {trk.title}
-                          </span>
-                          <span>▶</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </>
   )
