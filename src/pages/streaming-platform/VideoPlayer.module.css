@@ -153,3 +153,16 @@
 .subtitleMenu button.active,
 .audioMenu button.active { color: #a5b4fc; font-weight: 600; }
 
+
+.playbackError {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  text-align: center;
+}

@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
 import Hls from 'hls.js'
+import { Button } from '../../components/ui/Button'
 import styles from './VideoPlayer.module.css'
 
 export interface SubtitleTrack {
@@ -91,6 +92,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   const onProgressRef = useRef(onProgress)
   onProgressRef.current = onProgress
 
+  const [playbackError, setPlaybackError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const retryPosition = useRef<{ src: string; time: number } | null>(null)
   const [playing, setPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -174,6 +178,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
   useEffect(() => {
     const video = videoRef.current
     if (!video || !src) return
+    setPlaybackError(null)
+    const resumeTime = retryPosition.current?.src === src ? retryPosition.current.time : startTime
+    retryPosition.current = null
     hlsRef.current?.destroy()
     hlsRef.current = null
     video.removeAttribute('src')
@@ -185,13 +192,15 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
     // otherwise fail completely silently — nothing shows up in the console.
     const onNativeError = () => {
       const err = video.error
+      if (!err || hlsRef.current) return
+      if (format === 'HLS') setPlaybackError('Playback could not start or continue.')
       console.error('[VideoPlayer] native <video> error', {
         code: err?.code,
         message: err?.message,
-        currentSrc: video.currentSrc,
         format,
       })
     }
+    const restorePosition = () => { video.currentTime = resumeTime }
     video.addEventListener('error', onNativeError)
 
     if (format === 'HLS') {
@@ -236,7 +245,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
             setAudioTracks(tracks)
             setActiveAudioTrack(hls.audioTrack)
           }
-          if (startTime > 5) video.currentTime = startTime
+          if (resumeTime > 5) video.currentTime = resumeTime
         })
         hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (_evt, data) => {
           console.log('[VideoPlayer][HLS] audio tracks updated', data.audioTracks?.length)
@@ -259,38 +268,57 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
             fragments: data.details?.fragments?.length,
           })
         })
-        hls.on(Hls.Events.FRAG_LOADED, (_evt, data) => {
-          console.log('[VideoPlayer][HLS] fragment loaded', data.frag?.url)
+        let recoveryTimer: ReturnType<typeof setTimeout> | undefined
+        let networkAttempts = 0
+        let mediaAttempts = 0
+        let stopped = false
+
+        hls.on(Hls.Events.DESTROYING, () => {
+          stopped = true
+          clearTimeout(recoveryTimer)
         })
+
         hls.on(Hls.Events.ERROR, (_evt, data) => {
-          console.error('[VideoPlayer][HLS] error', {
+          if (!data.fatal || stopped || hlsRef.current !== hls) return
+
+          const status = data.response?.code
+          const parsingError = data.details === Hls.ErrorDetails.LEVEL_PARSING_ERROR
+            || data.details === Hls.ErrorDetails.MANIFEST_PARSING_ERROR
+          const permanentHttpError = status != null && status >= 400 && status < 500
+            && status !== 408 && status !== 429
+          const canRetryNetwork = data.type === Hls.ErrorTypes.NETWORK_ERROR
+            && !parsingError && !permanentHttpError && networkAttempts < 3
+          const canRecoverMedia = data.type === Hls.ErrorTypes.MEDIA_ERROR
+            && mediaAttempts < 1 && Boolean(video.error)
+
+          if (canRetryNetwork || canRecoverMedia) {
+            if (recoveryTimer !== undefined) return
+            const delay = canRetryNetwork ? 1000 * 2 ** networkAttempts++ : 1000
+            if (canRecoverMedia) mediaAttempts++
+            recoveryTimer = setTimeout(() => {
+              recoveryTimer = undefined
+              if (stopped || hlsRef.current !== hls) return
+              if (canRecoverMedia) {
+                hls.recoverMediaError()
+              } else if (data.details === Hls.ErrorDetails.MANIFEST_LOAD_ERROR
+                || data.details === Hls.ErrorDetails.MANIFEST_LOAD_TIMEOUT) {
+                hls.loadSource(src)
+              } else {
+                hls.startLoad()
+              }
+            }, delay)
+            return
+          }
+
+          console.error('[VideoPlayer][HLS] playback stopped', {
             type: data.type,
             details: data.details,
-            fatal: data.fatal,
-            responseCode: data.response?.code,
-            url: data.url,
-            // For manifestIncompatibleCodecsError this names the exact
-            // CODECS attribute(s) the manifest declared that got rejected.
-            reason: (data as {reason?: string}).reason,
-            errorMessage: data.error?.message,
+            responseCode: status,
           })
-
-          if (!data.fatal) return
-
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              console.warn('[VideoPlayer][HLS] fatal network error — retrying load')
-              hls.startLoad()
-              break
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              console.warn('[VideoPlayer][HLS] fatal media error — attempting recovery')
-              hls.recoverMediaError()
-              break
-            default:
-              console.error('[VideoPlayer][HLS] unrecoverable fatal error — destroying instance')
-              hls.destroy()
-              break
-          }
+          setPlaybackError(parsingError ? 'The HLS playlist is invalid.' : 'Playback could not start or continue.')
+          retryPosition.current = { src, time: video.currentTime || resumeTime }
+          hls.destroy()
+          hlsRef.current = null
         })
 
         // Use plain src; Authorization header is injected via xhrSetup for all HLS requests
@@ -306,8 +334,8 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
         const token = localStorage.getItem('token')
         const srcWithToken = appendToken(src, token)
         video.src = srcWithToken
-        if (startTime > 5) {
-          video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
+        if (resumeTime > 5) {
+          video.addEventListener('loadedmetadata', restorePosition, { once: true })
         }
       }
 
@@ -315,6 +343,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
         hlsRef.current?.destroy()
         hlsRef.current = null
         video.removeEventListener('error', onNativeError)
+        video.removeEventListener('loadedmetadata', restorePosition)
         setAudioTracks([])
         setActiveAudioTrack(-1)
         setShowAudioMenu(false)
@@ -324,18 +353,19 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
       const token = localStorage.getItem('token')
       const srcWithToken = appendToken(src, token)
       video.src = srcWithToken
-      if (startTime > 5) {
-        video.addEventListener('loadedmetadata', () => { video.currentTime = startTime }, { once: true })
+      if (resumeTime > 5) {
+        video.addEventListener('loadedmetadata', restorePosition, { once: true })
       }
       return () => {
         video.removeEventListener('error', onNativeError)
+        video.removeEventListener('loadedmetadata', restorePosition)
         setAudioTracks([])
         setActiveAudioTrack(-1)
         setShowAudioMenu(false)
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src, format])
+  }, [src, format, retryCount])
 
   useEffect(() => {
     const video = videoRef.current
@@ -506,6 +536,16 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, Props>(({
           <track key={sub.lang} kind="subtitles" src={sub.url} srcLang={sub.lang} label={sub.label} />
         ))}
       </video>
+
+      {playbackError && (
+        <div className={styles.playbackError}>
+          <p role="alert">{playbackError}</p>
+          <Button variant="secondary" onClick={() => {
+            retryPosition.current ??= { src, time: videoRef.current?.currentTime ?? startTime }
+            setRetryCount((count) => count + 1)
+          }}>Retry</Button>
+        </div>
+      )}
 
       <div
         className={`${styles.controls} ${showControls ? styles.visible : styles.hidden}`}
