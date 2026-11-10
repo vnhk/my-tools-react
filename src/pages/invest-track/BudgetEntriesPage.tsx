@@ -100,9 +100,11 @@ export function BudgetEntriesPage() {
         load()
     }, [JSON.stringify(filters)])
 
-    useEffect(() => {
+    const loadCategories = () => {
         budgetEntriesApi.getCategories().then(r => setCategories(r.data))
-    }, [])
+    }
+
+    useEffect(loadCategories, [])
 
     return (
         <div className={styles.page}>
@@ -124,6 +126,7 @@ export function BudgetEntriesPage() {
                         <div className={styles.root}>
                             <div className={styles.toolbar}>
                                 <EntityFilters entityName="BudgetEntry" filters={filters}
+                                               dynamicOptions={{category: categories}}
                                                onFiltersChange={setFilter}
                                                onClear={clearFilters}/>
                             </div>
@@ -133,7 +136,10 @@ export function BudgetEntriesPage() {
                         <BudgetTreeTab
                             entries={entries}
                             categories={categories}
-                            onReload={load}
+                            onReload={() => {
+                                load()
+                                loadCategories()
+                            }}
                         />
                     )}
 

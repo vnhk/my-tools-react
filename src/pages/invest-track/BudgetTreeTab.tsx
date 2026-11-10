@@ -352,6 +352,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                     <span className={styles.colPayment}>Payment</span>
                     <span className={styles.colDate}>Date</span>
                     <span className={styles.colNotes}>Notes</span>
+                    <span className={styles.colNotes}>Tags</span>
                     <span className={styles.colCheck}/>
                 </div>
 
@@ -373,6 +374,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                 </span>
                                 <span className={styles.colPayment}/><span className={styles.colDate}/><span
                                 className={styles.colNotes}/>
+                                <span className={styles.colNotes}/>
                                 <span className={styles.colCheck}>
                   <button className={styles.plusBtn}
                           onClick={e => {
@@ -401,6 +403,7 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                       </span>
                                             <span className={styles.colPayment}/><span className={styles.colDate}/><span
                                             className={styles.colNotes}/>
+                                            <span className={styles.colNotes}/>
                                             <span className={styles.colCheck}>
                         <button className={styles.plusBtn}
                                 onClick={e => {
@@ -427,6 +430,9 @@ export function BudgetTreeTab({entries, categories, onReload}: TreeTabProps) {
                                                 <span
                                                     className={styles.colDate}>{item.entryDate ? item.entryDate.slice(5).replace('-', '.') : ''}</span>
                                                 <span className={styles.colNotes}>{item.notes ?? ''}</span>
+                                                <span className={styles.colNotes} title={item.tags ?? undefined}>
+                                                    {item.tags}
+                                                </span>
                                                 <span className={styles.colCheck}>
                           <input type="checkbox" checked={selectedIds.has(item.id)}
                                  onChange={() => setSelectedIds(toggle(selectedIds, item.id))}

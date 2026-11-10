@@ -9,6 +9,7 @@ interface EntityFiltersProps {
     filters: FilterValues
     onFiltersChange: (key: string, value: string | string[] | undefined) => void
     onClear: () => void
+    dynamicOptions?: Record<string, string[]>
     extraFilters?: Record<string, { label: string; strValues?: string[] }>
     extraFilterValues?: FilterValues
     onExtraFilterChange?: (key: string, value: string | string[] | undefined) => void
@@ -19,6 +20,7 @@ export function EntityFilters({
                                   filters,
                                   onFiltersChange,
                                   onClear,
+                                  dynamicOptions,
                               }: EntityFiltersProps) {
     const [open, setOpen] = useState(false)
     const [draftFilters, setDraftFilters] = useState<FilterValues>(filters)
@@ -113,8 +115,7 @@ export function EntityFilters({
                         let options: string[]
                         if (f.strValues?.length) options = f.strValues
                         else if (f.intValues?.length) options = (f.intValues ?? []).map(String)
-                        else if (f.dynamicStrValuesList?.length) options = f.dynamicStrValuesList
-                        else options = []
+                        else options = dynamicOptions?.[f.field] ?? f.dynamicStrValuesList ?? []
                         const selected = (draftFilters[f.field] as string[]) ?? []
                         return (
                             <div key={f.field} className={styles.filterGroup}>
@@ -152,6 +153,7 @@ export function EntityFilters({
                             <input
                                 className={styles.textInput}
                                 type="text"
+                                aria-label={f.displayName}
                                 value={(draftFilters[f.field] as string) ?? ''}
                                 onChange={(e) => updateDraftFilter(f.field, e.target.value || undefined)}
                                 {...inputEvents}

@@ -13,6 +13,7 @@ test.describe('Invest Track — Budget Entries integration', () => {
         await page.getByLabel('Category').fill('E2ECategory')
         await page.getByLabel('Name').fill('E2EBudgetEntry')
         await page.getByLabel('Value').fill('99')
+        await page.getByLabel('Tags').fill('E2EBudgetTag, E2ESecondTag')
         await page.getByLabel('Date').fill(new Date().toISOString().slice(0, 10))
 
         const saveResponse = page.waitForResponse(
@@ -35,6 +36,19 @@ test.describe('Invest Track — Budget Entries integration', () => {
 
         await page.getByRole('button', {name: 'Expand All'}).click()
         await expect(page.getByText('E2EBudgetEntry')).toBeVisible()
+        await expect(page.getByTitle(/E2EBudgetTag/)).toContainText('E2ESecondTag')
+
+        await page.getByRole('button', {name: 'Toggle Filters'}).click()
+        await page.getByRole('checkbox', {name: 'E2ECategory'}).check()
+        const tagsFilter = page.getByRole('textbox', {name: 'Tags'})
+        await tagsFilter.fill('E2ENonexistentTag')
+        await tagsFilter.press('Enter')
+        await expect(page.getByText('E2EBudgetEntry')).not.toBeVisible()
+
+        await tagsFilter.fill('E2EBudgetTag')
+        await tagsFilter.press('Enter')
+        await expect(page.getByTitle(/E2EBudgetTag/)).toBeVisible()
+        await page.getByRole('button', {name: 'Toggle Filters'}).click()
 
         await page.getByText('E2EBudgetEntry').click()
         page.once('dialog', (d) => d.accept())
