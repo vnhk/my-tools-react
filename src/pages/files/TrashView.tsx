@@ -19,6 +19,7 @@ import client from '../../api/client'
 import { Button } from '../../components/ui/Button'
 import { DynamicFormDialog } from '../../components/ui/DynamicFormDialog'
 import { useNotification } from '../../components/ui/Notification'
+import { isTextFile } from './fileTypes'
 import styles from './FilesPage.module.css'
 
 export interface TrashItem {
@@ -36,7 +37,6 @@ export interface TrashItem {
 
 const IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'])
 const VIDEO_EXT = new Set(['mp4', 'webm', 'mov', 'mkv'])
-const TEXT_EXT = new Set(['txt', 'md', 'json', 'xml', 'csv', 'log', 'yaml', 'yml', 'vtt', 'srt'])
 const PDF_EXT = new Set(['pdf'])
 
 function FileIcon({ item, size = 16 }: { item: TrashItem; size?: number }) {
@@ -46,7 +46,7 @@ function FileIcon({ item, size = 16 }: { item: TrashItem; size?: number }) {
     if (IMAGE_EXT.has(ext)) return <FaFileImage size={size} color="var(--color-primary, #a5b4fc)" style={style} />
     if (VIDEO_EXT.has(ext)) return <FaFileVideo size={size} color="var(--color-danger, #ef4444)" style={style} />
     if (PDF_EXT.has(ext)) return <FaFilePdf size={size} color="#f87171" style={style} />
-    if (TEXT_EXT.has(ext)) return <FaFileAlt size={size} color="var(--color-text-secondary)" style={style} />
+    if (isTextFile(item)) return <FaFileAlt size={size} color="var(--color-text-secondary)" style={style} />
     if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return <FaFileArchive size={size} color="#fbbf24" style={style} />
     if (['mp3', 'wav', 'flac', 'ogg'].includes(ext)) return <FaFileAudio size={size} color="#34d399" style={style} />
     return <FaFile size={size} color="var(--color-text-tertiary)" style={style} />
