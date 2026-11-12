@@ -11,7 +11,7 @@ import {
   FaChevronUp,
 } from 'react-icons/fa'
 import type { AudioPlaylist, AudioTrack } from './types'
-import { deletePlaylist, getPlaylistM3u8Url } from './api'
+import { deletePlaylist, getPlaylistZipUrl } from './api'
 import { useAudioPlayer } from './AudioPlayerContext'
 import { useNotification } from '../../components/ui/Notification'
 import { CreatePlaylistDialog } from './CreatePlaylistDialog'
@@ -264,10 +264,10 @@ export function PlaylistsTabView({
 
                   <div className={styles.actionBtnGroup}>
                     <a
-                      href={getPlaylistM3u8Url(playlist.id)}
-                      download={`${playlist.name}.m3u8`}
+                      href={getPlaylistZipUrl(playlist.id)}
+                      download={`${playlist.name}.zip`}
                       className={styles.iconBtn}
-                      title="Download M3U8 stream playlist (VLC)"
+                      title="Download playlist with tracks (ZIP)"
                     >
                       <FaDownload />
                     </a>

@@ -191,6 +191,6 @@ export function deletePlaylist(id: string) {
   return client.delete(`/audio/playlists/${encodeURIComponent(id)}`)
 }
 
-export function getPlaylistM3u8Url(id: string): string {
-  return appendToken(`/api/audio/playlists/${encodeURIComponent(id)}/stream`)
+export function getPlaylistZipUrl(id: string): string {
+  return appendToken(`/api/audio/playlists/${encodeURIComponent(id)}/download`)
 }
