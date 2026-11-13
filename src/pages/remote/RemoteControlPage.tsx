@@ -7,15 +7,17 @@ import {StreamingRemoteTab} from './StreamingRemoteTab'
 import {MusicRemoteTab} from './MusicRemoteTab'
 import {InvestTrackRemoteTab} from './InvestTrackRemoteTab'
 import {FilesRemoteTab} from './FilesRemoteTab'
+import {PhotosRemoteTab} from './PhotosRemoteTab'
 import styles from './RemoteControlPage.module.css'
 
-type App = 'streaming' | 'music' | 'invest-track' | 'files'
+type App = 'streaming' | 'music' | 'invest-track' | 'files' | 'photos'
 
 const APP_HOME: Record<App, string> = {
     streaming: '/streaming',
     music: '/music',
     'invest-track': '/invest-track/dashboard',
     files: '/files/tv-view',
+    photos: '/photos',
 }
 
 export default function RemoteControlPage() {
@@ -115,6 +117,8 @@ export default function RemoteControlPage() {
                     </div>
 
                     <div className={styles.tabBar}>
+                        <Button variant={activeApp === 'photos' ? 'primary' : 'secondary'}
+                                onClick={() => switchApp('photos')}>Photos</Button>
                         <button
                             className={activeApp === 'streaming' ? styles.tabBtnActive : styles.tabBtn}
                             onClick={() => switchApp('streaming')}
@@ -155,6 +159,7 @@ export default function RemoteControlPage() {
                             expandedKeys={investExpandedKeys}
                         />
                     )}
+                    {activeApp === 'photos' && <PhotosRemoteTab connected={connected} send={send}/>}
                     {activeApp === 'files' && (
                         <FilesRemoteTab connected={connected} send={send}/>
                     )}

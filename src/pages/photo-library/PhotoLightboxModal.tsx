@@ -15,6 +15,7 @@ import {
   FaDownload,
   FaPlus,
 } from 'react-icons/fa'
+import {useOptionalRemoteControlContext} from '../../components/layout/RemoteControlProvider'
 import type { PhotoItem } from './types'
 import { getPhotoFileUrl, getPhotoDownloadUrl, toggleFavorite, deletePhoto, updatePhotoTags } from './api'
 import { isHeicFormat, isSafariOrApple, convertHeicToJpegUrl } from '../../utils/mediaUtils'
@@ -59,6 +60,8 @@ export function PhotoLightboxModal({
   onItemUpdated,
   onItemDeleted,
 }: Props) {
+  const remote = useOptionalRemoteControlContext()
+  const videoRef = useRef<HTMLVideoElement>(null)
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [zoom, setZoom] = useState(1)
   const [rotation, setRotation] = useState(0)
@@ -125,6 +128,24 @@ export function PhotoLightboxModal({
   }, [items.length])
 
   // Keyboard navigation
+  useEffect(() => remote?.subscribe(command => {
+    switch (command.action) {
+      case 'PHOTO_NEXT': handleNext(); break
+      case 'PHOTO_PREVIOUS': handlePrev(); break
+      case 'PHOTO_CLOSE': onClose(); break
+      case 'PHOTO_SLIDESHOW': setIsSlideshow(value => !value); break
+      case 'PHOTO_ZOOM_IN': setZoom(value => Math.min(5, value + 0.25)); break
+      case 'PHOTO_ZOOM_OUT': setZoom(value => Math.max(0.25, value - 0.25)); break
+      case 'PHOTO_ROTATE': setRotation(value => (value + 90) % 360); break
+      case 'PHOTO_VIDEO_TOGGLE': {
+        const video = videoRef.current
+        if (video?.paused) video.play()?.catch(() => {})
+        else video?.pause()
+        break
+      }
+    }
+  }), [remote, handleNext, handlePrev, onClose])
+
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === 'INPUT') return
@@ -324,6 +345,7 @@ export function PhotoLightboxModal({
         >
           {currentItem.mediaType === 'VIDEO' ? (
             <video
+              ref={videoRef}
               className={styles.video}
               src={fileUrl}
               controls

@@ -1,3 +1,4 @@
+import {useSearchParams} from 'react-router-dom'
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import {
   FaSearch,
@@ -32,7 +33,19 @@ interface Props {
 }
 
 export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const requestedPhoto = searchParams.get("photo")
   const [photos, setPhotos] = useState<PhotoItem[]>([])
+  useEffect(() => {
+    if (!requestedPhoto) return
+    const index = photos.findIndex(photo => photo.id === requestedPhoto)
+    if (index < 0) return
+    setLightboxIndex(index)
+    setSearchParams(params => {
+      params.delete('photo')
+      return params
+    }, {replace: true})
+  }, [requestedPhoto, photos, setSearchParams])
   const [tagsMap, setTagsMap] = useState<Record<string, number>>({})
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -405,6 +418,7 @@ export function PhotoTimelinePage({ favoriteOnly, videoOnly, albumId }: Props) {
       {/* Lightbox Modal */}
       {lightboxIndex !== null && (
         <PhotoLightboxModal
+          key={photos[lightboxIndex]?.id}
           items={photos}
           initialIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
