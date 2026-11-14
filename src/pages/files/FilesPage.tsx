@@ -254,8 +254,8 @@ export function FilesPage() {
     const doSync = async () => {
         setSyncing(true)
         try {
-            await client.post('/files/sync')
-            showNotification('Synchronization complete', 'success')
+            await client.post('/files/sync', null, {params: {path}})
+            showNotification('Directory synchronization complete', 'success')
             load(path)
         } catch {
             showNotification('Sync failed', 'error')
@@ -450,7 +450,7 @@ export function FilesPage() {
                     )}
                     {path !== '/' && <Button variant="ghost" onClick={goUp}>↑ Up</Button>}
                     <Button variant="secondary" onClick={doSync} disabled={syncing}>
-                        {syncing ? '⟳ Syncing…' : '⟳ Sync'}
+                        {syncing ? '⟳ Syncing…' : '⟳ Synchronize current directory'}
                     </Button>
                     <Button variant="secondary" onClick={() => setUploadDialog(true)}>⬆ Upload</Button>
                     <Button variant="secondary" onClick={() => {
