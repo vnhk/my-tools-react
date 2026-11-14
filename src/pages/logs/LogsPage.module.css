@@ -146,3 +146,9 @@
   padding: var(--space-sm) !important;
   font-size: var(--font-size-xs);
 }
+
+.levelError { color: var(--color-danger); font-weight: 700; }
+.levelWarn { color: var(--color-warning); font-weight: 700; }
+.levelInfo { color: var(--color-info); font-weight: 700; }
+.levelDebug { color: var(--color-success); font-weight: 700; }
+.levelTrace { color: var(--color-text-secondary); font-weight: 700; }

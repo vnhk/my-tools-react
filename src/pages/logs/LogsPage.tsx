@@ -10,6 +10,7 @@ import {useEntityFilters} from '../../hooks/useEntityFilters'
 import {useAutoRefresh} from '../../common/hooks/useAutoRefresh'
 import {toPage} from '../../api/crud'
 import styles from './LogsPage.module.css'
+import {formatLog, type LogFormat} from './formatLog'
 import {CustomSelect} from "../../components/fields/CustomSelect.tsx";
 import {useNotification} from "../../components/ui/Notification.tsx";
 import {Button} from "../../components/ui/Button.tsx";
@@ -62,43 +63,38 @@ function saveHiddenJsonFields(fields: Set<string>) {
     }
 }
 
-function ExpandableLog({text, forceExpanded, hiddenFields}: {
+function ExpandableLog({text, forceExpanded, hiddenFields, format}: {
     text: string
     forceExpanded?: boolean
-    hiddenFields?: Set<string>
+    hiddenFields: Set<string>
+    format: LogFormat
 }) {
     const [localExpanded, setLocalExpanded] = useState(false)
     const expanded = forceExpanded ?? localExpanded
-    const isLong = text && text.length > 300
-    const display = expanded || !isLong ? text : text.slice(0, 300) + '…'
-
-    let isJson = false
-    let parsed: Record<string, unknown> | null = null
-    try {
-        if (text && text.trimStart().startsWith('{')) {
-            const raw = JSON.parse(text)
-            if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-                parsed = hiddenFields && hiddenFields.size > 0
-                    ? Object.fromEntries(Object.entries(raw).filter(([k]) => !hiddenFields.has(k)))
-                    : raw
-                isJson = true
-            }
-        }
-    } catch { /* not json */
-    }
+    const formatted = formatLog(text, hiddenFields, format, expanded)
+    const isLong = formatted.text.length > 300
+    const display = expanded || !isLong ? formatted.text : formatted.text.slice(0, 300) + '…'
+    const levelToken = format === 'text' ? '[' + formatted.level + ']' : JSON.stringify(formatted.level)
+    const levelIndex = formatted.level
+        ? (format === 'text' ? 0 : display.indexOf(levelToken, display.indexOf('"level":') + 8))
+        : -1
+    const levelClass = ({
+        ERROR: styles.levelError, FATAL: styles.levelError,
+        WARN: styles.levelWarn, WARNING: styles.levelWarn,
+        INFO: styles.levelInfo, DEBUG: styles.levelDebug, TRACE: styles.levelTrace,
+    } as Record<string, string>)[formatted.level.toUpperCase()]
 
     return (
         <div className={styles.logCell}>
-            {isJson && parsed ? (
-                <pre
-                    className={styles.jsonLog}>{expanded ? JSON.stringify(parsed, null, 2) : JSON.stringify(parsed).slice(0, 300) + (isLong ? '…' : '')}</pre>
-            ) : (
-                <span className={styles.logText}>{display}</span>
-            )}
+            <pre className={format === 'json' ? styles.jsonLog : styles.logText}>
+                {levelIndex >= 0 && display.slice(levelIndex, levelIndex + levelToken.length) === levelToken
+                    ? <>{display.slice(0, levelIndex)}<span className={levelClass}>{levelToken}</span>{display.slice(levelIndex + levelToken.length)}</>
+                    : display}
+            </pre>
             {isLong && forceExpanded === undefined && (
-                <button className={styles.expandBtn} onClick={() => setLocalExpanded(!localExpanded)}>
+                <Button variant="ghost" size="sm" onClick={() => setLocalExpanded(!localExpanded)}>
                     {expanded ? 'Collapse' : 'Expand'}
-                </button>
+                </Button>
             )}
         </div>
     )
@@ -152,6 +148,10 @@ function JsonFieldsMenu({fields, hidden, onToggle}: {
 
 export function LogsPage() {
     const {showError, showSuccess} = useNotification()
+    const [logFormat, setLogFormat] = useState<LogFormat>(() => {
+        try { return localStorage.getItem('logs.format') === 'text' ? 'text' : 'json' }
+        catch { return 'json' }
+    })
     const [appNames, setAppNames] = useState<string[]>([])
     const [appName, setAppName] = useState('')
     const [activeMinutes, setActiveMinutes] = useState(0)
@@ -233,6 +233,7 @@ export function LogsPage() {
                     text={row.fullLog}
                     forceExpanded={expandAll ? true : undefined}
                     hiddenFields={hiddenJsonFields}
+                    format={logFormat}
                 />
             ),
             width: '480px',
@@ -410,7 +411,7 @@ export function LogsPage() {
         const selected = displayedRows.filter(r => selectedIds.has(r.id))
         if (selected.length === 0) return
         try {
-            await navigator.clipboard.writeText(selected.map(r => r.fullLog || r.message).join('\n\n'))
+            await navigator.clipboard.writeText(selected.map(r => formatLog(r.fullLog || r.message, hiddenJsonFields, logFormat).text).join('\n\n'))
             showSuccess(`Copied ${selected.length} row(s)`)
             setSelectedIds(new Set())
         } catch {
@@ -464,6 +465,13 @@ export function LogsPage() {
                 )}
                 <Button variant="secondary" size="sm" onClick={() => setExpandAll(v => !v)}>
                     {expandAll ? 'Collapse All' : 'Expand All'}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => {
+                    const next = logFormat === 'json' ? 'text' : 'json'
+                    setLogFormat(next)
+                    try { localStorage.setItem('logs.format', next) } catch { /* Storage may be unavailable. */ }
+                }}>
+                    {logFormat === 'json' ? 'View as text' : 'View as JSON'}
                 </Button>
                 <JsonFieldsMenu fields={knownJsonFields} hidden={hiddenJsonFields} onToggle={toggleJsonField}/>
                 {selectedIds.size > 0 && (
