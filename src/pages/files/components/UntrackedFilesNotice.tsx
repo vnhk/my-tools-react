@@ -26,7 +26,7 @@ export function UntrackedFilesNotice({path}: {path: string}) {
         <div className={styles.notice} role="note">
             <FaInfoCircle aria-hidden="true"/>
             <span>
-                Not all files are listed here. In HLS folders, {extensions.map(ext => `.${ext}`).join(', ')} files
+                Not all files are listed here. In some folders, {extensions.map(ext => `.${ext}`).join(', ')} files
                 remain on disk but are not indexed in the file browser. Other files remain listed.
             </span>
         </div>
