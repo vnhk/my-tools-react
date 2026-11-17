@@ -1,0 +1,19 @@
+.notice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-sm) var(--space-md);
+    border-left: 3px solid var(--color-info);
+    border-radius: var(--radius-xs);
+    background: var(--color-info-subtle);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+}
+
+.notice svg {
+    flex-shrink: 0;
+    margin-top: var(--space-xs);
+    color: var(--color-info);
+}

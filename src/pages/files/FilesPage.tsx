@@ -33,6 +33,7 @@ import {createStreamUrl} from './fileStream'
 import {useSecureFileUrl} from './hooks/useSecureFileUrl'
 import {UploadDialog} from './components/UploadDialog'
 import {MoveDialog} from './components/MoveDialog'
+import {UntrackedFilesNotice} from './components/UntrackedFilesNotice'
 import {FileViewerDialog} from './components/FileViewerDialog'
 
 export {createStreamUrl, useSecureFileUrl}
@@ -483,6 +484,8 @@ export function FilesPage() {
                     onChange={(e) => setSearch(e.target.value)}
                 />
             </div>
+
+            <UntrackedFilesNotice key={path} path={path}/>
 
             {/* File list / grid */}
             <div className={styles.scrollArea}>
